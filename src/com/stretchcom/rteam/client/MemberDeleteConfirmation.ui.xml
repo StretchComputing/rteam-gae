@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style src="rteam.css" />
+	
+	<g:HTMLPanel styleName="{style.panel}">
+		<div style="height:15px;"></div>
+		<div class="{style.welcome}" >
+			<span>Membership has been deleted as requested</span>
+		</div>
+		<div class="{style.userInfo}">rTeam User Information</div>
+		<table id="box-table-a" summary="User Info">
+		    <thead>
+		    	<tr>
+		        	<th scope="col">Property</th>
+		            <th scope="col">Value</th>
+		        </tr>
+		    </thead>
+		    <tbody>
+		    	<tr>
+		        	<td>Deleted Membership Email</td>
+		            <td><span ui:field="emailAddress" /></td>
+		        </tr>
+		        <tr>
+		        	<td>Deleted Membership Name</td>
+		            <td><span ui:field="fullName" /></td>
+		        </tr>
+		    </tbody>
+		</table>
+	</g:HTMLPanel> 
+</ui:UiBinder> 

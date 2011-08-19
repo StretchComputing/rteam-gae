@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns="http://java.sun.com/xml/ns/javaee"
+xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
+   <display-name>rteam servlet</display-name>  
+  
+	<!--  not sure what this is for - copied from GWT serialization example -->
+	<context-param>
+		<param-name>org.restlet.clients</param-name>
+		<param-value>CLAP FILE</param-value>
+	</context-param>
+
+   <!-- Restlet adapter -->  
+	<servlet>
+		<servlet-name>adapter</servlet-name>
+		<servlet-class>org.restlet.ext.gwt.GwtShellServletWrapper</servlet-class>
+		<init-param>
+			<param-name>org.restlet.application</param-name>
+			<param-value>com.stretchcom.rteam.server.RteamApplication</param-value>
+		</init-param>
+	</servlet>
+
+	<servlet>
+		<servlet-name>EmailTaskServlet</servlet-name>
+		<servlet-class>com.stretchcom.rteam.server.EmailTaskServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>EmailTaskServlet</servlet-name>
+		<url-pattern>/sendEmailTask</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>ActivityTaskServlet</servlet-name>
+		<servlet-class>com.stretchcom.rteam.server.ActivityTaskServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ActivityTaskServlet</servlet-name>
+		<url-pattern>/removeTeamActivityTask</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>SynchActivityWithTwitterTaskServlet</servlet-name>
+		<servlet-class>com.stretchcom.rteam.server.SynchActivityWithTwitterTaskServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>SynchActivityWithTwitterTaskServlet</servlet-name>
+		<url-pattern>/synchActivityWithTwitterTask</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>MigrationTaskServlet</servlet-name>
+		<servlet-class>com.stretchcom.rteam.server.MigrationTaskServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>MigrationTaskServlet</servlet-name>
+		<url-pattern>/migrationTask</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>adapter</servlet-name>
+		<url-pattern>/*</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+	  <servlet-name>emailHandler</servlet-name>
+	  <servlet-class>com.stretchcom.rteam.server.EmailHandlerServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+	  <servlet-name>emailHandler</servlet-name>
+	  <url-pattern>/_ah/mail/*</url-pattern>
+	</servlet-mapping>
+
+	<welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+    
+<!--   
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>all</web-resource-name> 
+            <description/> 
+            <url-pattern>/teams/*</url-pattern> 
+            <http-method>GET</http-method> 
+            <http-method>POST</http-method> 
+            <http-method>HEAD</http-method> 
+            <http-method>PUT</http-method> 
+            <http-method>OPTIONS</http-method> 
+            <http-method>TRACE</http-method> 
+            <http-method>DELETE</http-method> 
+        </web-resource-collection>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+-->
+
+<!-- TODO turn this on in production
+	<security-constraint>
+        <web-resource-collection>
+        	<web-resource-name>Cron</web-resource-name> 
+            <url-pattern>/cron/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>admin</role-name>
+        </auth-constraint>
+    </security-constraint>
+-->
+
+</web-app>

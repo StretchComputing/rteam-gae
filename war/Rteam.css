@@ -1,0 +1,40 @@
+body {
+	margin: 15px auto auto 10px;
+}
+
+.FlexTable {
+	border-top: thin solid #444444;
+	border-left: thin solid #444444;
+	border-right: thin solid #111111;
+	border-bottom: thin solid #111111;
+	background-color: #505050;
+}
+
+.FlexTable-OddRow {
+	background-color: #e8edff;
+}
+
+.FlexTable-EvenRow {
+	background-color: #d0dafd;
+}
+
+.FlexTable-ColumnLabel {
+	color: white;
+	padding: 3px;
+}
+
+.FlexTable-ColumnLabelCell {
+	border-width: 0 0 1px 0;
+	border-style: solid;
+	border-color: white;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+}
+
+.FlexTable-Cell {
+	border-width: 0px 0px 0px 1px;
+	border-style: solid;
+	border-color: white;
+	padding: 5px;
+}

@@ -1,0 +1,841 @@
+package com.stretchcom.rteam.server;
+	
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.logging.Logger;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.Query;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.restlet.resource.Delete;
+import org.restlet.resource.Get;
+import org.restlet.resource.Put;
+import org.restlet.data.Form;
+import org.restlet.data.MediaType;
+import org.restlet.data.Parameter;
+import org.restlet.data.Reference;
+import org.restlet.data.Status;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.representation.Representation;
+import org.restlet.representation.StringRepresentation;
+import org.restlet.representation.Variant;
+import org.restlet.resource.ServerResource;
+import org.restlet.resource.ResourceException;
+
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Text;
+
+/**
+ * @author joepwro
+ */
+public class MessageThreadResource extends ServerResource {
+	private static final Logger log = Logger.getLogger(MessageThreadResource.class.getName());
+
+    // The sequence of characters that identifies the resource.
+    String teamId;
+    String messageThreadId;
+    String timeZoneStr;
+    String includeMemberInfo;
+    String oneUseToken;
+    String pollResponse;
+    
+    @Override  
+    protected void doInit() throws ResourceException {  
+        // attribute values taken from the URI template /team/{teamId}/messageThreads/{messageThreadId}/{timeZone}
+    	
+        this.teamId = (String)getRequest().getAttributes().get("teamId"); 
+        log.info("MessageThreadResource:doInit() - teamId = " + this.teamId);
+        if(this.teamId != null) {
+            this.teamId = Reference.decode(this.teamId);
+            log.info("MessageThreadResource:doInit() - decoded teamId = " + this.teamId);
+        }
+   
+        this.messageThreadId = (String)getRequest().getAttributes().get("messageThreadId"); 
+        log.info("MessageThreadResource:doInit() - messageThreadId = " + this.messageThreadId);
+        if(this.messageThreadId != null) {
+            this.messageThreadId = Reference.decode(this.messageThreadId);
+            log.info("MessageThreadResource:doInit() - decoded messageThreadId = " + this.messageThreadId);
+        }
+        
+        this.timeZoneStr = (String)getRequest().getAttributes().get("timeZone"); 
+        log.info("MessageThreadResource:doInit() - timeZone = " + this.timeZoneStr);
+        if(this.timeZoneStr != null) {
+            this.timeZoneStr = Reference.decode(this.timeZoneStr);
+            log.info("MessageThreadResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+        }
+        
+		Form form = getRequest().getResourceRef().getQueryAsForm();
+		for (Parameter parameter : form) {
+			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			if(parameter.getName().equals("includeMemberInfo"))  {
+				this.includeMemberInfo = (String)parameter.getValue();
+				this.includeMemberInfo = Reference.decode(this.includeMemberInfo);
+				log.info("MessageThreadResource:doInit() - decoded includeMemberInfo = " + this.includeMemberInfo);
+			} else if(parameter.getName().equals("oneUseToken")) {
+				this.oneUseToken = (String)parameter.getValue();
+				this.oneUseToken = Reference.decode(this.oneUseToken);
+				log.info("MessageThreadResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
+			} else if(parameter.getName().equals("pollResponse")) {
+				this.pollResponse = (String)parameter.getValue();
+				this.pollResponse = Reference.decode(this.pollResponse);
+				log.info("MessageThreadResource:doInit() - decoded pollResponse = " + this.pollResponse);
+			}
+		}
+    }  
+
+    // Handles 'Get message thread info' API  
+    @Get("json")
+    public JsonRepresentation getMessageThreadInfo(Variant variant) {
+        log.info("MessageThreadResource:toJson() entered");
+        JSONObject jsonReturn = new JSONObject();
+		EntityManager em = EMF.get().createEntityManager();
+
+		String apiStatus = ApiStatusCode.SUCCESS;
+		this.setStatus(Status.SUCCESS_OK);
+		User currentUser = null;
+		TimeZone tz = null;
+		try {
+    		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
+    		if(currentUser == null) {
+    			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+    			log.severe("user could not be retrieved from Request attributes!!");
+    		}
+    		//::BUSINESSRULE:: user must be network authenticated to send a message
+    		else if(!currentUser.getIsNetworkAuthenticated()) {
+    			apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
+    		}
+    		// teamId, messageThreadId and time zone are all required
+    		else if(this.teamId == null || this.teamId.length() == 0 ||
+    	        	   this.messageThreadId == null || this.messageThreadId.length() == 0 ||
+    	        	   this.timeZoneStr == null || this.timeZoneStr.length() == 0) {
+    	        		log.info("MessageThreadResource:toJson() teamId, messageThreadId or timeZone null or zero length");
+    	        		apiStatus = ApiStatusCode.TEAM_ID_MESSAGE_THREAD_ID_AND_TIME_ZONE_REQUIRED;
+    	    }
+    		// must be a member of the team
+    		else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
+				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
+				log.info(apiStatus);
+        	} else {
+    			tz = GMT.getTimeZone(this.timeZoneStr);
+    			if(tz == null) {
+    				apiStatus = ApiStatusCode.INVALID_TIME_ZONE_PARAMETER;
+    			}
+        	}
+			
+			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
+				jsonReturn.put("apiStatus", apiStatus);
+				return new JsonRepresentation(jsonReturn);
+			}
+
+    		Key messageThreadKey = KeyFactory.stringToKey(this.messageThreadId);
+    		MessageThread messageThread = (MessageThread)em.createNamedQuery("MessageThread.getByKey")
+    			.setParameter("key", messageThreadKey)
+    			.getSingleResult();
+    		log.info("messageThread retrieved = " + messageThread.getSubject());
+        	
+        	jsonReturn.put("subject", messageThread.getSubject());
+        	jsonReturn.put("body", messageThread.getMessage());
+        	jsonReturn.put("type", messageThread.getType());
+        	
+        	if(messageThread.getEventId() !=  null) {
+        		jsonReturn.put("eventId", messageThread.getEventId());
+        		jsonReturn.put("eventType", messageThread.getIsGame() ? Game.GAME : Practice.PRACTICE);	
+        	}
+        	
+    		JSONArray jsonPollChoices = new JSONArray();
+    		for(String s : messageThread.getPollChoices()) {
+    			jsonPollChoices.put(s);
+    		}
+    		jsonReturn.put("pollChoices", jsonPollChoices);
+    		
+    		if(this.includeMemberInfo != null && this.includeMemberInfo.equalsIgnoreCase("true"))  {
+	    		JSONArray jsonMemberArray = new JSONArray();
+	    		List<Recipient> recipients = messageThread.getRecipients();
+	    		log.info("# of recipients = " + recipients.size());
+	    		// go through recipient list and find a single reply disposition for each member
+	    		HashMap<String, Recipient> uniqueMemberRecipients = new HashMap<String, Recipient>();
+	    		String currentUserId = KeyFactory.keyToString(currentUser.getKey());
+	    		for(Recipient r : recipients) {
+    				if(r.getUserId() != null && r.getUserId().equals(currentUserId)) {
+    					r.setBelongToUser(true);
+    				}
+    				
+	    			Recipient memberRecipient = uniqueMemberRecipients.get(r.getMemberId());
+	    			if(memberRecipient == null) {
+	    				// no recipient associated with this member ID in the list, so add it
+	    				uniqueMemberRecipients.put(r.getMemberId(), r);
+	    			} else if(memberRecipient.getReply() == null && r.getReply() != null) {
+    					// replace the recipient in the list with no reply with this one that has a reply
+	    				if(memberRecipient.getBelongToUser()) {
+	    					r.setBelongToUser(true);
+	    				}
+    					uniqueMemberRecipients.remove(r.getMemberId());
+    					uniqueMemberRecipients.put(r.getMemberId(), r);
+	    			}
+	    		}
+	    		
+	    		Collection<Recipient> uniqueMemberCollection = uniqueMemberRecipients.values();
+	    		for(Recipient r : uniqueMemberCollection) {
+	    			JSONObject jsonMemberObj = new JSONObject();
+	    			Boolean belongsToUserReply = r.getBelongToUser() == null ? false : r.getBelongToUser();
+	    			jsonMemberObj.put("belongsToUser", belongsToUserReply);
+	    			jsonMemberObj.put("memberId", r.getMemberId());
+	    			jsonMemberObj.put("memberName", r.getMemberName());
+	    			
+	    			if(r.getReply() != null) {
+	    				String reply = "private";
+	    				// send real reply if messageThread is public or if private and this user is the messageThread originator
+	    				if(messageThread.getIsPublic() || 
+	    					(!messageThread.getIsPublic() && messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey())) )) {
+	    					reply = r.getReply();
+	    				}
+	    				jsonMemberObj.put("reply", reply);
+	    			}
+	    			if(r.getReplyEmailAddress() != null) jsonMemberObj.put("replyEmailAddress", r.getReplyEmailAddress());
+	    			if(r.getReplyGmtDate() != null) jsonMemberObj.put("replyDate", GMT.convertToLocalDate(r.getReplyGmtDate(), tz));
+	    			jsonMemberArray.put(jsonMemberObj);
+	    		}
+	    		jsonReturn.put("members", jsonMemberArray);
+    		}
+    		
+    		jsonReturn.put("isAlert", messageThread.getIsAlert() ? "true" : "false");
+    		jsonReturn.put("createdDate", GMT.convertToLocalDate(messageThread.getCreatedGmtDate(), tz));
+    		if(messageThread.getFinalizedGmtDate() != null) jsonReturn.put("finalizedDate", GMT.convertToLocalDate(messageThread.getFinalizedGmtDate(), tz));
+    		jsonReturn.put("status", messageThread.getStatus());
+    		if(messageThread.getFollowupMessage() !=  null) jsonReturn.put("followUpMessage", messageThread.getFollowupMessage());
+    		jsonReturn.put("isPublic", messageThread.getIsPublic() ? "true" : "false");
+        } catch (NoResultException e) {
+        	log.info("no result exception, messageThread not found");
+        	apiStatus = ApiStatusCode.MESSAGE_THREAD_NOT_FOUND;
+		} catch (JSONException e) {
+			log.severe("error building JSON object");
+			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+			e.printStackTrace();
+		} catch (NonUniqueResultException e) {
+			log.severe("should never happen - two or more messageThreads have same ID");
+			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+			e.printStackTrace();
+		} finally {
+			em.close();
+		}
+		
+		try {
+			jsonReturn.put("apiStatus", apiStatus);
+		} catch (JSONException e) {
+			log.severe("error creating JSON return object");
+			e.printStackTrace();
+		}
+        return new JsonRepresentation(jsonReturn);
+    }
+
+    // Handles 'Update message thread' API
+    // Handles 'Message thread response' API (for GWT)
+    @Put 
+    public JsonRepresentation updateMessageThread(Representation entity) {
+    	JSONObject jsonReturn = new JSONObject();
+    	log.info("updateMessageThread(@Put) entered ..... ");
+		EntityManager em = EMF.get().createEntityManager();
+		
+		String apiStatus = ApiStatusCode.SUCCESS;
+		this.setStatus(Status.SUCCESS_OK);
+		User currentUser = null;
+        try {
+        	if(this.oneUseToken != null) {
+    			// --------------------------------------------------
+    			// This is the 'Message thread response' API call
+    			// --------------------------------------------------
+        		log.info("this is 'Message thread response' API handling");
+        		
+        		Recipient recipient = null;
+        		MessageThread messageThread = null;
+        		try {
+        			em.getTransaction().begin();
+        			recipient = (Recipient)em.createNamedQuery("Recipient.getByOneUseTokenAndTokenStatus")
+        				.setParameter("oneUseToken", this.oneUseToken)
+        				.setParameter("oneUseTokenStatus", Recipient.NEW_TOKEN_STATUS)
+        				.getSingleResult();
+        			log.info("updateMessageThread(): recipient found");
+        			
+        			String userReply = Recipient.CONFIRMED_REPLY_MESSAGE;
+        			if(this.pollResponse != null) {
+        				userReply = this.pollResponse;
+        			}
+        			
+        			// This is a "first" response wins scenario. So mark other individuals that are part of this same
+        			// membership as having replied.
+        			messageThread = recipient.getMessageThread();
+        			List<Recipient> recipients = messageThread.getRecipients();
+        			for(Recipient r : recipients) {
+        				if(recipient.getMemberId().equals(r.getMemberId())) {
+            				r.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
+            				r.setReply(userReply);
+            				r.setReplyGmtDate(new Date());
+            				r.setReplyEmailAddress(recipient.getToEmailAddress());
+        				}
+        			}
+        			messageThread.addMemberIdThatReplied(recipient.getMemberId());
+        			
+        			em.getTransaction().commit();
+        		} catch (NoResultException e) {
+        			// Not an error - multiple people associated with the same membership may respond. Or, the same user may click
+        			// on the link in the message multiple times.  In either case, it is inactive after first response.
+        			apiStatus = ApiStatusCode.MESSAGE_THREAD_CONFIRMATION_LINK_NO_LONGER_ACTIVE;
+        		} catch (NonUniqueResultException e) {
+        			log.severe("updateMessageThread(): should never happen - two or more recipients have same oneUseToken");
+        			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+        		}
+        		// try/catch at end of method does entity manager cleanup
+        		// TODO maybe move entity manager cleanup here for better code clarity
+        		
+    			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
+    				jsonReturn.put("apiStatus", apiStatus);
+    				return new JsonRepresentation(jsonReturn);
+    			}
+
+    			EntityManager em2 = EMF.get().createEntityManager();
+    			Member memberConfirming = null;
+	    		String memberId = null;
+    	    	try {
+    				Key memberKey = KeyFactory.stringToKey(recipient.getMemberId());
+    				memberConfirming = (Member)em2.createNamedQuery("Member.getByKey")
+    	    			.setParameter("key", memberKey)
+    	    			.getSingleResult();
+    	    		log.info("member confirming = " + memberConfirming.getFullName());
+    	    		memberId = KeyFactory.keyToString(memberConfirming.getKey());
+    	    		
+                	// TODO eventually return -- for all members -- who has and hasn't confirmed so far
+                	jsonReturn.put("firstName", memberConfirming.getFirstName());
+        			jsonReturn.put("lastName", memberConfirming.getLastName());
+    	    	} catch (NoResultException e) {
+    				this.setStatus(Status.SERVER_ERROR_INTERNAL);
+    				log.severe("should never happen - member could not be found using memberId stored in recipient entity");
+    			} catch (NonUniqueResultException e) {
+    				this.setStatus(Status.SERVER_ERROR_INTERNAL);
+    				log.severe("should never happen - two or more members have same member ID");
+    				e.printStackTrace();
+    			} finally {
+        		    em2.close();
+        		}
+        		
+    			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
+    				jsonReturn.put("apiStatus", apiStatus);
+    				return new JsonRepresentation(jsonReturn);
+    			}
+        		
+            	jsonReturn.put("subject", messageThread.getSubject());
+            	jsonReturn.put("body", messageThread.getMessage());
+            	
+        		JSONArray jsonPollChoices = new JSONArray();
+        		for(String s : messageThread.getPollChoices()) {
+        			jsonPollChoices.put(s);
+        		}
+        		jsonReturn.put("pollChoices", jsonPollChoices);
+        		
+	    		JSONArray jsonMemberArray = new JSONArray();
+	    		List<Recipient> recipients = messageThread.getRecipients();
+	    		log.info("# of recipients = " + recipients.size());
+	    		// go through recipient list and find a single reply disposition for each member
+	    		HashMap<String, Recipient> uniqueMemberRecipients = new HashMap<String, Recipient>();
+	    		for(Recipient r : recipients) {
+	    			Recipient memberRecipient = uniqueMemberRecipients.get(r.getMemberId());
+	    			if(memberRecipient == null) {
+	    				// no recipient associated with this member ID in the list, so add it
+	    				uniqueMemberRecipients.put(r.getMemberId(), r);
+	    			} else if(memberRecipient.getReply() == null && r.getReply() != null) {
+    					// replace the recipient in the list with no reply with this one that has a reply
+    					uniqueMemberRecipients.remove(r.getMemberId());
+    					uniqueMemberRecipients.put(r.getMemberId(), r);
+	    			}
+	    		}
+	    		
+	    		Collection<Recipient> uniqueMemberCollection = uniqueMemberRecipients.values();
+	    		for(Recipient r : uniqueMemberCollection) {
+	    			JSONObject jsonMemberObj = new JSONObject();
+	    			Boolean belongsToMemberReply = memberId.equals(r.getMemberId());
+	    			jsonMemberObj.put("belongsToMember", belongsToMemberReply);
+	    			jsonMemberObj.put("memberId", r.getMemberId());
+	    			jsonMemberObj.put("memberName", r.getMemberName());
+	    			if(r.getReply() != null) jsonMemberObj.put("reply", r.getReply());
+	    			if(r.getReplyEmailAddress() != null) jsonMemberObj.put("replyEmailAddress", r.getReplyEmailAddress());
+	    			// TODO need to figure out a way to know the member's timezone to return the replyDate
+	    			//if(r.getReplyGmtDate() != null) jsonMemberObj.put("replyDate", GMT.convertToLocalDate(r.getReplyGmtDate(), tz));
+	    			jsonMemberArray.put(jsonMemberObj);
+	    		}
+	    		log.info("uniqueMemberCollection size = " + uniqueMemberCollection.size());
+	    		jsonReturn.put("members", jsonMemberArray);
+        	} else {
+    			// --------------------------------------------
+    			// This is the 'Update message thread' API call
+    			// --------------------------------------------
+        		log.info("this is 'Update message thread' API handling");
+        		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
+        		if(currentUser == null) {
+        			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+        			log.severe("user could not be retrieved from Request attributes!!");
+        		}
+        		//::BUSINESSRULE:: user must be network authenticated to update a message thread
+        		else if(!currentUser.getIsNetworkAuthenticated()) {
+        			apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
+        		}
+        		// teamId, messageThreadId and time zone are all required
+        		else if(this.teamId == null || this.teamId.length() == 0 ||
+        	        	   this.messageThreadId == null || this.messageThreadId.length() == 0) {
+        	        		log.info("MessageThreadResource:toJson() teamId or messageThreadId null or zero length");
+        	        		apiStatus = ApiStatusCode.TEAM_ID_AND_MESSAGE_THREAD_ID_REQUIRED;
+        	    }
+        		// must be a member of the team
+        		else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
+    				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
+    				log.info(apiStatus);
+            	} 
+        		
+    			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
+    				jsonReturn.put("apiStatus", apiStatus);
+    				return new JsonRepresentation(jsonReturn);
+    			}
+
+    			JsonRepresentation jsonRep = new JsonRepresentation(entity);
+    			JSONObject json = jsonRep.toJsonObject();
+    			log.info("received json object = " + json.toString());
+            	
+    			// enforce the query parameter defaults and rules
+    			// sendReminder, reply and followupMessage are all mutually exclusive
+    			int mutualExclusiveCount = 0;
+    			if(json.has("sendReminder")) {mutualExclusiveCount++;}
+    			if(json.has("reply")) {mutualExclusiveCount++;}
+    			if(json.has("followupMessage")) {mutualExclusiveCount++;}
+    			if(json.has("status")) {mutualExclusiveCount++;}
+    			if(mutualExclusiveCount > 1) {
+                    log.info("MessageThreadResource:toJson() can only specify one of: sendReminder, reply, followupMessage, status");
+    				jsonReturn.put("apiStatus", ApiStatusCode.MUTUALLY_EXCLUSIVE_PARAMETERS_SPECIFIED);
+    				return new JsonRepresentation(jsonReturn);
+    			}
+    			
+    			Boolean wasViewed = null;
+    			if(json.has("wasViewed")) {
+    				String wasViewedStr = json.getString("wasViewed");
+    				if(wasViewedStr.equalsIgnoreCase("true")) {
+    					wasViewed = true;
+    				} else if(wasViewedStr.equalsIgnoreCase("false")) {
+    					wasViewed = false;
+    				} else {
+    	                log.info("MessageThreadResource:toJson() wasViewed must be 'true' or 'false'");
+    	 				jsonReturn.put("apiStatus", ApiStatusCode.INVALID_WAS_VIEWED_PARAMETER);
+    					return new JsonRepresentation(jsonReturn);
+    				}
+    			}
+    			
+    			if(json.has("status")) {
+    				String status = json.getString("status");
+    				if(!status.equalsIgnoreCase(MessageThread.ARCHIVED_STATUS)) {
+    	                log.info("MessageThreadResource:toJson() status did not have a value of 'archived'");
+    	 				jsonReturn.put("apiStatus", ApiStatusCode.INVALID_STATUS_PARAMETER);
+    					return new JsonRepresentation(jsonReturn);
+    				}
+    			}
+    			
+    			Team team = null;
+    			try {
+    				Key teamKey = KeyFactory.stringToKey(this.teamId);
+            		team = (Team)em.createNamedQuery("Team.getByKey")
+    					.setParameter("key", teamKey)
+    					.getSingleResult();
+        			
+				} catch (NoResultException e) {
+					log.info("team not found");
+					apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
+				} catch (NonUniqueResultException e) {
+					log.severe("should never happen - two teams have the same key");
+					this.setStatus(Status.SERVER_ERROR_INTERNAL);
+				}
+    			
+    			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
+    				jsonReturn.put("apiStatus", apiStatus);
+    				return new JsonRepresentation(jsonReturn);
+    			}
+
+				// member only needed if need to verify request came from a recipient
+    			List<Member> memberships = null;
+    			if(json.has("reply") || json.has("wasViewed") || json.has("status")) {
+            		memberships = Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
+            		for(Member m : memberships) {
+            			log.info("primary name of matching membership = " + m.getFullName());
+            		}
+            		if(memberships.size() == 0) {
+    					log.info("requesting user is not of member of the team. Must be team member.");
+    					apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
+            		}
+    			}
+    			
+    			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
+    				jsonReturn.put("apiStatus", apiStatus);
+    				return new JsonRepresentation(jsonReturn);
+    			}
+
+    			em.getTransaction().begin();
+        		Key messageThreadKey = KeyFactory.stringToKey(this.messageThreadId);
+        		MessageThread messageThread = (MessageThread)em.createNamedQuery("MessageThread.getByKey")
+        			.setParameter("key", messageThreadKey)
+        			.getSingleResult();
+        		log.info("messageThread retrieved = " + messageThread.getSubject());
+        		
+    			// for some updated message threads, user must be a recipient, so if appropriate, try to find
+    			Recipient recipientOfThisUser = null;
+        		if(json.has("reply") || json.has("wasViewed") || json.has("status")) {
+        			List<Recipient> recipients = messageThread.getRecipients();
+        			outerLoop:for(Recipient r: recipients) {
+        				for(Member m : memberships) {
+            				if(r.getToEmailAddress().equalsIgnoreCase(currentUser.getEmailAddress()) &&
+            						r.getMemberId().equals(KeyFactory.keyToString(m.getKey()))) {
+            					recipientOfThisUser = r;
+            					break outerLoop;
+            				}
+        				}
+        			}
+        		}
+    			
+    			List<String> memberIds = new ArrayList<String>();
+    			String reply = "";
+    			String followupMessage = "";
+    			if(json.has("sendReminder")) {
+    				// user sending reminder must be the originator of this message thread
+    				if(messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
+    					
+    					JSONArray recipientsJsonArray = json.getJSONArray("sendReminder");
+    					int arraySize = recipientsJsonArray.length();
+    					log.info("json recipients array length = " + arraySize);
+    					for(int i=0; i<arraySize; i++) {
+    						log.info("storing member " + i);
+    						memberIds.add(recipientsJsonArray.getString(i));
+    					}
+    					
+    					boolean memberIdsProvided = memberIds.size() == 0 ? false : true;
+    					
+    					List<Recipient> recipients = messageThread.getRecipients();
+    					for(Recipient r: recipients) {
+    						boolean matchingMember = false;
+    						if(memberIdsProvided) {
+    							// see if this recipient is one of the members provided/specified
+    							for(String memId : memberIds) {
+    								if(memId.equals(r.getMemberId())) {
+    									matchingMember = true;
+    									break;
+    								}
+    							}
+    							
+    						} else {
+    							// no members provided, so build memberIds list needed to send message below
+    							memberIds.add(r.getMemberId());
+    							matchingMember = true;
+    						}
+    						
+    						// only update recipient if member is to receive the reminder message
+    						if(matchingMember == true && r.getStatus().equalsIgnoreCase(Recipient.SENT_STATUS)) {
+    							int numOfSends = r.getNumOfSends();
+    							numOfSends++;
+    							r.setNumOfSends(numOfSends);
+    							r.setWasViewed(false);
+    							r.setReceivedGmtDate(new Date());
+    						}
+    					}
+    					
+    					followupMessage = messageThread.getMessage();
+    				} else {
+    					apiStatus = ApiStatusCode.USER_NOT_ORIGINATOR_OF_MESSAGE_THREAD;
+    					log.info("requester is not the originator of this message thread -- cannot send reminder unless you are the originator");
+    				}
+    			} else if(json.has("reply")) {
+    				reply = json.getString("reply");
+    				
+    				if(recipientOfThisUser != null) {
+    					if(recipientOfThisUser.getReply() == null) {
+    						messageThread.handleMemberReply(recipientOfThisUser.getMemberId());
+    						
+    						// TODO see if all replies have been received -- send alert to messageThread creator
+    						int numOfRecipients = messageThread.getNumOfRecipients();
+    					}
+    					recipientOfThisUser.setReply(reply);
+    					recipientOfThisUser.setStatus(Recipient.REPLIED_STATUS);
+    					recipientOfThisUser.setReplyGmtDate(new Date());
+    					messageThread.addMemberIdThatReplied(recipientOfThisUser.getMemberId());
+    				} else {
+    					apiStatus = ApiStatusCode.USER_NOT_RECIPIENT_OF_MESSAGE_THREAD;
+    					log.info("requester is not a recipient of this message thread -- cannot reply unless you are a recipient");
+    				}
+    			} else if(json.has("followupMessage")) {
+    				// cannot send a follow-up message if messageThread is already finalized
+    				if(messageThread.getStatus().equalsIgnoreCase(MessageThread.FINALIZED_STATUS)) {
+    					apiStatus = ApiStatusCode.FOLLOWUP_NOT_ALLOWED_ON_FINALIZED_MESSAGE_THREAD;
+    					log.info("messageThread already finalized. Followup message is not permitted.");
+    				} else if(!messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
+    					apiStatus = ApiStatusCode.USER_NOT_ORIGINATOR_OF_MESSAGE_THREAD;
+    					log.info("requester is not the originator of this message thread");
+    				} else {
+    					followupMessage = json.getString("followupMessage");
+    					messageThread.setFollowupMessage(followupMessage);
+    					messageThread.setStatus(MessageThread.FINALIZED_STATUS);
+    					messageThread.setFinalizedGmtDate(new Date());
+    					
+    					List<Recipient> recipients = messageThread.getRecipients();
+    					for(Recipient r: recipients) {
+    						r.setReceivedGmtDate(new Date());
+    						r.setFollowupMessage(followupMessage);
+    						r.setStatus(MessageThread.FINALIZED_STATUS);
+    						r.setWasViewed(false);
+    						memberIds.add(r.getMemberId());
+    					}
+    				}
+    			} else if(json.has("status")) {
+    				if(recipientOfThisUser == null && !messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
+    					apiStatus = ApiStatusCode.USER_NOT_ORIGINATOR_OR_RECIPIENT_OF_MESSAGE_THREAD;
+    					log.info("user is neither the originator or recipient of this message thread");
+    				} else {
+    					if(recipientOfThisUser != null) {
+    						// user is a recipient, so archive message out of inbox
+    						recipientOfThisUser.setStatus(Recipient.ARCHIVED_STATUS);
+    					} else {
+    						// user is originator, so archive message out of sent messages
+    						messageThread.setStatus(MessageThread.ARCHIVED_STATUS);
+    					}
+    				}
+    			}
+    			
+    			// wasViewed is ignored if this is also a reminder or a follow-up message
+    			if(json.has("wasViewed") && !json.has("sendReminder") && !json.has("followupMessage") ) {
+    				if(recipientOfThisUser != null) {
+    					Boolean oldWasViewed = recipientOfThisUser.getWasViewed();
+    					recipientOfThisUser.setWasViewed(wasViewed);
+    					// for a user, viewing is also a confirmation if this is a messageThread requesting confirmation
+    					if(messageThread.getType().equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
+        					messageThread.addMemberIdThatReplied(recipientOfThisUser.getMemberId());
+        					recipientOfThisUser.setReplyGmtDate(new Date());
+    					}
+    				} else {
+    					apiStatus = ApiStatusCode.USER_NOT_RECIPIENT_OF_MESSAGE_THREAD;
+    					log.info("requester is not a recipient of this message thread -- cannot change view status unless you are a recipient");
+    				}
+    			}
+    			
+    			// Need to commit before sending messages below.
+    			em.getTransaction().commit();
+    			
+    			// send followup message to recipients if appropriate
+    			// TODO right now, iPhone returning "none" when user does not enter followup message
+    			if(followupMessage.length() > 0 && !followupMessage.equalsIgnoreCase("none")) {
+    				// convert memberIds to keys
+    				Set<Key> memberKeys = new HashSet<Key>();
+    				for(String mId : memberIds) {
+    					memberKeys.add(KeyFactory.stringToKey(mId));
+    				}
+    				
+    				try {
+    		    		List<Member> members = null;
+    		    		if(memberKeys.size() > 0) {
+    		    			members = (List<Member>)em.createQuery("select from " + Member.class.getName() + " where key = :keys")
+    		    	    		.setParameter("keys", memberKeys)
+    		    	    		.getResultList();
+    		    			
+    		    			List<UserMemberInfo> authorizedTeamRecipients = new ArrayList<UserMemberInfo>();
+    		    			////////////////////////////////
+    		    			// Build Raw Team Recipient List
+    		    			////////////////////////////////
+    		    			for(Member m : members) {
+    		    				List<UserMemberInfo> authorizedMembershipRecipients = m.getAuthorizedRecipients(m.getTeam());
+    		    				for(UserMemberInfo umi : authorizedMembershipRecipients) {
+    		    					// filter out current user
+    		    					if( (umi.getEmailAddress() != null && umi.getEmailAddress().equalsIgnoreCase(currentUser.getEmailAddress())) ||
+    		    						 (umi.getPhoneNumber() != null && currentUser.getPhoneNumber() != null && umi.getPhoneNumber().equals(currentUser.getPhoneNumber()))  ) {
+    		    						continue;
+    		    					}
+    		    						
+    		    					// need to know associated member for loop below
+    		    					umi.setMember(m);
+    		    					umi.setToken(TF.get());
+    		    					umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
+    		    					authorizedTeamRecipients.add(umi);
+    		    				}
+    		    			} 
+        		    		
+		    				///////////////////////////////////////////////////////////////////////////////////////
+		    				// Filter Team Recipient List
+		    				//      All entities in returned list have unique: emailAddress, userId and phoneNumber
+		    				///////////////////////////////////////////////////////////////////////////////////////
+		    				authorizedTeamRecipients = UserMemberInfo.filterDuplicates(authorizedTeamRecipients);
+
+		    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), followupMessage, messageThread, team, true, currentUser.getFullName());
+    		    		}
+    				} catch (Exception e) {
+    					log.severe("query for members failed");
+    				}
+    			}
+        	}
+		} catch (IOException e) {
+			log.severe("error extracting JSON object from Put");
+			e.printStackTrace();
+			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+		} catch (JSONException e) {
+			log.severe("error converting json representation into a JSON object");
+			e.printStackTrace();
+			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+		} catch (NoResultException e) {
+			log.severe("messageThread not found");
+			apiStatus = ApiStatusCode.MESSAGE_THREAD_NOT_FOUND;
+		} catch (NonUniqueResultException e) {
+			log.severe("should never happen - two or more messageThreads have same team name");
+			e.printStackTrace();
+			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+		} finally {
+		    if (em.getTransaction().isActive()) {
+		        em.getTransaction().rollback();
+		    }
+		    em.close();
+		}
+		
+		try {
+			jsonReturn.put("apiStatus", apiStatus);
+		} catch (JSONException e) {
+			log.severe("error creating JSON return object");
+			e.printStackTrace();
+		}
+		return new JsonRepresentation(jsonReturn);
+    }
+    
+    //::EMAIL::EVENT::
+    // Handles email response from new users and new members.
+    public static UserMemberInfo handleUserMemberConfirmEmailResponse(String theOneUseToken) {
+		String userId = null;
+		String memberId = null;
+		String toEmailAddress = null;
+		UserMemberInfo userMemberInfo = new UserMemberInfo(ApiStatusCode.SUCCESS);
+		EntityManager em = EMF.get().createEntityManager();
+		try {
+			em.getTransaction().begin();
+			Recipient recipient = (Recipient)em.createNamedQuery("Recipient.getByOneUseTokenAndTokenStatus")
+				.setParameter("oneUseToken", theOneUseToken)
+				.setParameter("oneUseTokenStatus", Recipient.NEW_TOKEN_STATUS)
+				.getSingleResult();
+			log.info("handleUserMemberConfirmEmailResponse(): recipient found");
+			userId = recipient.getUserId();
+			memberId = recipient.getMemberId();
+			toEmailAddress = recipient.getToEmailAddress();
+			
+			// obviously, token is only good one time
+			recipient.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
+			
+			em.getTransaction().commit();
+		} catch (NoResultException e) {
+			// not an error - email could be received with a bad or old token -- just ignore
+			userMemberInfo.setApiStatus(ApiStatusCode.EMAIL_CONFIRMATION_LINK_NO_LONGER_ACTIVE);
+		} catch (NonUniqueResultException e) {
+			log.severe("handleUserMemberConfirmEmailResponse(): should never happen - two or more recipients have same oneUseToken");
+			userMemberInfo.setApiStatus(ApiStatusCode.SERVER_ERROR);
+		} finally {
+		    if (em.getTransaction().isActive()) {
+		        em.getTransaction().rollback();
+		    }
+		    em.close();
+		}
+		
+		if(!userMemberInfo.getApiStatus().equals(ApiStatusCode.SUCCESS)) {
+			return userMemberInfo;
+		}
+		
+		User emailRecipientUser = null;
+		Member emailRecipientMember = null;
+		if(userId != null || memberId != null) {
+			// get the user entity of the user responding to the email and mark the user as networkAuthenticated
+			EntityManager em2 = EMF.get().createEntityManager();
+			try {
+				
+				if(userId != null) {
+					log.info("userId set, so this is a USER authorizing their email address");
+					
+					// Verify this email address is not in use.
+					// -----------------------------------------
+					// Here is how the email address may be in use
+					// - user1 registers with email address xyz
+					// - user2 registers with email address xyz. Allowed since email address xyz is not yet NA
+					// - user1 confirms email address xyz
+					// - user2 attempts to confirm email address xyz (this is what we are checking for here)
+					User matchingUser = User.getUserWithEmailAddress(toEmailAddress);
+					
+					em2.getTransaction().begin();
+					emailRecipientUser = (User)em2.createNamedQuery("User.getByKey")
+						.setParameter("key", KeyFactory.stringToKey(userId))
+						.getSingleResult();
+
+					if(matchingUser != null) {
+						log.info("email confirmation failed because email address " + toEmailAddress + " already in use and network authenticated");
+						userMemberInfo.setApiStatus(ApiStatusCode.EMAIL_ADDRESS_ALREADY_USED);
+						userMemberInfo.setEmailAddress(emailRecipientUser.getEmailAddress());
+						
+						// this user will be deleted by CRON job later
+						// TODO
+						emailRecipientUser.setInactivatedDueToDuplicateEmail(true);
+					} else {
+						emailRecipientUser.setIsNetworkAuthenticated(true);
+						userMemberInfo.setFirstName(emailRecipientUser.getFirstName());
+						userMemberInfo.setLastName(emailRecipientUser.getLastName());
+						userMemberInfo.setEmailAddress(emailRecipientUser.getEmailAddress());
+						userMemberInfo.setPhoneNumber(emailRecipientUser.getPhoneNumber());
+						userMemberInfo.setToken(emailRecipientUser.getToken());
+					}
+					em2.getTransaction().commit();
+				} else if(memberId != null) {
+					log.info("memberId set, so this is a MEMBER authorizing their email address");
+					
+					em2.getTransaction().begin();
+					emailRecipientMember = (Member)em2.createNamedQuery("Member.getByKey")
+						.setParameter("key", KeyFactory.stringToKey(memberId))
+						.getSingleResult();
+					log.info("NAing member, toEmailAddress = " + toEmailAddress);
+					emailRecipientMember.networkAuthenticateEmailAddress(toEmailAddress);
+					userMemberInfo.setFirstName(emailRecipientMember.getFirstNameByEmailAddress(toEmailAddress));
+					userMemberInfo.setLastName(emailRecipientMember.getLastNameByEmailAddress(toEmailAddress));
+					userMemberInfo.setEmailAddress(toEmailAddress);
+					userMemberInfo.setTeam(emailRecipientMember.getTeam());
+					userMemberInfo.setParticipantRole(emailRecipientMember.getParticipantRole());
+					userMemberInfo.setIsGuardian(emailRecipientMember.isGuardian(toEmailAddress));
+					userMemberInfo.setPrimaryDisplayName(emailRecipientMember.getPrimaryDisplayName());
+					em2.getTransaction().commit();
+				}
+				log.info("handleUserMemberConfirmEmailResponse(): mail recipient user/member found");
+			} catch (NoResultException e) {
+				log.severe("handleUserMemberConfirmEmailResponse(): could not find email recipient user/member associated with messageThread");
+				userMemberInfo.setApiStatus(ApiStatusCode.SERVER_ERROR);
+			} catch (NonUniqueResultException e) {
+				log.severe("handleUserMemberConfirmEmailResponse(): should never happen - two or more users/members have same key");
+				userMemberInfo.setApiStatus(ApiStatusCode.SERVER_ERROR);
+			} finally {
+			    if (em2.getTransaction().isActive()) {
+			    	em2.getTransaction().rollback();
+			    }
+			    em2.close();
+			}
+			
+			// only do synch ups if no errors above. Must be done after transaction above committed
+			if(userMemberInfo.getApiStatus().equals(ApiStatusCode.SUCCESS)) {
+				if(userId != null) {
+					User.synchUpWithAuthorizedMemberships(emailRecipientUser);
+				} else if(memberId != null) {
+					Member.synchUpWithAuthorizedUser(emailRecipientMember, toEmailAddress);
+				}
+			}
+		}
+		
+		return userMemberInfo;
+    }
+}

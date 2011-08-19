@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style src="rteam.css" />
+	
+	<g:HTMLPanel styleName="{style.panel}">
+		<div style="height:15px;"></div>
+		<div class="{style.welcome}" >
+			<span>Message Confirmation Link is No Longer Active</span>
+		</div>
+
+		<div style="height:5px;"></div>
+		<div style="padding:20px; border-radius:10px; -o-border-radius:10px; -icab-border-radius:10px; -khtml-border-radius:10px; -moz-border-radius:10px; -webkit-border-radius:10px; background-color: #ccc; border: 1px solid #000; width:85%;">
+			<span ui:field="errorMessage"/>
+		</div>
+		
+	</g:HTMLPanel> 
+</ui:UiBinder> 

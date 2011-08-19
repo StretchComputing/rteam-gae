@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<datastore-indexes
+  autoGenerate="true">
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="memberId" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 4 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="eventId" direction="asc"/>
+        <property name="isGame" direction="asc"/>
+        <property name="memberId" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="memberId" direction="asc"/>
+        <property name="wasViewed" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="eventId" direction="asc"/>
+        <property name="isGame" direction="asc"/>
+        <property name="memberId" direction="asc"/>
+        <property name="wasViewed" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+    
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="eventId" direction="asc"/>
+        <property name="isGame" direction="asc"/>
+        <property name="memberId" direction="asc"/>
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="toEmailAddress" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+    
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="eventId" direction="asc"/>
+        <property name="isGame" direction="asc"/>
+        <property name="memberId" direction="asc"/>
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="toEmailAddress" direction="asc"/>
+        <property name="wasViewed" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+    
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="memberId" direction="asc"/>
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="toEmailAddress" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="memberId" direction="asc"/>
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="toEmailAddress" direction="asc"/>
+        <property name="wasViewed" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="userId" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="userId" direction="asc"/>
+        <property name="wasViewed" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+    
+    <!-- Used 3 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="status" direction="asc"/>
+        <property name="activeThruGmtDate" direction="asc"/>
+    </datastore-index>
+    
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 3 times in query history -->
+    <datastore-index kind="Practice" ancestor="false" source="auto">
+        <property name="teams" direction="asc"/>
+        <property name="eventGmtStartDate" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 3 times in query history -->
+    <datastore-index kind="Game" ancestor="false" source="auto">
+        <property name="teams" direction="asc"/>
+        <property name="eventGmtStartDate" direction="asc"/>
+    </datastore-index>
+    
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Activity" ancestor="false" source="auto">
+        <property name="teamId" direction="asc"/>
+        <property name="createdGmtDate" direction="desc"/>
+    </datastore-index>
+    
+    <!-- Used 1 time in query history -->
+    <datastore-index kind="Activity" ancestor="false" source="auto">
+        <property name="teamId" direction="asc"/>
+        <property name="cacheId" direction="desc"/>
+    </datastore-index>
+    
+    <!-- Used 2 times in query history -->
+    <datastore-index kind="Attendee" ancestor="false" source="auto">
+        <property name="eventType" direction="asc"/>
+        <property name="memberId" direction="asc"/>
+        <property name="eventGmtDate" direction="asc"/>
+    </datastore-index>
+
+    <!-- Used 1 time in query history -->
+    <datastore-index kind="Attendee" ancestor="false" source="auto">
+        <property name="memberId" direction="asc"/>
+        <property name="eventGmtDate" direction="asc"/>
+    </datastore-index>
+    
+    <!-- Used 1 time in query history -->
+    <datastore-index kind="MessageThread" ancestor="false" source="auto">
+        <property name="status" direction="asc"/>
+        <property name="activeThruGmtDate" direction="asc"/>
+    </datastore-index>
+    
+</datastore-indexes>

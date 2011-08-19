@@ -1,0 +1,88 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style src="rteam.css" />
+	
+	<g:HTMLPanel ui:field="htmlPanel" styleName="{style.panel}">
+		<div style="height:15px;"></div>
+		<div class="{style.welcome}" >
+			<span ui:field="userFirstName" />,
+			<span>congratulations your rTeam account is now activated</span>
+		</div>
+		<table id="box-table-a" summary="User Info">
+		    <thead>
+		    	<tr>
+		        	<th scope="col">rTeam Account Info</th>
+		            <th scope="col">Current Value</th>
+		        </tr>
+		    </thead>
+		    <tbody>
+		        <tr>
+		        	<td>User Name</td>
+		            <td><span ui:field="userFullName" /></td>
+		        </tr>
+		    	<tr>
+		        	<td>Authorized Email</td>
+		            <td><span ui:field="userEmailAddress" /></td>
+		        </tr>
+		    </tbody>
+		</table>
+		<div style="height:15px;"></div>
+		<div ui:field="createTeamDiv" class="{style.form-panel}">
+			<div class="{style.welcome}" >
+				<span>Now's a great time to create your first team</span>
+			</div>
+			<table class="{style.form-table}">
+					<tr>
+						<td>Team Name:</td>
+						<td><g:TextBox ui:field="teamName"/></td>
+					</tr>
+					<tr>
+						<td>Sport:</td>
+						<td><g:SuggestBox ui:field="sportSuggestBox"/></td>
+					</tr>
+					<tr>
+						<td colspan='2'><g:Button ui:field="createTeamButton">CreateTeam</g:Button></td>
+					</tr>
+			</table>
+			<div ui:field="createTeamErrorDiv" style="display:none;" class="{style.error-div}">
+				<span ui:field="createTeamErrorMessage"/>
+			</div>
+		</div>
+		<div ui:field="addMemberDiv" class="{style.form-panel}" style="display:none;">
+			<div class="{style.welcome}" >
+				<span>Team '</span>
+				<span ui:field="newTeamName"/>
+				<span>' created successfully</span>
+			</div>
+			<table class="{style.form-table}">
+					<tr>
+						<td>Member Email Address:</td>
+						<td><g:TextBox ui:field="memberEmailAddress"/></td>
+					</tr>
+					<tr>
+						<td>Phone Number:</td>
+						<td><g:TextBox ui:field="memberPhoneNumber"/><span class="{style.optional-msg}">(optional)</span></td>
+					</tr>
+					<tr>
+						<td>First Name:</td>
+						<td><g:TextBox ui:field="memberFirstName"/><span class="{style.optional-msg}">(optional)</span></td>
+					</tr>
+					<tr>
+						<td>Last Name:</td>
+						<td><g:TextBox ui:field="memberLastName"/><span class="{style.optional-msg}">(optional)</span></td>
+					</tr>
+					<tr>
+						<td colspan='2'><g:Button ui:field="addMemberButton">Add Member</g:Button></td>
+					</tr>
+			</table>
+			<div ui:field="addMemberErrorDiv" style="display:none;" class="{style.error-div}">
+				<span ui:field="addMemberErrorMessage"/>
+			</div>
+			<div ui:field="addMemberSuccessDiv" style="display:none;" class="{style.success-div}">
+				<span ui:field="addMemberSuccessMessage"/>
+			</div>
+		</div>
+		<div style="height:15px;"></div>
+	</g:HTMLPanel> 
+</ui:UiBinder> 

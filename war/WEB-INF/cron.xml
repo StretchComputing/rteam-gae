@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cronentries>
+  <cron>
+    <url>/cron/messageArchiver</url>
+    <description>Auto archive messageThreads and recipients</description>
+    <schedule>every day 02:00</schedule>
+    <timezone>America/New_York</timezone>
+  </cron>
+  <cron>
+    <url>/cron/emailSmsIsAlive</url>
+    <description>Is alive message sent to emailToSms server to keep it 'alert'</description>
+    <schedule>every 1 minutes</schedule>
+  </cron>
+</cronentries>
