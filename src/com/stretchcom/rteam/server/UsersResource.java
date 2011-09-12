@@ -223,6 +223,7 @@ public class UsersResource extends ServerResource {
 		return new JsonRepresentation(jsonReturn);
     }
     
+    // Deprecated
     // Handles 'Delete All Users' API
     @Delete
     public JsonRepresentation removeAllUsers() {
@@ -230,6 +231,8 @@ public class UsersResource extends ServerResource {
     	EntityManager em = EMF.get().createEntityManager();
         JSONObject jsonReturn = new JSONObject();
         
+        return new JsonRepresentation(jsonReturn);
+/*        
         String apiStatus = ApiStatusCode.SUCCESS;
 		this.setStatus(Status.SUCCESS_OK);
         try {
@@ -276,6 +279,7 @@ public class UsersResource extends ServerResource {
 			e.printStackTrace();
 		}
 		return new JsonRepresentation(jsonReturn);
+*/		
     }
     
     // Handles 'Migration' API
