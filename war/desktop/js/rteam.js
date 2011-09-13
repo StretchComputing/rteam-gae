@@ -15,7 +15,7 @@ function loadImages()
 {
 	if (document.images)
 	{
-		home_over = newImage("images/home2.png");
+		home_over = newImage("/desktop/images/home2.png");
 		preloadFlag = true;
 	}
 }

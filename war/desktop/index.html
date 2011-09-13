@@ -1,145 +1,135 @@
-<html> 
-<head> 
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
 <title>rTeam</title>
 <meta name="google-site-verification" content="3evtckUmgglFXW0HAFB8FuadYZeG6mtbASu_8EdygUM" />
-<meta name="description" content="Sports Team Communication Application"> 
-<meta name="keywords" content="sports, coaching, baseball, football, soccer, hockey, lacrosse, tennis, basketball, gymnastics, communication, email, sms, text messaging, coordination, mobile, iPhone, Android, iPad, iOS, web service, free"> 
-<meta name="author" content="Joe Wroblewski"> 
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
-<script type="text/javascript" src="js/rteam.js"></script> 
-<link rel="stylesheet" href="/styles/styles.css" type="text/css">
-<script language="javascript"> 
-function showVideo() {
-	var videoElem = document.getElementById("video");
-	var photoElem = document.getElementById("photo");
-	videoElem.style.display = "block";
-	photoElem.style.display = "none";
-} 
+<meta name="description" content="Sports Team Communication Application">
+<meta name="keywords"
+  content="sports, coaching, baseball, football, soccer, hockey, lacrosse, tennis, basketball, gymnastics, communication, email, sms, text messaging, coordination, mobile, iPhone, Android, iPad, iOS, web service, free">
+<meta name="author" content="Joe Wroblewski">
+<script src="/desktop/js/rteam.js"></script>
+<link rel="stylesheet" href="/desktop/styles/styles.css">
+<script>
+  function showVideo() {
+    var videoElem = document.getElementById("video");
+    var photoElem = document.getElementById("photo");
+    videoElem.style.display = "block";
+    photoElem.style.display = "none";
+  }
 </script>
 
-<script type="text/javascript">
-
+<script>
   var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-280128-3']);
-  _gaq.push(['_trackPageview']);
+  _gaq.push([ '_setAccount', 'UA-280128-3' ]);
+  _gaq.push([ '_trackPageview' ]);
 
   (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    var ga = document.createElement('script');
+    ga.type = 'text/javascript';
+    ga.async = true;
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(ga, s);
   })();
-
 </script>
-</head> 
- 
-<body bgcolor="#FFFFFF" text="#000000" leftmargin="20" bottommargin="10" topmargin="0" marginwidth="0" marginheight="0" onLoad="loadImages()">
-<div style="margin-top:30px;"></div>
-<table width="850" border="0" align="center" cellpadding="0" cellspacing="0"> 
-  <tr> 
-   <td width="445"><a href="index.html"><img name="logo" src="images/rTeamWebsiteLogo.png" width="265" height="80" border="0" alt="rTeam Logo"></a></td> 
-   <td width="75">
-		<a style="display:block; height:30px;" href="index.html"
-			onMouseOver="change('homeLink','images/home2.png');"
-			onMouseOut="change('homeLink','images/home1.png');">
-			<img name="homeLink" src="images/home1.png" border="0">
-		</a>
-	</td> 
-   <td width="110"><a style="display:block; height:30px;" href="features.html"
-			onMouseOver="change('featuresLink','images/features1.png');"
-			onMouseOut="change('featuresLink','images/features2.png');">
-		<img name="featuresLink" src="images/features2.png" border="0">
-	  </a>
-	</td> 
-   <td width="140"><a style="display:block; height:30px;" href="screenshots.html"
-			onMouseOver="change('screenshotsLink','images/screenshots1.png');"
-			onMouseOut="change('screenshotsLink','images/screenshots2.png');">
-		<img name="screenshotsLink" src="images/screenshots2.png" border="0">
-	  </a>
-	</td> 
-   <td width="80"><a style="display:block; height:30px;" href="help.html"
-			onMouseOver="change('helpLink','images/help1.png');"
-			onMouseOut="change('helpLink','images/help2.png');">
-		<img name="helpLink" src="images/help2.png" border="0">
-	  </a>
-	</td> 
-  </tr> 
-</table> 
-<div style="margin-top:10px;"></div>
-<table width="850" border="0" cellspacing="0" cellpadding="1" align="center" bgcolor="#000000">
-	<tr>
-		<td>
-			<table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#F0F0F0">
-				<tr>
-					<td width="333" align="center">
-						<div id="photo" style="margin-top:20px;margin-left:20px;margin-bottom:20px;margin-right:30px;display:block;">
-							<img src="images/slidingIntoHome.jpg" width="400" height="277">
-						</div>
-						<div id="video" style="margin-top:20px;margin-left:20px;margin-bottom:20px;
-												margin-right:30px;display:none;width:405px;height:260px;">
-							<iframe title="YouTube video player" width="400" height="255" src="http://www.youtube.com/embed/XZ_PjZETMXQ"
-									frameborder="0" allowfullscreen></iframe>
-						</div>
-						<div style="margin-top:20px;">
-							<a id="displayText" href="javascript:showVideo();">rTeam Intro Video</a>
-						</div>
-					</td>
-					<td>
-						<div style="height:15px;"></div>
-						<table>
-							<tr>
-								<td><img src="images/index_22.gif" width="355" height="5"></td>
-							</tr>
-							<tr>
-								<td>
-									<div style="font-size:20px;margin-left:15px;">The Sports Team Communication App</div>
-							</tr>
-							<tr>
-								<td><img src="images/index_22.gif" width="355" height="5"></td>
-							</tr>
-							<tr>
-								<td>
-									<div style="height:1px;"></div>
-									<p>
-										rTeam is a fast and effective way to manage your team and communicate with all team members. But
-										even more amazing is how it builds excitement with fans by providing constant access to live scores
-										and highlights.
-									</p>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<div style="height:25px;"></div>
-									<div style="margin-bottom:15px;">The free iPhone App is now available. iPad and Android Apps coming soon.</div>
-								</td>
-							</tr>
-							<tr>
-								<td align="center">
-									<a href="http://www.itunes.com/app/rteam" target="_blank"><img src="images/rteamOnIphone.png"></a>
-									<a href="http://www.itunes.com/app/rteam" target="_blank"><img src="images/index_14.gif"></a>
-								</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-			</table>
-		</td>
-	</tr>
-</table>
-<div style="margin-top:10px;"></div>
-<div style="margin-top:10px;"></div>
-<table width="850" border="0" cellspacing="0" cellpadding="0" align="center"> 
-  <tr> 
-    <td height="17" align="center" valign="bottom" class="footer">
-		<a href="http://www.facebook.com/pages/RTeam/177225928980036" target="_blank">
-			<img src="images/index_18.gif" alt="Facebook" border="0">
-		</a>
-		<span style="margin-left:20px;">
-			<a href="http://twitter.com/rTeamApp" target="_blank">
-				<img src="images/index_19.gif" alt="Twitter" border="0">
-			</a>
-		</span>
-	</td> 
-  </tr> 
-</table> 
-</body> 
-</html> 
+</head>
+
+<body bgcolor="#FFFFFF" text="#000000" leftmargin="20" bottommargin="10" topmargin="0" marginwidth="0" marginheight="0"
+  onLoad="loadImages()">
+  <div style="margin-top: 30px;"></div>
+  <table width="850" border="0" align="center" cellpadding="0" cellspacing="0">
+    <tr>
+      <td width="445"><a href="index.html"><img name="logo" src="/desktop/images/rTeamWebsiteLogo.png" width="265"
+          height="80" border="0" alt="rTeam Logo">
+      </a>
+      </td>
+      <td width="75"><a style="display: block; height: 30px;" href="index.html"
+        onMouseOver="change('homeLink','/desktop/images/home2.png');" onMouseOut="change('homeLink','/desktop/images/home1.png');"> <img
+          name="homeLink" src="/desktop/images/home1.png" border="0"> </a></td>
+      <td width="110"><a style="display: block; height: 30px;" href="features.html"
+        onMouseOver="change('featuresLink','/desktop/images/features1.png');"
+        onMouseOut="change('featuresLink','/desktop/images/features2.png');"> <img name="featuresLink"
+          src="/desktop/images/features2.png" border="0"> </a></td>
+      <td width="140"><a style="display: block; height: 30px;" href="screenshots.html"
+        onMouseOver="change('screenshotsLink','/desktop/images/screenshots1.png');"
+        onMouseOut="change('screenshotsLink','/desktop/images/screenshots2.png');"> <img name="screenshotsLink"
+          src="/desktop/images/screenshots2.png" border="0"> </a></td>
+      <td width="80"><a style="display: block; height: 30px;" href="help.html"
+        onMouseOver="change('helpLink','/desktop/images/help1.png');" onMouseOut="change('helpLink','/desktop/images/help2.png');"> <img
+          name="helpLink" src="/desktop/images/help2.png" border="0"> </a></td>
+    </tr>
+  </table>
+  <div style="margin-top: 10px;"></div>
+  <table width="850" border="0" cellspacing="0" cellpadding="1" align="center" bgcolor="#000000">
+    <tr>
+      <td>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#F0F0F0">
+          <tr>
+            <td width="333" align="center">
+              <div id="photo"
+                style="margin-top: 20px; margin-left: 20px; margin-bottom: 20px; margin-right: 30px; display: block;">
+                <img src="/desktop/images/slidingIntoHome.jpg" width="400" height="277">
+              </div>
+              <div id="video"
+                style="margin-top: 20px; margin-left: 20px; margin-bottom: 20px; margin-right: 30px; display: none; width: 405px; height: 260px;">
+                <iframe title="YouTube video player" width="400" height="255"
+                  src="http://www.youtube.com/embed/XZ_PjZETMXQ" frameborder="0" allowfullscreen></iframe>
+              </div>
+              <div style="margin-top: 20px;">
+                <a id="displayText" href="javascript:showVideo();">rTeam Intro Video</a>
+              </div></td>
+            <td>
+              <div style="height: 15px;"></div>
+              <table>
+                <tr>
+                  <td><img src="/desktop/images/index_22.gif" width="355" height="5">
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-size: 20px; margin-left: 15px;">The Sports Team Communication App</div>
+                </tr>
+                <tr>
+                  <td><img src="/desktop/images/index_22.gif" width="355" height="5">
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="height: 1px;"></div>
+                    <p>rTeam is a fast and effective way to manage your team and communicate with all team members.
+                      But even more amazing is how it builds excitement with fans by providing constant access to live
+                      scores and highlights.</p></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="height: 25px;"></div>
+                    <div style="margin-bottom: 15px;">The free iPhone App is now available. iPad and Android Apps
+                      coming soon.</div></td>
+                </tr>
+                <tr>
+                  <td align="center"><a href="http://www.itunes.com/app/rteam" target="_blank"><img
+                      src="/desktop/images/rteamOnIphone.png">
+                  </a> <a href="http://www.itunes.com/app/rteam" target="_blank"><img src="/desktop/images/index_14.gif">
+                  </a></td>
+                </tr>
+              </table></td>
+          </tr>
+        </table></td>
+    </tr>
+  </table>
+  <div style="margin-top: 10px;"></div>
+  <div style="margin-top: 10px;"></div>
+  <table width="850" border="0" cellspacing="0" cellpadding="0" align="center">
+    <tr>
+      <td height="17" align="center" valign="bottom" class="footer">
+        <a href="http://www.facebook.com/pages/RTeam/177225928980036" target="_blank"><img src="/desktop/images/index_18.gif" alt="Facebook" border="0"></a>
+        <span style="margin-left: 20px;">
+          <a href="http://twitter.com/rTeamApp" target="_blank"><img src="/desktop/images/index_19.gif" alt="Twitter" border="0"></a>
+        </span>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

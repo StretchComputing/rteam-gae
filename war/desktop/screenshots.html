@@ -1,17 +1,16 @@
+<!DOCTYPE html>
 
-<html> 
-<head> 
+<html>
+<head>
+<meta charset="UTF-8">
 <title>rTeam</title>
-<meta name="google-site-verification" content="3evtckUmgglFXW0HAFB8FuadYZeG6mtbASu_8EdygUM"/>
-<meta name="description" content="Sports Team Communication Application"> 
-<meta name="keywords" content="sports, coaching, baseball, football, soccer, hockey, lacrosse, tennis, basketball, gymnastics, communication, email, sms, text messaging, coordination, mobile, iPhone, Android, iPad, iOS, web service, free"> 
-<meta name="author" content="Joe Wroblewski"> 
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
-<script type="text/javascript" src="js/rteam.js"></script> 
-
-<SCRIPT TYPE="text/javascript">
-<!--
-
+<meta name="google-site-verification" content="3evtckUmgglFXW0HAFB8FuadYZeG6mtbASu_8EdygUM" />
+<meta name="description" content="Sports Team Communication Application">
+<meta name="keywords"
+  content="sports, coaching, baseball, football, soccer, hockey, lacrosse, tennis, basketball, gymnastics, communication, email, sms, text messaging, coordination, mobile, iPhone, Android, iPad, iOS, web service, free">
+<meta name="author" content="Joe Wroblewski">
+<script src="/desktop/js/rteam.js"></script>
+<script>
 /*==================================================*
  $Id: slideshow.js,v 1.16 2003/10/14 12:39:00 pat Exp $
  Copyright 2000-2003 Patrick Fitzgerald
@@ -709,20 +708,15 @@ function slideshow( slideshowname ) {
     this.display_text();
   }
 }
-
-//-->
-</SCRIPT>
-
-<SCRIPT TYPE="text/javascript">
-<!--
-
+</script>
+<script>
 SLIDES = new slideshow("SLIDES");
 SLIDES.timeout = 3000;
 SLIDES.prefetch = -1;
 SLIDES.repeat = false;
 
 s = new slide();
-s.src =  "images/screenshots/loadingScreen.png";
+s.src =  "/desktop/images/screenshots/loadingScreen.png";
 s.text = unescape("rTeam%20Launch%20Screen");
 s.link = "";
 s.target = "";
@@ -731,7 +725,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/registerScreen.png";
+s.src =  "/desktop/images/screenshots/registerScreen.png";
 s.text = unescape("User%20Registration%20Screen");
 s.link = "";
 s.target = "";
@@ -740,7 +734,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/homeScreen.png";
+s.src =  "/desktop/images/screenshots/homeScreen.png";
 s.text = unescape("Home%20Screen");
 s.link = "";
 s.target = "";
@@ -749,7 +743,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/selectSportScreen.png";
+s.src =  "/desktop/images/screenshots/selectSportScreen.png";
 s.text = unescape("Select%20Team%20Sport%20Screen");
 s.link = "";
 s.target = "";
@@ -758,7 +752,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/newTeamScreen.png";
+s.src =  "/desktop/images/screenshots/newTeamScreen.png";
 s.text = unescape("Create%20Team%20Screen");
 s.link = "";
 s.target = "";
@@ -767,7 +761,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/addMemberScreen.png";
+s.src =  "/desktop/images/screenshots/addMemberScreen.png";
 s.text = unescape("Add%20New%20Member%20Screen");
 s.link = "";
 s.target = "";
@@ -776,7 +770,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/inviteFanScreen.png";
+s.src =  "/desktop/images/screenshots/inviteFanScreen.png";
 s.text = unescape("Invite%20a%20Fan%20Screen");
 s.link = "";
 s.target = "";
@@ -785,7 +779,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/teamHomepageScreen.png";
+s.src =  "/desktop/images/screenshots/teamHomepageScreen.png";
 s.text = unescape("Team%20Homepage%20Screen");
 s.link = "";
 s.target = "";
@@ -794,7 +788,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/peopleScreen.png";
+s.src =  "/desktop/images/screenshots/peopleScreen.png";
 s.text = unescape("Team%20Roster%20Screen");
 s.link = "";
 s.target = "";
@@ -803,7 +797,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/playerProfileScreen.png";
+s.src =  "/desktop/images/screenshots/playerProfileScreen.png";
 s.text = unescape("Player%20Profile%20Screen");
 s.link = "";
 s.target = "";
@@ -812,7 +806,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/myTeamsScreen.png";
+s.src =  "/desktop/images/screenshots/myTeamsScreen.png";
 s.text = unescape("My%20Teams%20Screen");
 s.link = "";
 s.target = "";
@@ -821,7 +815,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/calendarScreen.png";
+s.src =  "/desktop/images/screenshots/calendarScreen.png";
 s.text = unescape("Calendar%20Screen");
 s.link = "";
 s.target = "";
@@ -830,7 +824,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/calendarListScreen.png";
+s.src =  "/desktop/images/screenshots/calendarListScreen.png";
 s.text = unescape("Calendar%20List%20Screen");
 s.link = "";
 s.target = "";
@@ -839,7 +833,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/teamEventListScreen.png";
+s.src =  "/desktop/images/screenshots/teamEventListScreen.png";
 s.text = unescape("Team%20Event%20List%20Screen");
 s.link = "";
 s.target = "";
@@ -848,7 +842,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/newEventScreen.png";
+s.src =  "/desktop/images/screenshots/newEventScreen.png";
 s.text = unescape("Create%20Event%20Screen");
 s.link = "";
 s.target = "";
@@ -857,7 +851,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/gamedayScreen.png";
+s.src =  "/desktop/images/screenshots/gamedayScreen.png";
 s.text = unescape("Game%20Scoring%20Screen");
 s.link = "";
 s.target = "";
@@ -866,7 +860,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/gameAttendanceScreen.png";
+s.src =  "/desktop/images/screenshots/gameAttendanceScreen.png";
 s.text = unescape("Game%20Attendance%20Screen");
 s.link = "";
 s.target = "";
@@ -875,7 +869,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/gameMessagesScreen.png";
+s.src =  "/desktop/images/screenshots/gameMessagesScreen.png";
 s.text = unescape("Game%20Chat%20Screen");
 s.link = "";
 s.target = "";
@@ -884,7 +878,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/gameVoteScreen.png";
+s.src =  "/desktop/images/screenshots/gameVoteScreen.png";
 s.text = unescape("Game%20MVP%20Voting%20Screen");
 s.link = "";
 s.target = "";
@@ -893,7 +887,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/allActivityScreen.png";
+s.src =  "/desktop/images/screenshots/allActivityScreen.png";
 s.text = unescape("Activity/Live%20Feed%20Screen");
 s.link = "";
 s.target = "";
@@ -902,7 +896,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/messagesInboxScreen.png";
+s.src =  "/desktop/images/screenshots/messagesInboxScreen.png";
 s.text = unescape("Message%20Inbox%20Screen");
 s.link = "";
 s.target = "";
@@ -911,7 +905,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/pollReceivedScreen.png";
+s.src =  "/desktop/images/screenshots/pollReceivedScreen.png";
 s.text = unescape("Poll%20Received%20Screen");
 s.link = "";
 s.target = "";
@@ -920,7 +914,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/messageReceivedScreen.png";
+s.src =  "/desktop/images/screenshots/messageReceivedScreen.png";
 s.text = unescape("Message%20Received%20Screen");
 s.link = "";
 s.target = "";
@@ -929,7 +923,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/scoresScreen.png";
+s.src =  "/desktop/images/screenshots/scoresScreen.png";
 s.text = unescape("All%20Team%20Scores%20Screen");
 s.link = "";
 s.target = "";
@@ -938,7 +932,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/settingsScreen.png";
+s.src =  "/desktop/images/screenshots/settingsScreen.png";
 s.text = unescape("User%20Settings%20Screen");
 s.link = "";
 s.target = "";
@@ -947,7 +941,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/messageFrequencyScreen.png";
+s.src =  "/desktop/images/screenshots/messageFrequencyScreen.png";
 s.text = unescape("Inbox%20Settings%20Screen");
 s.link = "";
 s.target = "";
@@ -956,7 +950,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/profilePicScreen.png";
+s.src =  "/desktop/images/screenshots/profilePicScreen.png";
 s.text = unescape("User%20%20Photo%20Settings%20Screen");
 s.link = "";
 s.target = "";
@@ -965,7 +959,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/passwordResetQuestionScreen.png";
+s.src =  "/desktop/images/screenshots/passwordResetQuestionScreen.png";
 s.text = unescape("Password%20Settings%20Screen");
 s.link = "";
 s.target = "";
@@ -974,7 +968,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/changePasswordScreen.png";
+s.src =  "/desktop/images/screenshots/changePasswordScreen.png";
 s.text = unescape("Change%20Password%20Screen");
 s.link = "";
 s.target = "";
@@ -983,7 +977,7 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 s = new slide();
-s.src =  "images/screenshots/feedbackRateScreen.png";
+s.src =  "/desktop/images/screenshots/feedbackRateScreen.png";
 s.text = unescape("User%20Feedback%20Screen");
 s.link = "";
 s.target = "";
@@ -992,14 +986,12 @@ s.filter = "";
 SLIDES.add_slide(s);
 
 if (false) SLIDES.shuffle();
-
-//-->
-</SCRIPT>
+</script>
 
 
-<link rel="stylesheet" href="/styles/styles.css" type="text/css"> 
+<link rel="stylesheet" href="/desktop/styles/styles.css">
 
-<script type="text/javascript">
+<script>
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-280128-3']);
@@ -1012,125 +1004,114 @@ if (false) SLIDES.shuffle();
   })();
 
 </script>
-</head> 
- 
-<body bgcolor="#FFFFFF" text="#000000" leftmargin="20" bottommargin="10" topmargin="0" marginwidth="0" marginheight="0" onLoad="loadImages()">
-<div style="margin-top:30px;"></div>
-<table width="850" border="0" align="center" cellpadding="0" cellspacing="0"> 
-  <tr> 
-   <td width="445"><a href="index.html"><img name="logo" src="images/rTeamWebsiteLogo.png" width="265" height="80" border="0" alt="rTeam Logo"></a></td> 
-   <td width="75">
-		<a style="display:block; height:30px;" href="index.html"
-			onMouseOver="change('homeLink','images/home2.png');"
-			onMouseOut="change('homeLink','images/home1.png');">
-			<img name="homeLink" src="images/home1.png" border="0">
-		</a>
-	</td> 
-   <td width="110"><a style="display:block; height:30px;" href="features.html"
-			onMouseOver="change('featuresLink','images/features1.png');"
-			onMouseOut="change('featuresLink','images/features2.png');">
-		<img name="featuresLink" src="images/features2.png" border="0">
-	  </a>
-	</td> 
-   <td width="140"><a style="display:block; height:30px;" href="screenshots.html"
-			onMouseOver="change('screenshotsLink','images/screenshots1.png');"
-			onMouseOut="change('screenshotsLink','images/screenshots2.png');">
-		<img name="screenshotsLink" src="images/screenshots2.png" border="0">
-	  </a>
-	</td> 
-   <td width="80"><a style="display:block; height:30px;" href="help.html"
-			onMouseOver="change('helpLink','images/help1.png');"
-			onMouseOut="change('helpLink','images/help2.png');">
-		<img name="helpLink" src="images/help2.png" border="0">
-	  </a>
-	</td> 
-  </tr> 
-</table> 
-<div style="margin-top:1px;"></div>
-<table width="650" border="0" cellspacing="0" cellpadding="0" align="center" bgcolor="#FFFFFF"> 
-  <tr> 
-    <td width="10"><img src="images/spacer.gif" sheight="1"></td> 
-    <td width="300"><img src="images/spacer.gif" height="1"></td> 
-    <td width="20">&nbsp;</td> 
-    <td width="320"><img src="images/spacer.gif" height="2"></td> 
-    <td>&nbsp;</td> 
-  </tr> 
-  <tr> 
-    <td valign="top">&nbsp;</td> 
-    <td valign="top" class="text-small">
-		<div style="margin-top:140px;"></div>
-		<div><img src="images/iphoneSimple.jpg" width="175" height="60" style="margin-left:30px;"></div>
-        <img src="images/spacer.gif" width="275" height="12"><br> 
-		<div style="font-weight:bold;font-size:16px;margin-top:5px;text-align:center;font-style:italic;">A mobile app powered by the cloud</div>  
-	</td> 
-    <td valign="bottom" background="images/linevt.gif"><img src="images/whtspace.gif" width="21"></td> 
-    <td class="text-small" valign="top" align="center">
-		<div class="client_list">
-			<P>
-			<span style="margin-left:5px;"><A HREF="javascript:SLIDES.previous()">previous</A></span>
-			<span style="margin-left:5px;"><A HREF="javascript:SLIDES.next()">next</A></span>
-			<span style="margin-left:5px;"><A HREF="javascript:SLIDES.play()">play</A></span>
-			<span style="margin-left:5px;"><A HREF="javascript:SLIDES.pause()">stop</A></span>
+</head>
 
-			<P>
-			<a href="javascript:SLIDES.hotlink()"><img name="SLIDESIMG"
-			src="images/screenshots/homeScreen.png" STYLE="filter:progid:DXImageTransform.Microsoft.Fade()" BORDER=0 alt="Slideshow image"></A>
+<body bgcolor="#FFFFFF" text="#000000" leftmargin="20" bottommargin="10" topmargin="0" marginwidth="0" marginheight="0"
+  onLoad="loadImages()">
+  <div style="margin-top: 30px;"></div>
+  <table width="850" border="0" align="center" cellpadding="0" cellspacing="0">
+    <tr>
+      <td width="445"><a href="index.html"><img name="logo" src="/desktop/images/rTeamWebsiteLogo.png"
+          width="265" height="80" border="0" alt="rTeam Logo"> </a>
+      </td>
+      <td width="75"><a style="display: block; height: 30px;" href="index.html"
+        onMouseOver="change('homeLink','/desktop/images/home2.png');"
+        onMouseOut="change('homeLink','/desktop/images/home1.png');"> <img name="homeLink"
+          src="/desktop/images/home1.png" border="0"> </a></td>
+      <td width="110"><a style="display: block; height: 30px;" href="features.html"
+        onMouseOver="change('featuresLink','/desktop/images/features1.png');"
+        onMouseOut="change('featuresLink','/desktop/images/features2.png');"> <img name="featuresLink"
+          src="/desktop/images/features2.png" border="0"> </a></td>
+      <td width="140"><a style="display: block; height: 30px;" href="screenshots.html"
+        onMouseOver="change('screenshotsLink','/desktop/images/screenshots1.png');"
+        onMouseOut="change('screenshotsLink','/desktop/images/screenshots2.png');"> <img name="screenshotsLink"
+          src="/desktop/images/screenshots2.png" border="0"> </a></td>
+      <td width="80"><a style="display: block; height: 30px;" href="help.html"
+        onMouseOver="change('helpLink','/desktop/images/help1.png');"
+        onMouseOut="change('helpLink','/desktop/images/help2.png');"> <img name="helpLink"
+          src="/desktop/images/help2.png" border="0"> </a></td>
+    </tr>
+  </table>
+  <div style="margin-top: 1px;"></div>
+  <table width="650" border="0" cellspacing="0" cellpadding="0" align="center" bgcolor="#FFFFFF">
+    <tr>
+      <td width="10"><img src="/desktop/images/spacer.gif" sheight="1">
+      </td>
+      <td width="300"><img src="/desktop/images/spacer.gif" height="1">
+      </td>
+      <td width="20">&nbsp;</td>
+      <td width="320"><img src="/desktop/images/spacer.gif" height="2">
+      </td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td valign="top">&nbsp;</td>
+      <td valign="top" class="text-small">
+        <div style="margin-top: 140px;"></div>
+        <div>
+          <img src="/desktop/images/iphoneSimple.jpg" width="175" height="60" style="margin-left: 30px;">
+        </div> <img src="/desktop/images/spacer.gif" width="275" height="12"><br>
+        <div style="font-weight: bold; font-size: 16px; margin-top: 5px; text-align: center; font-style: italic;">A
+          mobile app powered by the cloud</div></td>
+      <td valign="bottom" background="/desktop/images/linevt.gif"><img src="/desktop/images/whtspace.gif"
+        width="21">
+      </td>
+      <td class="text-small" valign="top" align="center">
+        <div class="client_list">
+          <P>
+            <span style="margin-left: 5px;"><A HREF="javascript:SLIDES.previous()">previous</A> </span> <span
+              style="margin-left: 5px;"><A HREF="javascript:SLIDES.next()">next</A> </span> <span
+              style="margin-left: 5px;"><A HREF="javascript:SLIDES.play()">play</A> </span> <span
+              style="margin-left: 5px;"><A HREF="javascript:SLIDES.pause()">stop</A> </span>
+          <P>
+            <a href="javascript:SLIDES.hotlink()"><img name="SLIDESIMG"
+              src="/desktop/images/screenshots/homeScreen.png" STYLE="filter: progid:DXImageTransform.Microsoft.Fade()"
+              BORDER=0 alt="Slideshow image"> </A>
+          <P>
+          <div ID="SLIDESTEXT" style="font-weight: bold; font-size: 18px; font-style: italic;">
+            <script>
+            // For browsers that cannot change the HTML on the page,
+            // display all of the text from the slideshow.
+            // I place this within the DIV, so browers won't see it
+            // if they can change the DIV.
+            nodivtext = SLIDES.get_all_text("<li>", "<p>\n");
+            if (nodivtext) {
+              document.write("<UL>\n" + nodivtext + "\n</UL>");
+            }
+            </script>
+          </div>
 
-			<P>
-			<DIV ID="SLIDESTEXT" style="font-weight:bold;font-size:18px;font-style:italic;">
-				<SCRIPT type="text/javascript">
-				<!--
-				// For browsers that cannot change the HTML on the page,
-				// display all of the text from the slideshow.
-				// I place this within the DIV, so browers won't see it
-				// if they can change the DIV.
-				nodivtext = SLIDES.get_all_text("<li>", "<p>\n");
-				if (nodivtext) {
-				  document.write("<UL>\n" + nodivtext + "\n</UL>");
-				}
-				//-->
-				</SCRIPT>
-			</DIV>
+          <script>
+          if (document.images) {
+            SLIDES.image = document.images.SLIDESIMG;
+            SLIDES.textid = "SLIDESTEXT";
+            SLIDES.update();
+          }
+          </script>
 
-			<SCRIPT type="text/javascript">
-			<!--
-			if (document.images) {
-			  SLIDES.image = document.images.SLIDESIMG;
-			  SLIDES.textid = "SLIDESTEXT";
-			  SLIDES.update();
-			  
-			}
-			//-->
-			</SCRIPT>
+          <BR CLEAR=all>
 
-			<BR CLEAR=all>
+          <NOSCRIPT>
+            <HR>
+            Since your web browser does not support JavaScript, here is a non-JavaScript version of the image slideshow:
+            <P>
+            <P>
+              <IMG SRC="/desktop/images/screenshots/homeScreen.png" ALT="slideshow image"><BR> Home Screen
+            </P>
+            <HR>
+            <P>
+              <IMG SRC="/desktop/images/screenshots/inviteFanScreen.png" ALT="slideshow image"><BR> Invite a
+              Fan Screen
+            </P>
+            <HR>
 
-			<NOSCRIPT>
-			<HR>
-			Since your web browser does not support JavaScript,
-			here is a non-JavaScript version of the image slideshow:
-			<P>
-			<P>
-			<IMG SRC="images/screenshots/homeScreen.png" ALT="slideshow image"><BR>
-			Home Screen
-			</P>
-			<HR>
-			<P>
-			<IMG SRC="images/screenshots/inviteFanScreen.png" ALT="slideshow image"><BR>
-			Invite a Fan Screen
-			</P>
-			<HR>
+          </NOSCRIPT>
 
-			</NOSCRIPT>
-
-		</div>
-	</td> 
-    <td>
-		<img src="images/spacer.gif" width="30" height="1">
-	</td> 
-  </tr> 
-</table> 
-<div style="margin-top:10px;"></div>
-<div style="margin-top:10px;"></div>
-</body> 
-</html> 
+        </div></td>
+      <td><img src="/desktop/images/spacer.gif" width="30" height="1"></td>
+    </tr>
+  </table>
+  <div style="margin-top: 10px;"></div>
+  <div style="margin-top: 10px;"></div>
+</body>
+</html>
