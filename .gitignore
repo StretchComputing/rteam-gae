@@ -2,4 +2,4 @@
 ####################
 *.class
 gwt-unitCache
-
+.gwt
