@@ -3,3 +3,4 @@
 *.class
 gwt-unitCache
 .gwt
+.DS_Store
