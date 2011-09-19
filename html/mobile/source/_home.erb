@@ -1,3 +1,11 @@
+<script>
+  $(function() {
+    $('#sliding_into_home').click(function() {
+      $(this).hide();
+      $('#rteam_video').show();
+    });
+  });
+</script>
 <div data-role="page" id="index" data-theme="b">
   <% @page_name = "index" %>
   <%= partial "header" %>
@@ -6,7 +14,8 @@
       Fast, effective team communication.
     </div>
     <br>
-    <img src="/mobile/img/slidingIntoHome.jpg" alt="sliding into home" style="width: 189px; height: 131px;">
+    <img id="sliding_into_home" src="/mobile/img/slidingIntoHome.jpg" alt="sliding into home" style="width: 189px; height: 131px;">
+    <iframe id="rteam_video" width="199" height="131" src="http://www.youtube.com/embed/XZ_PjZETMXQ?rel=0" frameborder="0" allowfullscreen style="display: none;"></iframe>
   </div>
   <%= partial "footer" %>
 </div>
