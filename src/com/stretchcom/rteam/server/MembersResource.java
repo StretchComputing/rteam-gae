@@ -374,8 +374,8 @@ public class MembersResource extends ServerResource {
 		// ::BUSINESS_RULE:: Guardian phone numbers don't have to be unique per team (parent can have multiple kids on same team), but
 		//                   must be unique within the membership. That is, each guardian phone number must be unique and cannot be the
 		//                   same as the primary phone number.
-		if(theJson.has("guardians")) {
-			JSONArray guardianJsonArray = theJson.getJSONArray("guardians");
+        if(theJson.has("guardians")) {
+        	JSONArray guardianJsonArray = theJson.getJSONArray("guardians");
 			int arraySize = guardianJsonArray.length();
 			log.info("guardian json array length = " + arraySize);
 			List<Guardian> guardians = new ArrayList<Guardian>();
@@ -451,9 +451,11 @@ public class MembersResource extends ServerResource {
 				}
 			}
 			
-			if(!member.createGuardians(guardians)) {
-				log.info("createGuardians() failed");
-				return ApiStatusCode.SERVER_ERROR;
+			if(guardians.size() > 0) {
+				if(!member.createGuardians(guardians)) {
+					log.info("createGuardians() failed");
+					return ApiStatusCode.SERVER_ERROR;
+				}
 			}
 		}
 		
