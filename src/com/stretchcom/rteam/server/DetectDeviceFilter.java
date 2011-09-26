@@ -31,7 +31,7 @@ public class DetectDeviceFilter implements Filter {
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             String uri = httpRequest.getRequestURI();
-            log.info("Before URI: " + uri);
+            log.info("Detect Device filter. Before URI: " + uri);
 
             if (!uri.startsWith(MOBILE_DIR) && !uri.startsWith(DESKTOP_DIR)) {
                 UAgentInfo agent_info = new UAgentInfo(httpRequest.getHeader("user-agent"), httpRequest.getHeader("accept"));

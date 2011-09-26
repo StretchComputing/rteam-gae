@@ -11,16 +11,27 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<param-name>org.restlet.clients</param-name>
 		<param-value>CLAP FILE</param-value>
 	</context-param>
-
-   <!-- Restlet adapter --><filter>
-     <filter-name>DetectDevice</filter-name>
-     <filter-class>com.stretchcom.rteam.server.DetectDeviceFilter</filter-class>
+	
+<filter>
+	<filter-name>UrlRewrite</filter-name>
+	<filter-class>com.stretchcom.rteam.server.UrlRewriteFilter</filter-class>
 </filter>
-  <filter-mapping>
-    <filter-name>DetectDevice</filter-name>
-    <url-pattern>*.html</url-pattern>
-    <url-pattern>/</url-pattern>
-  </filter-mapping>
+<filter-mapping>
+   <filter-name>UrlRewrite</filter-name>
+   <url-pattern>/*</url-pattern>
+</filter-mapping>
+
+<filter>
+	<filter-name>DetectDevice</filter-name>
+	<filter-class>com.stretchcom.rteam.server.DetectDeviceFilter</filter-class>
+</filter>
+<filter-mapping>
+   <filter-name>DetectDevice</filter-name>
+   <url-pattern>*.html</url-pattern>
+   <url-pattern>/</url-pattern>
+</filter-mapping>
+  
+  <!-- Restlet adapter -->
   <servlet>
 		<servlet-name>adapter</servlet-name>
 		<servlet-class>org.restlet.ext.gwt.GwtShellServletWrapper</servlet-class>
