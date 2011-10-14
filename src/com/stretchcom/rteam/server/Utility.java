@@ -161,6 +161,18 @@ public class Utility {
 		return null;
 	}
 	
+	// returns carrier name if found, otherwise returns null
+	public static String getCarrierNameFromSmsEmailAddress(String theSmsEmailAddress) {
+		if(theSmsEmailAddress == null) {return null;}
+		
+		int index = theSmsEmailAddress.indexOf("@");
+		if(index >= 0) {
+			String carrierName = theSmsEmailAddress.substring(index+1);
+			return carrierName;
+		}
+		return null;
+	}
+	
 	public static Boolean doesEmailAddressStartWithPhoneNumber(String theEmailAddress) {
 		if(theEmailAddress == null) {return false;}
 		

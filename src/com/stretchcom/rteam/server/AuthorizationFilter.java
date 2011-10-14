@@ -132,10 +132,11 @@ public class AuthorizationFilter extends Filter{
 		log.info("login = " + login);
 		log.info("token = " + token);
 		try {
+			log.info("1");
 			User user = (User)em.createNamedQuery("User.getByToken")
 				.setParameter("token", token)
 				.getSingleResult();
-			
+			log.info("2");
 			// store "current" user in request attributes so it can be used by Restlets downstream
 			request.getAttributes().put(RteamApplication.CURRENT_USER, user);
 			log.finer("validAuthentication(): token found, request has been authenticated");
@@ -145,6 +146,8 @@ public class AuthorizationFilter extends Filter{
 		} catch (NonUniqueResultException e) {
 			log.severe("should never happen - two or more users have same token");
 			e.printStackTrace();
+		} catch (Exception e) {
+			log.info("exception = " + e.getMessage() );
 		}
 		log.info("returning from validAuthentication()");
 		return true;
