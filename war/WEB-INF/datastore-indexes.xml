@@ -1,6 +1,5 @@
-	<?xml version="1.0" encoding="utf-8"?>
-<datastore-indexes
-  autoGenerate="true">
+<?xml version="1.0" encoding="utf-8"?>
+<datastore-indexes autoGenerate="true">
     <!-- Used 2 times in query history -->
     <datastore-index kind="Recipient" ancestor="false" source="auto">
         <property name="memberId" direction="asc"/>
