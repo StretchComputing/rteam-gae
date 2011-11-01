@@ -120,7 +120,7 @@ public class Emailer {
     	sb.append("<div style='height:20px;'></div>");
     	sb.append("<div>");
     	sb.append("<span style='margin-left:15px; margin-right:10px;'>");
-    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
+    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
     	sb.append("</span>");
     	sb.append("<a href='" + url + "'>Send confirmation now</a>");
     	sb.append("</div>");
@@ -160,7 +160,7 @@ public class Emailer {
     		String url = baseUrl + encodedPollChoice;
         	sb.append("<div>");
         	sb.append("<span style='margin-left:15px; margin-right:10px;'>");
-        	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
+        	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
         	sb.append("</span>");
         	sb.append("<a href='" + url + "'>" + pollChoice + "</a>");
         	sb.append("</div>");
@@ -199,7 +199,7 @@ public class Emailer {
 		String url = baseUrl;
     	sb.append("<div>");
     	sb.append("<span style='margin-left:15px; margin-right:10px;'>");
-    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
+    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
     	sb.append("</span>");
     	sb.append("<a href='" + url + "'>View Poll Details</a>");
     	sb.append("</div>");
@@ -266,7 +266,7 @@ public class Emailer {
     	sb.append("<div style='height:20px;'></div>");
     	sb.append("<div>");
     	sb.append("<span style='margin-left:15px; margin-right:10px;'>");
-    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
+    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
     	sb.append("</span>");
     	sb.append("<a href='" + theUrl + "'>");
     	if(theMessageType.equalsIgnoreCase(MessageThread.USER_ACTIVATION_TYPE)) {
@@ -329,7 +329,7 @@ public class Emailer {
     	sb.append("<div style='height:20px;'></div>");
     	sb.append("<div>");
     	sb.append("<span style='margin-left:15px; margin-right:10px;'>");
-    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
+    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
     	sb.append("</span>");
     	sb.append("<a href='" + acceptUrl + "'>Delete my membership</a> on this team");
     	sb.append("</div>");
@@ -337,7 +337,7 @@ public class Emailer {
     	sb.append("<div style='height:20px;'></div>");
     	sb.append("<div>");
     	sb.append("<span style='margin-left:15px; margin-right:10px;'>");
-    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
+    	sb.append("<img style='vertical-align:middle;' src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/arrow_right_green_24.png' width='24' height='24' border='0' alt='*'>");
     	sb.append("</span>");
     	sb.append("<a href='" + rejectUrl + "'>Keep my membership</a> on this team");
     	sb.append("</div>");
@@ -618,7 +618,7 @@ public class Emailer {
     	sb.append("<head></head>");
     	sb.append("<body>");
     	
-    	sb.append("<div><img src='" + RteamApplication.BASE_URL_WITH_SLASH + "images/rteamEmailLogo.png' width='155' height='46' border='0' alt='rTeam Logo'></div>");
+    	sb.append("<div><img src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/rteamEmailLogo.png' width='155' height='46' border='0' alt='rTeam Logo'></div>");
     	sb.append("<div style='height:5px;'></div>");
     	
     	sb.append("<div style='padding:20px; border-radius:10px; -o-border-radius:10px; -icab-border-radius:10px; -khtml-border-radius:10px; ");

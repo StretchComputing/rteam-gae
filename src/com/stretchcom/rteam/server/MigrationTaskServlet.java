@@ -68,6 +68,8 @@ public class MigrationTaskServlet extends HttpServlet {
 	    		normalizePhoneNumbers();
 	    	} else if(migrationName.equalsIgnoreCase("normalizeGuardianListsTask")) {
 	    		normalizeGuardianLists();
+	    	} else if(migrationName.equalsIgnoreCase("defaultMemberAccessPreferencesTask")) {
+	    		defaultMemberAccessPreferences();
 	    	}
 		    
 			// Return status depends on how many times this been attempted. If max retry count reached, return HTTP 200 so
@@ -274,6 +276,26 @@ public class MigrationTaskServlet extends HttpServlet {
 			log.info("# of memberships with Guardian updates = " + membersWithGuardiansCount);
     	} catch (Exception e) {
     		log.severe("exception with Guardian updates: " + e.getMessage());
+    	} finally {
+		    emMemberships.close();
+		}
+    }
+
+    private void defaultMemberAccessPreferences() {
+		EntityManager emMemberships = EMF.get().createEntityManager();
+		try {
+			List<Member> memberships = (List<Member>)emMemberships.createNamedQuery("Member.getAll").getResultList();
+			log.info("total number of members to be processed = " + memberships.size());
+			
+			int memberCount = 0;
+			for(Member m : memberships) {
+				memberCount++;
+				m.setDefaultAccessPreferences();
+			}
+			log.info("total number of members processed = " + memberCount);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		log.severe("exception in defaultMemberAccessPreferences(): " + e.getMessage());
     	} finally {
 		    emMemberships.close();
 		}

@@ -2479,7 +2479,12 @@ public class Member {
 		if(this.guardianFirstNames != null && this.guardianFirstNames.size() > listSize) {listSize = this.guardianFirstNames.size();}
 		if(this.guardianLastNames != null && this.guardianLastNames.size() > listSize) {listSize = this.guardianLastNames.size();}
 		if(this.guardianAutoArchiveDayCounts != null && this.guardianAutoArchiveDayCounts.size() > listSize) {listSize = this.guardianAutoArchiveDayCounts.size();}
-		
+		if(this.guardianEmailAddresses != null && this.guardianEmailAddresses.size() > listSize) {listSize = this.guardianEmailAddresses.size();}
+		if(this.guardianSmsEmailAddresses != null && this.guardianSmsEmailAddresses.size() > listSize) {listSize = this.guardianSmsEmailAddresses.size();}
+		if(this.guardianHasRteamMessageAccessEnabled != null && this.guardianHasRteamMessageAccessEnabled.size() > listSize) {listSize = this.guardianHasRteamMessageAccessEnabled.size();}
+		if(this.guardianHasEmailMessageAccessEnabled != null && this.guardianHasEmailMessageAccessEnabled.size() > listSize) {listSize = this.guardianHasEmailMessageAccessEnabled.size();}
+		if(this.guardianHasSmsMessageAccessEnabled != null && this.guardianHasSmsMessageAccessEnabled.size() > listSize) {listSize = this.guardianHasSmsMessageAccessEnabled.size();}
+
 		Boolean wasListUpdated = false;
 		if(listSize > 0) {
 			if(this.guardianKeys == null) {
@@ -2555,6 +2560,66 @@ public class Member {
 				for(int i=this.guardianAutoArchiveDayCounts.size(); i<listSize; i++) {
 					this.guardianAutoArchiveDayCounts.add(-1);
 					log.info("adding guardianAutoArchiveDayCount to member = " + this.getFullName());
+					wasListUpdated = true;
+				}
+			}
+			
+			if(this.guardianEmailAddresses == null) {
+				this.guardianEmailAddresses = new ArrayList<String>();
+				log.info("adding guardianEmailAddresses to member = " + this.getFullName());
+			}
+			if(this.guardianEmailAddresses.size() < listSize) {
+				for(int i=this.guardianEmailAddresses.size(); i<listSize; i++) {
+					this.guardianEmailAddresses.add("");
+					//log.info("adding guardianEmailAddresses to member = " + this.getFullName());
+					wasListUpdated = true;
+				}
+			}
+			
+			if(this.guardianSmsEmailAddresses == null) {
+				this.guardianSmsEmailAddresses = new ArrayList<String>();
+				log.info("adding guardianSmsEmailAddresses to member = " + this.getFullName());
+			}
+			if(this.guardianSmsEmailAddresses.size() < listSize) {
+				for(int i=this.guardianSmsEmailAddresses.size(); i<listSize; i++) {
+					this.guardianEmailAddresses.add("");
+					//log.info("adding guardianSmsEmailAddresses to member = " + this.getFullName());
+					wasListUpdated = true;
+				}
+			}
+			
+			if(this.guardianHasRteamMessageAccessEnabled == null) {
+				this.guardianHasRteamMessageAccessEnabled = new ArrayList<Boolean>();
+				//log.info("adding guardianHasRteamMessageAccessEnabled to member = " + this.getFullName());
+			}
+			if(this.guardianHasRteamMessageAccessEnabled.size() < listSize) {
+				for(int i=this.guardianHasRteamMessageAccessEnabled.size(); i<listSize; i++) {
+					this.guardianHasRteamMessageAccessEnabled.add(true);
+					//log.info("adding guardianHasRteamMessageAccessEnabled to member = " + this.getFullName());
+					wasListUpdated = true;
+				}
+			}
+			
+			if(this.guardianHasEmailMessageAccessEnabled == null) {
+				this.guardianHasEmailMessageAccessEnabled = new ArrayList<Boolean>();
+				//log.info("adding guardianHasEmailMessageAccessEnabled to member = " + this.getFullName());
+			}
+			if(this.guardianHasEmailMessageAccessEnabled.size() < listSize) {
+				for(int i=this.guardianHasEmailMessageAccessEnabled.size(); i<listSize; i++) {
+					this.guardianHasEmailMessageAccessEnabled.add(true);
+					//log.info("adding guardianHasEmailMessageAccessEnabled to member = " + this.getFullName());
+					wasListUpdated = true;
+				}
+			}
+			
+			if(this.guardianHasSmsMessageAccessEnabled == null) {
+				this.guardianHasSmsMessageAccessEnabled = new ArrayList<Boolean>();
+				//log.info("adding guardianHasSmsMessageAccessEnabled to member = " + this.getFullName());
+			}
+			if(this.guardianHasSmsMessageAccessEnabled.size() < listSize) {
+				for(int i=this.guardianHasSmsMessageAccessEnabled.size(); i<listSize; i++) {
+					this.guardianHasSmsMessageAccessEnabled.add(true);
+					//log.info("adding guardianHasSmsMessageAccessEnabled to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
