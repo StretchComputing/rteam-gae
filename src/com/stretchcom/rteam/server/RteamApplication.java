@@ -20,6 +20,8 @@ public class RteamApplication extends Application {
 	public static final String GWT_HOST_PAGE = "Rteam.html";
 	public static final String EMAIL_START_TOKEN_MARKER = ":rTeamId:";
 	public static final String EMAIL_END_TOKEN_MARKER = "::";
+	public static final String AUTO_POST = "rTeam";
+	public static final String TWITTER_POST = "twitter";
   
     /** 
      * Creates a root Restlet that will receive all incoming calls. 

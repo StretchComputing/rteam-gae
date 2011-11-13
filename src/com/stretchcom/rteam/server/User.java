@@ -100,6 +100,7 @@ public class User {
 	private Text thumbNailBase64;
 	private Double latitude; // local copy of team location data maintained in Location entity.
 	private Double longitude; // local copy of team location data maintained in Location entity.
+	private String location; // location user registered from
 	private Boolean isSmsConfirmed = false;
 	private String smsEmailAddress;
 	private Boolean hasRteamMessageAccessEnabled = false;
@@ -597,6 +598,14 @@ public class User {
 
 	public void setLongitude(Double longitude) {
 		this.longitude = longitude;
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
 	}
 
 	public Boolean getIsSmsConfirmed() {

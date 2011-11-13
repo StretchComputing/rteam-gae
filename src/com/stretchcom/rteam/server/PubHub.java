@@ -2456,6 +2456,7 @@ public class PubHub {
 				newActivity.setCreatedGmtDate(new Date());
 				newActivity.setTeamId(KeyFactory.keyToString(theTeam.getKey()));
 				newActivity.setTeamName(theTeam.getTeamName());
+				newActivity.setContributor(RteamApplication.AUTO_POST);
 				
 				// cacheId held in team is the last used.
 				Long cacheId = theTeam.getNewestCacheId() + 1;

@@ -78,6 +78,23 @@ public class Activity implements Comparable<Activity> {
 	public void setContributors(List<String> contributors) {
 		this.contributors = contributors;
 	}
+	
+    // returns the first contributor in the contributor list if any; null otherwise
+	public String getContributor() {
+		if(this.contributors == null || this.contributors.size() == 0) {
+			return null;
+		}
+		return this.contributors.get(0);
+	}
+
+	// add specified contributor to the list
+	public void setContributor(String theContributor) {
+		if(this.contributors == null) {
+			// create the list since it doesn't yet exist
+			this.contributors = new ArrayList<String>();
+		}
+		this.contributors.add(theContributor);
+	}
 
 	public Long getTwitterId() {
 		return twitterId;

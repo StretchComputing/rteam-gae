@@ -147,6 +147,10 @@ public class UsersResource extends ServerResource {
 				}
 			}
 			
+			if(json.has("location")) {
+				user.setLocation(json.getString("location"));
+			}
+			
 			// not passed in via this API, but need to default the autoArchiveDayCount
 			user.setAutoArchiveDayCount(User.AUTO_ARCHIVE_DAY_COUNT_DEFAULT);
 			

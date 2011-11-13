@@ -665,6 +665,10 @@ public class UserResource extends ServerResource {
 						return new JsonRepresentation(jsonReturn);
 					}
 				}
+				
+				if(json.has("location")) {
+					user.setLocation(json.getString("location"));
+				}
 
 				em.getTransaction().commit();
 				

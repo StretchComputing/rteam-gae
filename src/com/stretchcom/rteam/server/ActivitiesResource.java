@@ -214,13 +214,7 @@ public class ActivitiesResource extends ServerResource {
 				return new JsonRepresentation(jsonReturn);
 			}
 			
-			// No anonymous Activity posts.
-			// TODO once twitter API supports the meta data, then user name will not have to be inserted into update
-			if(statusUpdate == null || statusUpdate.length() == 0) {
-				statusUpdate = currentUser.getFullName() + " shared a photo fr loc " + TF.getPassword();
-			} else {
-				statusUpdate = currentUser.getDisplayName() + " post: " + statusUpdate;
-			}
+			if(statusUpdate == null) {statusUpdate = "";}
 			
 			///////////////////////////////////////////////////////////////////
 			// Cache the activity post whether the team is using Twitter or not
@@ -235,6 +229,7 @@ public class ActivitiesResource extends ServerResource {
 			newActivity.setCreatedGmtDate(new Date());
 			newActivity.setTeamId(this.teamId);
 			newActivity.setTeamName(team.getTeamName());
+			newActivity.setContributor(currentUser.getFullName());
 			
 			// cacheId held in team is the last used.
 			Long cacheId = team.getNewestCacheId() + 1;
@@ -244,6 +239,14 @@ public class ActivitiesResource extends ServerResource {
 			// Only send activity to Twitter if team is using Twitter
 			twitter4j.Status twitterStatus = null;
 			if(team.getUseTwitter()) {
+				// TODO once twitter API supports the meta data, then user name will not have to be inserted into update
+				// Poster's name is added to update before sending to twitter
+				if(statusUpdate.length() == 0) {
+					statusUpdate = currentUser.getFullName() + " shared a photo fr loc " + TF.getPassword();
+				} else {
+					statusUpdate = currentUser.getDisplayName() + " post: " + statusUpdate;
+				}
+
 				// truncate if necessary
 				if(statusUpdate.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT) {
 					statusUpdate = statusUpdate.substring(0, TwitterClient.MAX_TWITTER_CHARACTER_COUNT - 2) + "..";
@@ -597,6 +600,7 @@ public class ActivitiesResource extends ServerResource {
 									
 									cacheId += 1;
 									a.setCacheId(cacheId);
+									a.setContributor(RteamApplication.TWITTER_POST);
 									em0.persist(a);
 									if(a.getTwitterId() > largestTwitterId) {largestTwitterId = a.getTwitterId();}
 					    		} catch (NonUniqueResultException e) {
@@ -825,6 +829,11 @@ public class ActivitiesResource extends ServerResource {
 				}
 				Boolean useTwitterRet = a.getTwitterId() == null ? false : true;
 				jsonActivityObj.put("useTwitter", useTwitterRet);
+				
+				// just set poster to the team name for legacy posting that were done before the poster started being returned
+				String poster = a.getContributor() == null ? a.getTeamName() : a.getContributor();
+				jsonActivityObj.put("poster", poster);
+				
 				jsonActivitiesArray.put(jsonActivityObj);
 			}
 			log.info("JSON object built successfully");
