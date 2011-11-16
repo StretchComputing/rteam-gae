@@ -40,6 +40,7 @@ public class Emailer {
 	public static final String MESSAGE_THREAD_BODY = "see recipeint body";
 	public static final String MESSAGE_LINK_REPLY_BODY = "used only for message link reply";
 	public static final String REPLY = "reply";
+	public static final String REPLY_EMAIL_ADDRESS = "reply" + BASE_FROM_EMAIL_ADDRESS;
 	public static final String NO_REPLY = "noreply";
 	public static final String SMS = "sms";
 	public static final String JOIN = "join";

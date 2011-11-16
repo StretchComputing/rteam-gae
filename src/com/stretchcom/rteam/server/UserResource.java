@@ -195,7 +195,7 @@ public class UserResource extends ServerResource {
                 	jsonReturn.put("firstName", userMemberInfo.getFirstName());
         			jsonReturn.put("lastName", userMemberInfo.getLastName());
         			jsonReturn.put("emailAddress", userMemberInfo.getEmailAddress());
-        			jsonReturn.put("token", userMemberInfo.getToken());
+        			jsonReturn.put("token", userMemberInfo.getOneUseToken());
         			
         			// new team member message sent to members, not new users
         			if(userMemberInfo.getTeam() != null && userMemberInfo.getParticipantRole() != null) {

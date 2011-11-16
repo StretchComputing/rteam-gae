@@ -52,7 +52,7 @@ public class EmailHandlerServlet extends HttpServlet {
         	if(fromAddress != null && fromAddress.length > 0) log.info("from address: " + fromEmailAddress);
         	if(sender != null) log.info("sender: " + sender.toString());
         	if(replyToAddress != null && replyToAddress.length > 0) log.info("reply to address: " + replyToAddress[0].toString());
-        	if(subject != null) log.info("subject: " + sender);
+        	if(subject != null) log.info("subject: " + subject);
         	if(toRecipient != null && toRecipient.length > 0) log.info("toRecipient: " + toRecipient[0].toString());
 
 	        String contentType = message.getContentType();
@@ -99,7 +99,7 @@ public class EmailHandlerServlet extends HttpServlet {
 	        	// Confirmation, poll response or unsolicited response from a SMS member
 	        	log.info("handling 'text' response");
 	        	returnedText = Recipient.handleSmsResponse(extractPhoneNumber(fromEmailAddress), body);
-	        } else if(toRecipientEmailAddress.startsWith(Emailer.REPLY)) {
+	        } else if(toRecipientEmailAddress.contains(Emailer.REPLY_EMAIL_ADDRESS)) {
 	        	// Unsolicited email reply
 	        	log.info("handling 'reply' response");
 	        	// extract the token from the body

@@ -22,7 +22,6 @@ public class UserMemberInfo {
 	private Boolean isGuardian;
 	private String primaryDisplayName; // only set if isGuardian is true
 	private Boolean hasBeenSmsConfirmed;
-	private String token;
 	private String smsEmailAddress;
 	private Integer autoArchiveDayCount;
 	private Member member;  // held on temporarily so UMI list can be built in one loop and processed in another
@@ -92,14 +91,6 @@ public class UserMemberInfo {
 
 	public void setOneUseSmsToken(String oneUseSmsToken) {
 		this.oneUseSmsToken = oneUseSmsToken;
-	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public void setToken(String token) {
-		this.token = token;
 	}
 	
 	@Override

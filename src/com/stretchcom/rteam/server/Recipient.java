@@ -580,6 +580,7 @@ public class Recipient {
 	// theToken: 10 digit phone number or real token
 	// theSmsResponse: response SMS message received. May be NULL.
 	public static String handleSmsResponse(String theToken, String theSmsResponse) {
+		log.info("handleSmsResponse() entered, theToken = " + theToken);
 		if(theSmsResponse == null) {theSmsResponse = "";}
 		else {theSmsResponse = theSmsResponse.trim();}
 		
@@ -678,7 +679,7 @@ public class Recipient {
 	    		log.info("number of recipients with token " + theToken + " confirmed via SMS = " + confirmedMessageCount);
 			}
 		} catch (Exception e) {
-    		log.severe("handleSmsResponse(): Query Recipient.getByOneUseSmsTokenAndTokenStatusAndNotStatus failed");
+    		log.severe("handleSmsResponse(): Query Recipient.getByOneUseSmsTokenAndTokenStatusAndNotStatus failed. exception = " + e.getMessage());
     		return UserInterfaceMessage.SERVER_ERROR;
     	} finally {
     		emRecipient.close();

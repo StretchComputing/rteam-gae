@@ -40,6 +40,12 @@
         <property name="status" direction="asc"/>
     </datastore-index>
     
+	<datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="toEmailAddress" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+    
     <!-- Used 2 times in query history -->
     <datastore-index kind="Recipient" ancestor="false" source="auto">
         <property name="eventId" direction="asc"/>
@@ -95,7 +101,19 @@
         <property name="messageLinkOnly" direction="asc"/>
         <property name="status" direction="asc"/>
     </datastore-index>
-
+    
+	<datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="oneUseToken" direction="asc"/>
+        <property name="oneUseTokenStatus" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+    
+	<datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="oneUseSmsToken" direction="asc"/>
+        <property name="oneUseTokenStatus" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+    
     <!-- Used 3 times in query history -->
     <datastore-index kind="Practice" ancestor="false" source="auto">
         <property name="teams" direction="asc"/>

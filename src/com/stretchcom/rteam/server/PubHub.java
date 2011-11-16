@@ -914,7 +914,7 @@ public class PubHub {
     	for(Member m : theMembers) {
         	List<UserMemberInfo> authorizedMembershipRecipients = m.getAuthorizedRecipients(theTeam);
         	for(UserMemberInfo umi : authorizedMembershipRecipients) {
-    			umi.setToken(TF.get());
+    			umi.setOneUseToken(TF.get());
     			umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
     			authorizedTeamRecipients.add(umi);
         	}
@@ -939,7 +939,7 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: email only sent to non-users
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getNewCoordinatorEmailBody(umi.getFullName(), theTeam.getTeamName(), umi.getToken(), theTeam.getTwitterScreenName());
+	    		String emailBody = Emailer.getNewCoordinatorEmailBody(umi.getFullName(), theTeam.getTeamName(), umi.getOneUseToken(), theTeam.getTwitterScreenName());
 	    		Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.NO_REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {
@@ -1027,7 +1027,7 @@ public class PubHub {
     	for(Member m : theMembers) {
         	List<UserMemberInfo> authorizedMembershipRecipients = m.getAuthorizedRecipients(theTeam);
         	for(UserMemberInfo umi : authorizedMembershipRecipients) {
-        		umi.setToken(TF.get());
+        		umi.setOneUseToken(TF.get());
     			authorizedTeamRecipients.add(umi);
         	}
     	}
@@ -1042,7 +1042,7 @@ public class PubHub {
 		    	//////////////////////////////////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: email sent to specified members which are all non-users
 		    	//////////////////////////////////////////////////////////////////////////////
-	    		String emailBody = Emailer.getNoCoordinatorEmailBody(umi.getFullName(), theTeam.getTeamName(), umi.getToken(), theTeam.getTwitterScreenName());
+	    		String emailBody = Emailer.getNoCoordinatorEmailBody(umi.getFullName(), theTeam.getTeamName(), umi.getOneUseToken(), theTeam.getTwitterScreenName());
 	    		Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.NO_REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {
@@ -1113,7 +1113,7 @@ public class PubHub {
     		
         	List<UserMemberInfo> authorizedMembershipRecipients = m.getAuthorizedRecipients(theTeam);
         	for(UserMemberInfo umi : authorizedMembershipRecipients) {
-    			umi.setToken(TF.get());
+    			umi.setOneUseToken(TF.get());
             	if(theMessageType.equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
         			umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
             	}
@@ -1129,19 +1129,19 @@ public class PubHub {
 		
 		List<UserMemberInfo> authorizedUserRecipients = new ArrayList<UserMemberInfo>();
 		for(UserMemberInfo umi : authorizedTeamRecipients) {
+			String messageBody = null;
 			String userId = umi.getUserId();
 			if(userId != null && umi.getHasRteamMessageAccessEnabled()) {
 				// if member is user, send rTeam message. Message sent below, just built here.
 				userKeys.add(KeyFactory.stringToKey(userId));
-				authorizedUserRecipients.add(umi);
-	    		String messageBody = getNewEventMessageBody(theUser.getFullName(), theTeam.getTeamName(), theGames, thePractices);
-				messageBodys.add(messageBody);
+	    		messageBody = getNewEventMessageBody(theUser.getFullName(), theTeam.getTeamName(), theGames, thePractices);
 			}
 			if(umi.getEmailAddress() != null && umi.getHasEmailMessageAccessEnabled()) {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getNewEventEmailBody(umi.getFullName(), theUser.getFullName(), umi.getToken(), theTeam.getTeamName(), theTeam.getTwitterScreenName(), theGames, thePractices);
+	    		String emailBody = Emailer.getNewEventEmailBody(umi.getFullName(), theUser.getFullName(), umi.getOneUseToken(), theTeam.getTeamName(), theTeam.getTwitterScreenName(), theGames, thePractices);
+		    	if(messageBody == null) {messageBody = emailBody;}
 		    	Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {
@@ -1149,17 +1149,23 @@ public class PubHub {
 				// #5 SMS 
 				//////////
 				String smsMessage = getNewEventSmsMessage(theUser.getDisplayName(), theGames, thePractices);
+				if(messageBody == null) {messageBody = smsMessage;}
 				// the new ad-free SMS sent via SmsEmailAddress takes precedence over the phoneNumber (Zeep Mobile) SMS
 				String smsAddress = umi.getSmsEmailAddress() == null ? umi.getPhoneNumber() : umi.getSmsEmailAddress();
 				postSms(smsAddress, "New Event", smsMessage, Emailer.REPLY);
 			}
+			
+			if(messageBody != null) {
+				messageBodys.add(messageBody);
+				authorizedUserRecipients.add(umi);
+			}
 		}
     	
-    	////////////////////////////////////////////////////////
-    	// #1 Message Thread Created - only users are recipients
-    	////////////////////////////////////////////////////////
+    	////////////////////////////
+    	// #1 Message Thread Created
+    	////////////////////////////
 		if(authorizedUserRecipients.size() > 0) {
-		    // only Users will be recipients of the messageThread 
+			// messageThread recipients created for emails and SMS messages too - needed to support unsolicited replies
 	    	//createMessageThread(theAuthorizedTeamRecipients, theTeam, theSubject, theBodys, theMessageType, theMessageLinkOnly)
 	    	createMessageThread(authorizedUserRecipients, theTeam, subject, messageBodys, theMessageType, false);
 		}
@@ -1372,7 +1378,7 @@ public class PubHub {
 		
 		List<UserMemberInfo> authorizedUserRecipients = new ArrayList<UserMemberInfo>();
 		for(UserMemberInfo umi : authorizedTeamRecipients) {
-			umi.setToken(TF.get());
+			umi.setOneUseToken(TF.get());
 			String userId = umi.getUserId();
 			if(userId != null && umi.getHasRteamMessageAccessEnabled()) {
 				// if member is user, send rTeam message. Message sent below, just built here.
@@ -1385,7 +1391,7 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getEventUpdatedEmailBody(umi.getFullName(), theUser.getFullName(), umi.getToken(), theTeam.getTeamName(), theTeam.getTwitterScreenName(), theGame, thePractice, theNotificationMessage, theUpdateAllLocations);
+	    		String emailBody = Emailer.getEventUpdatedEmailBody(umi.getFullName(), theUser.getFullName(), umi.getOneUseToken(), theTeam.getTeamName(), theTeam.getTwitterScreenName(), theGame, thePractice, theNotificationMessage, theUpdateAllLocations);
 		    	Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {
@@ -1549,7 +1555,7 @@ public class PubHub {
 		
 		List<UserMemberInfo> authorizedUserRecipients = new ArrayList<UserMemberInfo>();
 		for(UserMemberInfo umi : authorizedTeamRecipients) {
-			umi.setToken(TF.get());
+			umi.setOneUseToken(TF.get());
 			String userId = umi.getUserId();
 			if(userId != null && umi.getHasRteamMessageAccessEnabled()) {
 				// if member is user, send rTeam message. Message sent below, just built here.
@@ -1562,7 +1568,7 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getEventDeletedEmailBody(umi.getFullName(), theUser.getFullName(), umi.getToken(), theTeam.getTeamName(), theTeam.getTwitterScreenName(), theGame, thePractice);
+	    		String emailBody = Emailer.getEventDeletedEmailBody(umi.getFullName(), theUser.getFullName(), umi.getOneUseToken(), theTeam.getTeamName(), theTeam.getTwitterScreenName(), theGame, thePractice);
 		    	Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {
@@ -1714,7 +1720,7 @@ public class PubHub {
 		
 		List<UserMemberInfo> authorizedUserRecipients = new ArrayList<UserMemberInfo>();
 		for(UserMemberInfo umi : authorizedTeamRecipients) {
-			umi.setToken(TF.get());
+			umi.setOneUseToken(TF.get());
 			String userId = umi.getUserId();
 			if(userId != null && umi.getHasRteamMessageAccessEnabled()) {
 				// if member is user, send rTeam message. Message sent below, just built here.
@@ -1727,7 +1733,7 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getTeamInfoUpdateEmailBody(umi.getFullName(), theNotificationMessage, umi.getToken(), theTeam.getTwitterScreenName());
+	    		String emailBody = Emailer.getTeamInfoUpdateEmailBody(umi.getFullName(), theNotificationMessage, umi.getOneUseToken(), theTeam.getTwitterScreenName());
 		    	Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {
@@ -1838,7 +1844,7 @@ public class PubHub {
 		
 		List<UserMemberInfo> authorizedUserRecipients = new ArrayList<UserMemberInfo>();
 		for(UserMemberInfo umi : authorizedTeamRecipients) {
-			umi.setToken(TF.get());
+			umi.setOneUseToken(TF.get());
 			String userId = umi.getUserId();
 			if(userId != null && umi.getHasRteamMessageAccessEnabled()) {
 				// if member is user, send rTeam message. Message sent below, just built here.
@@ -1851,7 +1857,7 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getTeamInactiveEmailBody(umi.getFullName(), theTeam.getTeamName(), umi.getToken(), theTeam.getTwitterScreenName());
+	    		String emailBody = Emailer.getTeamInactiveEmailBody(umi.getFullName(), theTeam.getTeamName(), umi.getOneUseToken(), theTeam.getTwitterScreenName());
 		    	Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.NO_REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {
@@ -2061,7 +2067,7 @@ public class PubHub {
 		
 		List<UserMemberInfo> authorizedUserRecipients = new ArrayList<UserMemberInfo>();
 		for(UserMemberInfo umi : authorizedTeamRecipients) {
-			umi.setToken(TF.get());
+			umi.setOneUseToken(TF.get());
 			String userId = umi.getUserId();
 			if(userId != null && umi.getHasRteamMessageAccessEnabled()) {
 				// if member is user, send rTeam message. Message sent below, just built here.
@@ -2074,7 +2080,7 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getGameSummaryEmailBody(umi.getFullName(), theTeam, umi.getToken(), theGame);
+	    		String emailBody = Emailer.getGameSummaryEmailBody(umi.getFullName(), theTeam, umi.getOneUseToken(), theGame);
 		    	Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {

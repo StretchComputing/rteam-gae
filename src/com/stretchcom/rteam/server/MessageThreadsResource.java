@@ -415,7 +415,7 @@ public class MessageThreadsResource extends ServerResource {
 						
 					// need to know associated member for loop below
 					umi.setMember(rm);
-					umi.setToken(TF.get());
+					umi.setOneUseToken(TF.get());
 					umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
 					authorizedTeamRecipients.add(umi);
 				}

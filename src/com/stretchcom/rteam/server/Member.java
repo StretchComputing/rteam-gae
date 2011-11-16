@@ -1352,16 +1352,46 @@ public class Member {
 		}
 	}
 	
-	public Integer getAutoArchiveDayCountByEmailAddress(String theEmailAddress) {
-		if(theEmailAddress == null) {return null;}
-		
-		Integer retAutoArchiveDayCount = null;
+	public void setHasEmailMessageAccessEnabledByEmailAddress(String theEmailAddress, Boolean theHasEmailMessageAccess) {
 		if(this.emailAddress != null && this.emailAddress.equalsIgnoreCase(theEmailAddress)) {
-			retAutoArchiveDayCount = this.autoArchiveDayCount;
-		} else if(this.guardianEmailAddresses != null) {
+			this.hasEmailMessageAccessEnabled = theHasEmailMessageAccess;
+		} else if(this.guardianEmailAddresses != null && this.guardianHasEmailMessageAccessEnabled != null) {
 			int index = 0;
 			for(String gea : this.guardianEmailAddresses) {
 				if(gea.equalsIgnoreCase(theEmailAddress)) {
+					this.guardianHasEmailMessageAccessEnabled.set(index, theHasEmailMessageAccess);
+					break;
+				}
+				index++;
+			}
+		}
+	}
+	
+	public void setHasEmailMessageAccessEnabledByPhoneNumber(String thePhoneNumber, Boolean theHasSmsMessageAccessEnabled) {
+		if(this.phoneNumber != null && this.phoneNumber.equalsIgnoreCase(thePhoneNumber)) {
+			this.hasSmsMessageAccessEnabled = theHasSmsMessageAccessEnabled;
+		} else if(this.guardianPhoneNumbers != null && this.guardianHasSmsMessageAccessEnabled != null) {
+			int index = 0;
+			for(String gpn : this.guardianPhoneNumbers) {
+				if(gpn.equalsIgnoreCase(thePhoneNumber)) {
+					this.guardianHasSmsMessageAccessEnabled.set(index, theHasSmsMessageAccessEnabled);
+					break;
+				}
+				index++;
+			}
+		}
+	}
+	
+	public Integer getAutoArchiveDayCountByPhoneNumber(String thePhoneNumber) {
+		if(thePhoneNumber == null) {return null;}
+		
+		Integer retAutoArchiveDayCount = null;
+		if(this.phoneNumber != null && this.phoneNumber.equalsIgnoreCase(thePhoneNumber)) {
+			retAutoArchiveDayCount = this.autoArchiveDayCount;
+		} else if(this.guardianPhoneNumbers != null) {
+			int index = 0;
+			for(String gpn : this.guardianPhoneNumbers) {
+				if(gpn.equalsIgnoreCase(thePhoneNumber)) {
 					retAutoArchiveDayCount = this.guardianAutoArchiveDayCounts.get(index);
 					
 					// for guardian AutoArchiveDayCount list, "-1" is equivalent to null
@@ -1376,16 +1406,16 @@ public class Member {
 		return retAutoArchiveDayCount;
 	}
 	
-	public Integer getAutoArchiveDayCountByPhoneNumber(String thePhoneNumber) {
-		if(thePhoneNumber == null) {return null;}
+	public Integer getAutoArchiveDayCountByEmailAddress(String theEmailAddress) {
+		if(theEmailAddress == null) {return null;}
 		
 		Integer retAutoArchiveDayCount = null;
-		if(this.phoneNumber != null && this.phoneNumber.equalsIgnoreCase(thePhoneNumber)) {
+		if(this.emailAddress != null && this.emailAddress.equalsIgnoreCase(theEmailAddress)) {
 			retAutoArchiveDayCount = this.autoArchiveDayCount;
-		} else if(this.guardianPhoneNumbers != null) {
+		} else if(this.guardianEmailAddresses != null) {
 			int index = 0;
-			for(String gpn : this.guardianPhoneNumbers) {
-				if(gpn.equalsIgnoreCase(thePhoneNumber)) {
+			for(String gea : this.guardianEmailAddresses) {
+				if(gea.equalsIgnoreCase(theEmailAddress)) {
 					retAutoArchiveDayCount = this.guardianAutoArchiveDayCounts.get(index);
 					
 					// for guardian AutoArchiveDayCount list, "-1" is equivalent to null
@@ -2398,6 +2428,7 @@ public class Member {
     			Boolean isSmsConfirmed = m.isPhoneNumberSmsConfirmed(smsPhoneNumber);
     			if(!isSmsConfirmed) {
         			m.smsConfirmPhoneNumber(theSmsAddress);
+        			m.setHasEmailMessageAccessEnabledByPhoneNumber(smsPhoneNumber, true);
         			teamNames.add(m.getTeam().getTeamName());
         			newlyConfirmedMemberships.add(m);
     			} else {

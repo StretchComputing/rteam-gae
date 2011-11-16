@@ -663,7 +663,7 @@ public class MessageThreadResource extends ServerResource {
     		    						
     		    					// need to know associated member for loop below
     		    					umi.setMember(m);
-    		    					umi.setToken(TF.get());
+    		    					umi.setOneUseToken(TF.get());
     		    					umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
     		    					authorizedTeamRecipients.add(umi);
     		    				}
@@ -791,7 +791,7 @@ public class MessageThreadResource extends ServerResource {
 						userMemberInfo.setLastName(emailRecipientUser.getLastName());
 						userMemberInfo.setEmailAddress(emailRecipientUser.getEmailAddress());
 						userMemberInfo.setPhoneNumber(emailRecipientUser.getPhoneNumber());
-						userMemberInfo.setToken(emailRecipientUser.getToken());
+						userMemberInfo.setOneUseToken(emailRecipientUser.getToken());
 					}
 					em2.getTransaction().commit();
 				} else if(memberId != null) {
@@ -803,6 +803,8 @@ public class MessageThreadResource extends ServerResource {
 						.getSingleResult();
 					log.info("NAing member, toEmailAddress = " + toEmailAddress);
 					emailRecipientMember.networkAuthenticateEmailAddress(toEmailAddress);
+					emailRecipientMember.setHasEmailMessageAccessEnabledByEmailAddress(toEmailAddress, true);
+					
 					userMemberInfo.setFirstName(emailRecipientMember.getFirstNameByEmailAddress(toEmailAddress));
 					userMemberInfo.setLastName(emailRecipientMember.getLastNameByEmailAddress(toEmailAddress));
 					userMemberInfo.setEmailAddress(toEmailAddress);
@@ -810,6 +812,7 @@ public class MessageThreadResource extends ServerResource {
 					userMemberInfo.setParticipantRole(emailRecipientMember.getParticipantRole());
 					userMemberInfo.setIsGuardian(emailRecipientMember.isGuardian(toEmailAddress));
 					userMemberInfo.setPrimaryDisplayName(emailRecipientMember.getPrimaryDisplayName());
+					userMemberInfo.setHasEmailMessageAccessEnabled(true);
 					em2.getTransaction().commit();
 				}
 				log.info("handleUserMemberConfirmEmailResponse(): mail recipient user/member found");
