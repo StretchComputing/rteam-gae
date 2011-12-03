@@ -93,9 +93,15 @@ import com.google.appengine.api.datastore.Text;
  * Getters never return null, but rather, empty Strings, empty Lists, etc.
  */
 public class Attendee {
-	//constants
+	// isPresent constants
 	public static final String PRESENT = "yes";
 	public static final String NOT_PRESENT = "no";
+	
+	// preGameStatus constants	
+	public static final String YES_STATUS = "yes";
+	public static final String NO_STATUS = "no";
+	public static final String MAYBE_STATUS = "maybe";
+	public static final String NO_REPLY_STATUS = "noreply";
 
 	private Boolean isPresent;
 	private String eventId;  // soft schema: either a game key or a practice key
@@ -104,6 +110,7 @@ public class Attendee {
 	private String eventName; // only applies to generic events right now
 	private String teamId;    // soft schema: use id because team object is never used so @ManyToOne is overkill
     private String memberId;  // soft schema: use id because member object is never used so @ManyToOne is overkill
+    private String preGameStatus = NO_REPLY_STATUS;
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -139,6 +146,15 @@ public class Attendee {
 
 	public void setMemberId(String memberId) {
 		this.memberId = memberId;
+	}
+
+	public String getPreGameStatus() {
+		// guarantee not null and then no data migration required when this field was added
+		return preGameStatus == null ? Attendee.NO_REPLY_STATUS : preGameStatus;
+	}
+
+	public void setPreGameStatus(String preGameStatus) {
+		this.preGameStatus = preGameStatus;
 	}
 	
 	public Date getEventGmtDate() {

@@ -48,8 +48,14 @@ public class EmailHandlerServlet extends HttpServlet {
         	Address sender = message.getSender();
         	String subject = message.getSubject();
         	Address[] toRecipient = message.getRecipients(RecipientType.TO);
+        	
         	String fromEmailAddress = fromAddress[0].toString();
-        	if(fromAddress != null && fromAddress.length > 0) log.info("from address: " + fromEmailAddress);
+        	if(fromEmailAddress != null && fromEmailAddress.length() > 0) {
+        		log.info("raw from email address: " + fromEmailAddress);
+            	fromEmailAddress = Utility.extractEmailAddress(fromEmailAddress);
+        		log.info("extracted from email address: " + fromEmailAddress);
+        	}
+        	
         	if(sender != null) log.info("sender: " + sender.toString());
         	if(replyToAddress != null && replyToAddress.length > 0) log.info("reply to address: " + replyToAddress[0].toString());
         	if(subject != null) log.info("subject: " + subject);
@@ -101,7 +107,7 @@ public class EmailHandlerServlet extends HttpServlet {
 	        	returnedText = Recipient.handleSmsResponse(extractPhoneNumber(fromEmailAddress), body);
 	        } else if(toRecipientEmailAddress.contains(Emailer.REPLY_EMAIL_ADDRESS)) {
 	        	// Unsolicited email reply
-	        	log.info("handling 'reply' response");
+	        	log.info("handling 'reply' response. fromEmailAddress raw = " + fromEmailAddress);
 	        	// extract the token from the body
 	        	String emailReplyToken = getEmailReplyToken(body);
 	        	if(emailReplyToken != null && emailReplyToken.length() > 0) {

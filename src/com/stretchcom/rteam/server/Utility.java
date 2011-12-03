@@ -99,8 +99,6 @@ public class Utility {
 			extractedEmailAddress = matcher.group(0);
 		}		
 		return extractedEmailAddress;
-
-		//********** READY FOR TESTING **********************
 	}
     
     public static String getModMessage(String theFieldName, String theOldValue, String theNewValue) {

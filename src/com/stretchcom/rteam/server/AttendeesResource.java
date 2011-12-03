@@ -135,6 +135,7 @@ public class AttendeesResource extends ServerResource {
 			JSONArray attendeesJsonArray = null;
 			List<String> memberIds = new ArrayList<String>();
 			List<String> statuses = new ArrayList<String>();
+			List<String> preGameStatuses = new ArrayList<String>();
 			int attendeeArraySize = 0;
 			if(json.has("attendees")) {
 				attendeesJsonArray = json.getJSONArray("attendees");
@@ -143,8 +144,14 @@ public class AttendeesResource extends ServerResource {
 				for(int i=0; i<attendeeArraySize; i++) {
 					JSONObject attendeeJsonObj = attendeesJsonArray.getJSONObject(i);
 					memberIds.add(attendeeJsonObj.getString("memberId"));
-					statuses.add(attendeeJsonObj.getString("present"));
-					log.info("attendee status sent = " + attendeeJsonObj.getString("present"));
+					if(attendeeJsonObj.has("present")) {
+						statuses.add(attendeeJsonObj.getString("present"));
+						log.info("attendee status sent = " + attendeeJsonObj.getString("present"));
+					}
+					if(attendeeJsonObj.has("preGameStatus")) {
+						preGameStatuses.add(attendeeJsonObj.getString("preGameStatus"));
+						log.info("attendee pre-game status sent = " + attendeeJsonObj.getString("preGameStatus"));
+					}
 				}
 			}
 
@@ -216,10 +223,19 @@ public class AttendeesResource extends ServerResource {
 			List<Attendee> attendeesPresent = new ArrayList<Attendee>();
 			for(int i=0; i<attendeeArraySize; i++) {
 				boolean isPresent = false;
+				String preGameStatus = Attendee.NO_REPLY_STATUS;
 				String memberId =  memberIds.get(i);
-				if(statuses.get(i).equalsIgnoreCase(Attendee.PRESENT)) {
+				
+				// process only if "present" specified for all attendees
+				if(statuses.size() == attendeeArraySize && statuses.get(i).equalsIgnoreCase(Attendee.PRESENT)) {
 					isPresent = true;
 				}
+				
+				// process only if "preGameStatus" specified for all attendees
+				if(preGameStatuses.size() == attendeeArraySize) {
+					preGameStatus = preGameStatuses.get(i);
+				}
+				
 				//::TODO a better way than separate transactions for each Attendee????
 				em.getTransaction().begin();
 				try {
@@ -238,15 +254,25 @@ public class AttendeesResource extends ServerResource {
 					attendee.setEventName(eventName);
 					em.persist(attendee);
 				}
-				attendee.setIsPresent(isPresent);
-				if(isPresent) {
-					attendeesPresent.add(attendee);
+				
+				// process only if "present" specified for all attendees
+				if(statuses.size() == attendeeArraySize) {
+					attendee.setIsPresent(isPresent);
+					if(isPresent) {
+						attendeesPresent.add(attendee);
+					}
 				}
+				
+				// process only if "preGameStatus" specified for all attendees
+				if(preGameStatuses.size() == attendeeArraySize) {
+					attendee.setPreGameStatus(preGameStatus);
+				}
+				
 				em.getTransaction().commit();
 			}
 			
-			// if this is the first time attendance was take for this event, then post to team activity
-			if(attendanceTaken == null || !attendanceTaken) {
+			// if this is the first time GAME-TIME attendance was take for this event, then post to team activity
+			if(attendeesPresent.size() > 0 && (attendanceTaken == null || !attendanceTaken) ){
 				// need to build a member list from the attendee list because the member display info is needed for the post
 				EntityManager emMembers = EMF.get().createEntityManager();
 				
@@ -455,6 +481,7 @@ public class AttendeesResource extends ServerResource {
     			JSONObject jsonAttendeeObj = new JSONObject();
     			jsonAttendeeObj.put("teamId", this.teamId);
     			jsonAttendeeObj.put("present", a.getIsPresent() ? Attendee.PRESENT : Attendee.NOT_PRESENT);
+    			jsonAttendeeObj.put("preGameStatus", a.getPreGameStatus());
     			
     			if(isEventSearch) {
     				jsonAttendeeObj.put("memberId", a.getMemberId());

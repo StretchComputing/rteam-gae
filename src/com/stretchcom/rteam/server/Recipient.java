@@ -730,10 +730,12 @@ public class Recipient {
 		String returnResult = "";
 		
 		try {
+			log.info("about to query recipients");
 			List<Recipient> recipients = (List<Recipient>)emRecipient.createNamedQuery("Recipient.getByEmailAddressAndNotStatus")
 				.setParameter("emailAddress", theFromAddress)
 				.setParameter("status", Recipient.ARCHIVED_STATUS)
 				.getResultList();
+			log.info("number of recipients = " + recipients.size());
 			
 			Recipient matchingRecipient = null;
 			if(recipients.size() == 1) {
@@ -746,6 +748,7 @@ public class Recipient {
 				matchingRecipient = findRecipientWithBestSubjectMatch(recipients, theSubject);
 			}
 			
+			log.info("matchingRecipient = " + matchingRecipient);
 			if(matchingRecipient != null) {
 	    		sendReplyMessage(matchingRecipient, theReplyBody, emRecipient);
 	    		returnResult = UserInterfaceMessage.UNSOLICITED_RESPONSE_SUCCESSFUL;
@@ -754,6 +757,7 @@ public class Recipient {
 			}
 		} catch (Exception e) {
 			log.severe("handleEmailReplyUsingFromAddressAndSubject(): exception = " + e.getMessage());
+			e.printStackTrace();
 			returnResult = UserInterfaceMessage.SERVER_ERROR;
 		} finally {
     		emRecipient.close();
@@ -765,12 +769,23 @@ public class Recipient {
 	private static void sendReplyMessage(Recipient theRecipient, String theReplyBody, EntityManager theEmRecipient) {
 		MessageThread messageThread = theRecipient.getMessageThread();
 		String senderUserId = messageThread.getSenderUserId();
+		log.info("senderUserId = " + senderUserId);
 		
-		String teamId = messageThread.getTeamId();
-		Team team = (Team)theEmRecipient.createNamedQuery("Team.getByKey")
-			.setParameter("key", KeyFactory.stringToKey(teamId))
-			.getSingleResult();
-		log.info("team retrieved = " + team.getTeamName());
+		String teamId = theRecipient.getTeamId();
+		log.info("teamId = " + teamId);
+		Team team = null;
+		try {
+			team = (Team)theEmRecipient.createNamedQuery("Team.getByKey")
+				.setParameter("key", KeyFactory.stringToKey(teamId))
+				.getSingleResult();
+			log.info("team retrieved = " + team.getTeamName());
+		} catch (NoResultException e) {
+			log.severe("sendReplyMessage(): team not found");
+			return;
+		} catch (NonUniqueResultException e) {
+			log.severe("sendReplyMessage(): should never happen - two or more teams had the same token");
+			return;
+		}
 
 		List<Member> memberRecipients = new ArrayList<Member>();
 		List<Member> members = team.getMembers();
