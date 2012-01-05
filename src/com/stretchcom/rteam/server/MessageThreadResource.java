@@ -257,6 +257,7 @@ public class MessageThreadResource extends ServerResource {
     			// --------------------------------------------------
     			// This is the 'Message thread response' API call
     			// --------------------------------------------------
+        		//::EVENT::
         		log.info("this is 'Message thread response' API handling");
         		
         		Recipient recipient = null;
@@ -287,8 +288,20 @@ public class MessageThreadResource extends ServerResource {
         				}
         			}
         			messageThread.addMemberIdThatReplied(recipient.getMemberId());
-        			
-        			em.getTransaction().commit();
+
+					em.getTransaction().commit();
+					
+					// who's coming reply has to update the pre-game attendance
+					if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
+						log.info("who's coming reply = " + userReply);
+						String eventType = Utility.getEventType(recipient.getIsGame());
+						// ::BACKWARD COMPATIBILITY:: recipient started storing eventName on 1/5/2012 so handle null eventName for awhile
+						String eventName = recipient.getEventName() == null ? "" : recipient.getEventName();
+						
+						// update pre-event attendee status or create attendee if it doesn't exist yet for this event/member combination
+						Attendee.updatePreGameAttendance(recipient.getEventId(), eventType, recipient.getMemberId(),
+								recipient.getTeamId(), recipient.getEventGmtStartDate(), eventName, userReply);
+					}
         		} catch (NoResultException e) {
         			// Not an error - multiple people associated with the same membership may respond. Or, the same user may click
         			// on the link in the message multiple times.  In either case, it is inactive after first response.
@@ -510,6 +523,7 @@ public class MessageThreadResource extends ServerResource {
     			List<String> memberIds = new ArrayList<String>();
     			String reply = "";
     			String followupMessage = "";
+    			Boolean wasWhoIsComingReply = false;
     			if(json.has("sendReminder")) {
     				// user sending reminder must be the originator of this message thread
     				if(messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
@@ -568,13 +582,8 @@ public class MessageThreadResource extends ServerResource {
     					
     					// who's coming reply has to update the pre-game attendance
     					if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
-    						String eventType = Utility.getEventType(recipientOfThisUser.getIsGame());
-    						// ::BACKWARD COMPATIBILITY:: recipient started storing eventName on 1/5/2012 so handle null eventName for awhile
-    						String eventName = recipientOfThisUser.getEventName() == null ? "" : recipientOfThisUser.getEventName();
-    						
-    						// update pre-event attendee status or create attendee if it doesn't exist yet for this event/member combination
-    						Attendee.updatePreGameAttendance(recipientOfThisUser.getEventId(), eventType, recipientOfThisUser.getMemberId(),
-    								recipientOfThisUser.getTeamId(), recipientOfThisUser.getEventGmtStartDate(), eventName, reply);
+    						log.info("who's coming reply = " + reply);
+    						wasWhoIsComingReply = true;
     					}
     				} else {
     					apiStatus = ApiStatusCode.USER_NOT_RECIPIENT_OF_MESSAGE_THREAD;
@@ -636,6 +645,16 @@ public class MessageThreadResource extends ServerResource {
     			
     			// Need to commit before sending messages below.
     			em.getTransaction().commit();
+    			
+    			if(wasWhoIsComingReply) {
+					String eventType = Utility.getEventType(recipientOfThisUser.getIsGame());
+					// ::BACKWARD COMPATIBILITY:: recipient started storing eventName on 1/5/2012 so handle null eventName for awhile
+					String eventName = recipientOfThisUser.getEventName() == null ? "" : recipientOfThisUser.getEventName();
+					
+					// update pre-event attendee status or create attendee if it doesn't exist yet for this event/member combination
+					Attendee.updatePreGameAttendance(recipientOfThisUser.getEventId(), eventType, recipientOfThisUser.getMemberId(),
+							recipientOfThisUser.getTeamId(), recipientOfThisUser.getEventGmtStartDate(), eventName, reply);
+    			}
     			
     			// send followup message to recipients if appropriate
     			// TODO right now, iPhone returning "none" when user does not enter followup message

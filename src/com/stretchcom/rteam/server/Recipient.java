@@ -645,8 +645,8 @@ public class Recipient {
 	        			if(matchingPollChoice != null) {
 	            			// This is a "first" response wins scenario. So mark other individuals that are part
 	            			// of this same membership as having replied.
-	            			List<Recipient> sameMemberrecipients = messageThread.getRecipients();
-	            			for(Recipient smr : sameMemberrecipients) {
+	            			List<Recipient> sameMemberRecipients = messageThread.getRecipients();
+	            			for(Recipient smr : sameMemberRecipients) {
 	            				if(r.getMemberId().equals(smr.getMemberId())) {
 	                    			smr.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
 	                    			smr.setReply(matchingPollChoice);
@@ -655,6 +655,18 @@ public class Recipient {
 	            				}
 	            			}
 	        				matchingPollCount++;
+		        			
+							// who's coming reply has to update the pre-game attendance
+							if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
+								log.info("who's coming reply = " + theSmsResponse);
+								String eventType = Utility.getEventType(r.getIsGame());
+								// ::BACKWARD COMPATIBILITY:: recipient started storing eventName on 1/5/2012 so handle null eventName for awhile
+								String eventName = r.getEventName() == null ? "" : r.getEventName();
+								
+								// update pre-event attendee status or create attendee if it doesn't exist yet for this event/member combination
+								Attendee.updatePreGameAttendance(r.getEventId(), eventType, r.getMemberId(),
+										r.getTeamId(), r.getEventGmtStartDate(), eventName, theSmsResponse);
+							}
 	        			}
 	    			} else if(messageThread.getType().equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
 	    				r.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);

@@ -188,6 +188,7 @@ public class UserResource extends ServerResource {
     			log.info("This is the 'Get User Confirmation Info' API call");
     			
     			//::SIDE_EFFECT:: API is get confirm info, but here we are updating the user/member entities
+    			//::EVENT::
     			UserMemberInfo userMemberInfo = MessageThreadResource.handleUserMemberConfirmEmailResponse(this.oneUseToken);
     			
     			if(userMemberInfo.getApiStatus().equals(ApiStatusCode.SUCCESS)) {
