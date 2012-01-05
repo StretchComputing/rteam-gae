@@ -13,8 +13,7 @@ import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.google.appengine.repackaged.com.google.common.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 
 public class UrbanAirshipClient {
 	private static final Logger log = Logger.getLogger(UrbanAirshipClient.class.getName());
@@ -151,7 +150,7 @@ public class UrbanAirshipClient {
 				log.severe("base64 encoding failed: " + uee.getMessage());
 			}
 
-			String header = "Basic " + Base64.encode(bytes);
+			String header = "Basic " + Base64.encodeBase64String(bytes);
 			connection.setRequestProperty("Authorization", header);
 
 			////////////////////

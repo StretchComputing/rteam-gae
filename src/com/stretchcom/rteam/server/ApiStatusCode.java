@@ -62,6 +62,7 @@ public class ApiStatusCode {
 	public static final String START_DATE_REQUIRED = "325";
 	public static final String MEMBER_ID_REQUIRED = "326";
 	public static final String FIRST_NAME_OR_LAST_NAME_OR_EMAIL_ADDRESS_OR_PHONE_NUMBER_REQUIRED = "327";
+	public static final String EVENT_ID_AND_EVENT_TYPE_REQUIRED = "328";
 	
 	public static final String LATITIUDE_AND_LONGITUDE_MUST_BE_SPECIFIED_TOGETHER = "400";
 	public static final String TIME_ZONE_AND_DATES_MUST_BE_SPECIFIED_TOGETHER = "401";

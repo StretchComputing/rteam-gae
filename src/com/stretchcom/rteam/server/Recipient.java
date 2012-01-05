@@ -253,6 +253,7 @@ public class Recipient {
 	private String eventId;    // soft schema: either a game ID or a practice ID
 	private Date eventGmtStartDate;
 	private Boolean isGame;
+	private String eventName;  // only a practice has an event name, but store it anyhow
 	private String senderMemberId;
 	private String senderName;
 	private String toEmailAddress;
@@ -458,6 +459,14 @@ public class Recipient {
 
 	public void setOneUseEmailToken(String oneUseEmailToken) {
 		this.oneUseEmailToken = oneUseEmailToken;
+	}
+
+	public String getEventName() {
+		return eventName;
+	}
+
+	public void setEventName(String eventName) {
+		this.eventName = eventName;
 	}
 
 	public String getSenderMemberId() {

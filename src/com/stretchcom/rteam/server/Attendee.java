@@ -3,9 +3,11 @@ package com.stretchcom.rteam.server;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.persistence.Basic;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.Id;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.FetchType;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.NoResultException;
 
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Text;
@@ -93,6 +96,8 @@ import com.google.appengine.api.datastore.Text;
  * Getters never return null, but rather, empty Strings, empty Lists, etc.
  */
 public class Attendee {
+	private static final Logger log = Logger.getLogger(Attendee.class.getName());
+	
 	// isPresent constants
 	public static final String PRESENT = "yes";
 	public static final String NOT_PRESENT = "no";
@@ -189,4 +194,36 @@ public class Attendee {
 		this.eventName = eventName;
 	}
 
+	public static void updatePreGameAttendance(String theEventIdStr, String theEventType, String theMemberId, String theTeamId,
+			                                   Date theEventDate, String theEventName, String theReply) {
+    	EntityManager em = EMF.get().createEntityManager();
+		em.getTransaction().begin();
+		Attendee attendee = null;
+		try {
+			try {
+				attendee = (Attendee)em.createNamedQuery("Attendee.getByEventIdAndEventTypeAndMember")
+					.setParameter("eventId", theEventIdStr)
+					.setParameter("eventType", theEventType)
+					.setParameter("memberId", theMemberId)
+					.getSingleResult();
+			} catch(NoResultException e) {
+				attendee = new Attendee();
+				attendee.setEventId(theEventIdStr);
+				attendee.setEventType(theEventType);
+				attendee.setMemberId(theMemberId);
+				attendee.setTeamId(theTeamId);
+				attendee.setEventGmtDate(theEventDate);
+				attendee.setEventName(theEventName);
+			}
+			
+			attendee.setPreGameStatus(theReply);
+			
+			em.persist(attendee);
+		    em.getTransaction().commit();
+		} catch (Exception e) {
+			log.severe("updatePreGameAttendance(): exception = " + e.getMessage());
+		} finally {
+			em.close();
+		}
+	}
 }

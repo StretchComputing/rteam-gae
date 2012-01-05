@@ -7,7 +7,10 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.appengine.repackaged.com.google.common.util.Base64;
+import org.apache.commons.codec.binary.Base64;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.restlet.ext.json.JsonRepresentation;
 
 import sun.misc.BASE64Encoder;
 
@@ -150,6 +153,11 @@ public class Utility {
     	return eventTypeStr;
     }
     
+    public static String getEventType(Boolean theIsGame) {
+    	if(theIsGame == null) {return null;}
+      	return theIsGame ? Practice.GAME_EVENT_TYPE : Practice.PRACTICE_EVENT_TYPE;
+     }
+    
 	public static String encrypt(String thePlainText) {
 		String encryptedText = null;
 		MessageDigest md = null;
@@ -164,7 +172,7 @@ public class Utility {
 			byte raw[] = md.digest();
 			
 			// convert encrypted bytes to base64 encoded string so data can be stored in the database
-			encryptedText = Base64.encode(raw);
+			encryptedText = Base64.encodeBase64String(raw);
 		} catch (Exception e) {
 			log.severe("Utility::encrypt() exception = " + e.getMessage());
 		}
@@ -207,5 +215,19 @@ public class Utility {
 		}
 		
 		return false;
+	}
+
+	// if theApiStatus is null, no JSON object is returned
+    public static JsonRepresentation apiError(String theApiStatus){
+    	JSONObject json = new JSONObject();
+    	try {
+        	if(theApiStatus != null) {
+        		log.info("returning apiStatus = " + theApiStatus);
+    			json.put("apiStatus", theApiStatus);
+        	}
+		} catch (JSONException e) {
+			log.severe("Utility::apiError()  exception = " + e.getMessage());
+		}
+		return new JsonRepresentation(json);
 	}
 }

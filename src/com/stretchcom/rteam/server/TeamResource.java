@@ -42,8 +42,8 @@ import com.google.appengine.api.labs.taskqueue.Queue;
 import com.google.appengine.api.labs.taskqueue.QueueFactory;
 import com.google.appengine.api.labs.taskqueue.TaskOptions;
 import com.google.appengine.api.labs.taskqueue.TaskOptions.Method;
-import com.google.appengine.repackaged.com.google.common.util.Base64;
-import com.google.appengine.repackaged.com.google.common.util.Base64DecoderException;
+import org.apache.commons.codec.binary.Base64;
+
 
 /**
  * @author joepwro
@@ -667,7 +667,7 @@ public class TeamResource extends ServerResource {
     					String oldPhoto = team.getPhotoBase64() == null ? "" : team.getPhotoBase64();
     					
     					// decode the base64 encoding to create the thumb nail
-    					byte[] rawPhoto = Base64.decode(photoBase64);
+    					byte[] rawPhoto = Base64.decodeBase64(photoBase64);
     					ImagesService imagesService = ImagesServiceFactory.getImagesService();
     					Image oldImage = ImagesServiceFactory.makeImage(rawPhoto);
     					
@@ -686,7 +686,7 @@ public class TeamResource extends ServerResource {
 						}
 						Transform resize = ImagesServiceFactory.makeResize(tnWidth, tnHeight);
     					Image newImage = imagesService.applyTransform(resize, oldImage);
-    					String thumbNailBase64 = Base64.encode(newImage.getImageData());
+    					String thumbNailBase64 = Base64.encodeBase64String(newImage.getImageData());
     					
     					team.setThumbNailBase64(thumbNailBase64);
     					team.setPhotoBase64(photoBase64);
@@ -699,7 +699,7 @@ public class TeamResource extends ServerResource {
     					}
     					log.info("modMessage = " + teamUpdateMessage);
     					notificationMessage = notificationMessage + " " + teamUpdateMessage;
-    				} catch(Base64DecoderException e) {
+    				} catch(Exception e) {
     					apiStatus = ApiStatusCode.INVALID_PHOTO_PARAMETER;
     				}
     			}

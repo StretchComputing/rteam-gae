@@ -26,7 +26,6 @@ import twitter4j.http.AccessToken;
 import twitter4j.http.RequestToken;
 
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.repackaged.com.google.common.util.Base64;
 
 public class TwitterClient {
 	private static final Logger log = Logger.getLogger(TwitterClient.class.getName());

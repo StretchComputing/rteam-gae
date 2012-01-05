@@ -2,45 +2,39 @@ package com.stretchcom.rteam.server;
 	
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
-import javax.persistence.Query;
+
+import org.apache.commons.codec.binary.Base64;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.restlet.resource.Delete;
-import org.restlet.resource.Get;
-import org.restlet.resource.Put;
 import org.restlet.data.Form;
-import org.restlet.data.MediaType;
 import org.restlet.data.Parameter;
 import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
-import org.restlet.representation.StringRepresentation;
 import org.restlet.representation.Variant;
-import org.restlet.resource.ServerResource;
+import org.restlet.resource.Delete;
+import org.restlet.resource.Get;
+import org.restlet.resource.Put;
 import org.restlet.resource.ResourceException;
+import org.restlet.resource.ServerResource;
 
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.images.Image;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.Transform;
-import com.google.appengine.repackaged.com.google.common.util.Base64;
-import com.google.appengine.repackaged.com.google.common.util.Base64DecoderException;
 
 /**
  * @author joepwro
@@ -781,7 +775,7 @@ public class MemberResource extends ServerResource {
 					String oldPhoto = memberBeingModified.getPhotoBase64() == null ? "" : memberBeingModified.getPhotoBase64();
 					
 					// decode the base64 encoding to create the thumb nail
-					byte[] rawPhoto = Base64.decode(photoBase64);
+					byte[] rawPhoto = Base64.decodeBase64(photoBase64);
 					ImagesService imagesService = ImagesServiceFactory.getImagesService();
 					Image oldImage = ImagesServiceFactory.makeImage(rawPhoto);
 					
@@ -789,7 +783,7 @@ public class MemberResource extends ServerResource {
 					int tnHeight = isPortrait == true ? User.THUMB_NAIL_LONG_SIDE : User.THUMB_NAIL_SHORT_SIDE;
 					Transform resize = ImagesServiceFactory.makeResize(tnWidth, tnHeight);
 					Image newImage = imagesService.applyTransform(resize, oldImage);
-					String thumbNailBase64 = Base64.encode(newImage.getImageData());
+					String thumbNailBase64 = Base64.encodeBase64String(newImage.getImageData());
 					
 					memberBeingModified.setThumbNailBase64(thumbNailBase64);
 					memberBeingModified.setPhotoBase64(photoBase64);
@@ -802,7 +796,7 @@ public class MemberResource extends ServerResource {
 					}
 					log.info("modMessage = " + modMessage);
 					modificationMessages.add(modMessage);
-				} catch(Base64DecoderException e) {
+				} catch(Exception e) {
 					apiStatus = ApiStatusCode.INVALID_PHOTO_PARAMETER;
 				}
 			}

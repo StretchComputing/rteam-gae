@@ -104,6 +104,7 @@ public class MessageThread {
 	public static final String PLAIN_TYPE = "plain";
 	public static final String CONFIRMED_TYPE = "confirm";
 	public static final String POLL_TYPE = "poll";
+	public static final String WHO_IS_COMING_TYPE = "whoiscoming";
 	public static final String USER_ACTIVATION_TYPE = "user activation";
 	public static final String MEMBER_ACTIVATION_TYPE = "member activation";
 	public static final String EMAIL_UPDATE_CONFIRMATION_TYPE = "email update confirmation";
@@ -121,6 +122,10 @@ public class MessageThread {
 	public static final String OUTBOX_MESSAGE_GROUP = "outbox";
 	public static final String ALL_MESSAGE_GROUP = "all";
 	
+	public static final String YES_WHO_IS_COMING_CHOICE = "yes";
+	public static final String NO_WHO_IS_COMING_CHOICE = "no";
+	public static final String MAYBE_WHO_IS_COMING_CHOICE = "maybe";
+
 	public static final int MAX_NUMBER_OF_POLL_CHOICES = 5;
 	public static final int MAX_NUMBER_OF_AUTO_ARCHIVE_DAY_COUNT = 30;
 	

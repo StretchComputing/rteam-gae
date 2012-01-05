@@ -39,7 +39,7 @@ import twitter4j.http.AccessToken;
 import twitter4j.http.RequestToken;
 
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.repackaged.com.google.common.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 
 public class ZeepMobileClient {
 	// For your user to use the JOIN command, they simply text "JOIN rTeam" to 88147
@@ -180,7 +180,7 @@ public class ZeepMobileClient {
 		      mac.init(signingKey);
 		      
 		      byte[] signBytes = mac.doFinal(canonicalString.getBytes("UTF8"));
-		      String b64Mac = Base64.encode(signBytes);
+		      String b64Mac = Base64.encodeBase64String(signBytes);
 		      authentication = "Zeep " + API_KEY + ":" + b64Mac;
 		      
 		    }

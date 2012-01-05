@@ -16,7 +16,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.Query;
 
-import com.google.appengine.repackaged.com.google.common.util.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +39,7 @@ import com.google.appengine.api.images.Image;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.Transform;
+import org.apache.commons.codec.binary.Base64;
 
  
 /** 
@@ -269,7 +269,7 @@ public class ActivitiesResource extends ServerResource {
 			try {
 				if(photoBase64 != null) {
 					// decode the base64 encoding to create the thumb nail
-					byte[] rawPhoto = Base64.decode(photoBase64);
+					byte[] rawPhoto = Base64.decodeBase64(photoBase64);
 					ImagesService imagesService = ImagesServiceFactory.getImagesService();
 					Image oldImage = ImagesServiceFactory.makeImage(rawPhoto);
 					
@@ -277,7 +277,7 @@ public class ActivitiesResource extends ServerResource {
 					int tnHeight = isPortrait == true ? THUMB_NAIL_LONG_SIDE : THUMB_NAIL_SHORT_SIDE;
 					Transform resize = ImagesServiceFactory.makeResize(tnWidth, tnHeight);
 					Image newImage = imagesService.applyTransform(resize, oldImage);
-					String thumbNailBase64 = Base64.encode(newImage.getImageData());
+					String thumbNailBase64 = Base64.encodeBase64String(newImage.getImageData());
 					newActivity.setThumbNailBase64(thumbNailBase64);
 					newActivity.setPhotoBase64(photoBase64);
 					if(videoBase64 != null) newActivity.setVideoBase64(videoBase64);

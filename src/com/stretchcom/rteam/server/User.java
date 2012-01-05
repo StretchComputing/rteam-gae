@@ -71,6 +71,9 @@ public class User {
 	public static final Integer THUMB_NAIL_SHORT_SIDE  = 60;
 	public static final Integer THUMB_NAIL_LONG_SIDE  = 80;
 	
+	public static final String ANDROID_DEVICE = "android";
+	public static final String IOS_DEVICE = "ios";
+	
 	private String firstName;
 	private String lastName;
 	private String emailAddress;
@@ -85,6 +88,8 @@ public class User {
 	private String phoneNumber;
 	private String mobileCarrierCode;
 	private String phoneNumberConfirmationCode;
+	private String clientDevice;
+	private String c2dmRegistrationId; // Android cloud to device messaging (C2DM)
 	private Boolean isAggregator;	// aggregator is a user with special permission to access public APIs
 	private Boolean inactivatedDueToDuplicateEmail;  // TODO create a CRON job to delete user entities where this is TRUE
 	private String userIconOneId;
@@ -274,6 +279,14 @@ public class User {
 
 	public void setPhoneNumber(String phoneNumber) {
 		this.phoneNumber = phoneNumber;
+	}
+
+	public String getC2dmRegistrationId() {
+		return c2dmRegistrationId;
+	}
+
+	public void setC2dmRegistrationId(String c2dmRegistrationId) {
+		this.c2dmRegistrationId = c2dmRegistrationId;
 	}
 
 	public Boolean getIsAggregator() {
@@ -631,6 +644,14 @@ public class User {
 
 	public void setPhoneNumberConfirmationCode(String phoneNumberConfirmationCode) {
 		this.phoneNumberConfirmationCode = phoneNumberConfirmationCode;
+	}
+
+	public String getClientDevice() {
+		return clientDevice;
+	}
+
+	public void setClientDevice(String clientDevice) {
+		this.clientDevice = clientDevice;
 	}
 
 	public String getSmsEmailAddress() {

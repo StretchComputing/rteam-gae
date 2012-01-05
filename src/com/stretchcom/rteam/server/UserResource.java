@@ -35,8 +35,7 @@ import com.google.appengine.api.images.Image;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.Transform;
-import com.google.appengine.repackaged.com.google.common.util.Base64;
-import com.google.appengine.repackaged.com.google.common.util.Base64DecoderException;
+import org.apache.commons.codec.binary.Base64;
 
 /**
  *
@@ -625,7 +624,7 @@ public class UserResource extends ServerResource {
 					}
 					try {
 						// decode the base64 encoding to create the thumb nail
-						byte[] rawPhoto = Base64.decode(photoBase64);
+						byte[] rawPhoto = Base64.decodeBase64(photoBase64);
 						ImagesService imagesService = ImagesServiceFactory.getImagesService();
 						Image oldImage = ImagesServiceFactory.makeImage(rawPhoto);
 						
@@ -633,12 +632,12 @@ public class UserResource extends ServerResource {
 						int tnHeight = isPortrait == true ? User.THUMB_NAIL_LONG_SIDE : User.THUMB_NAIL_SHORT_SIDE;
 						Transform resize = ImagesServiceFactory.makeResize(tnWidth, tnHeight);
 						Image newImage = imagesService.applyTransform(resize, oldImage);
-						thumbNailBase64 = Base64.encode(newImage.getImageData());
+						thumbNailBase64 = Base64.encodeBase64String(newImage.getImageData());
 						
 						user.setThumbNailBase64(thumbNailBase64);
 						user.setPhotoBase64(photoBase64);
 						log.info("user photo and thumb nail skeleton were successfully persisted");
-					} catch(Base64DecoderException e) {
+					} catch(Exception e) {
 						jsonReturn.put("apiStatus", ApiStatusCode.INVALID_PHOTO_PARAMETER);
 						return new JsonRepresentation(jsonReturn);
 					}
@@ -668,6 +667,14 @@ public class UserResource extends ServerResource {
 				
 				if(json.has("location")) {
 					user.setLocation(json.getString("location"));
+				}
+				
+				if(json.has("clientDevice")) {
+					user.setClientDevice(json.getString("clientDevice"));
+				}
+				
+				if(json.has("c2dmRegistrationId")) {
+					user.setC2dmRegistrationId(json.getString("c2dmRegistrationId"));
 				}
 
 				em.getTransaction().commit();

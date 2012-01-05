@@ -561,16 +561,21 @@ public class MessageThreadResource extends ServerResource {
     				reply = json.getString("reply");
     				
     				if(recipientOfThisUser != null) {
-    					if(recipientOfThisUser.getReply() == null) {
-    						messageThread.handleMemberReply(recipientOfThisUser.getMemberId());
-    						
-    						// TODO see if all replies have been received -- send alert to messageThread creator
-    						int numOfRecipients = messageThread.getNumOfRecipients();
-    					}
     					recipientOfThisUser.setReply(reply);
     					recipientOfThisUser.setStatus(Recipient.REPLIED_STATUS);
     					recipientOfThisUser.setReplyGmtDate(new Date());
     					messageThread.addMemberIdThatReplied(recipientOfThisUser.getMemberId());
+    					
+    					// who's coming reply has to update the pre-game attendance
+    					if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
+    						String eventType = Utility.getEventType(recipientOfThisUser.getIsGame());
+    						// ::BACKWARD COMPATIBILITY:: recipient started storing eventName on 1/5/2012 so handle null eventName for awhile
+    						String eventName = recipientOfThisUser.getEventName() == null ? "" : recipientOfThisUser.getEventName();
+    						
+    						// update pre-event attendee status or create attendee if it doesn't exist yet for this event/member combination
+    						Attendee.updatePreGameAttendance(recipientOfThisUser.getEventId(), eventType, recipientOfThisUser.getMemberId(),
+    								recipientOfThisUser.getTeamId(), recipientOfThisUser.getEventGmtStartDate(), eventName, reply);
+    					}
     				} else {
     					apiStatus = ApiStatusCode.USER_NOT_RECIPIENT_OF_MESSAGE_THREAD;
     					log.info("requester is not a recipient of this message thread -- cannot reply unless you are a recipient");

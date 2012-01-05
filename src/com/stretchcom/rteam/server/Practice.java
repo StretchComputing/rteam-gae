@@ -294,7 +294,6 @@ public class Practice implements Cloneable {
 	public void setAttendanceTaken(Boolean attendanceTaken) {
 		this.attendanceTaken = attendanceTaken;
 	}
-	
     
     public static Date getEventDate(String theEventIdStr, String theEventTypeStr) {
     	EntityManager em = EMF.get().createEntityManager();
@@ -321,6 +320,43 @@ public class Practice implements Cloneable {
 		}
 		
 		return null;
+    }
+    
+    // return event (game or practice) info including:
+    // info[0]: GMT start date of type Date
+    // info[1]: Local start date converted using event's time zone of type String
+    // info[2]: event name (ony applies to practice, for game always an empty string
+    public static List getEventInfo(String theEventIdStr, String theEventTypeStr) {
+    	EntityManager em = EMF.get().createEntityManager();
+    	List info = new ArrayList();
+    	try {
+    		Key eventKey = KeyFactory.stringToKey(theEventIdStr);
+    		if(theEventTypeStr.equalsIgnoreCase(Game.GAME)) {
+        		Game game = (Game)em.createNamedQuery("Game.getByKey")
+					.setParameter("key", eventKey)
+					.getSingleResult();
+        		
+        		info.add(game.getEventGmtStartDate());
+        		info.add(game.getEventLocalStartDate());
+        		info.add("");
+    		} else {
+        		Practice practice = (Practice)em.createNamedQuery("Practice.getByKey")
+					.setParameter("key", eventKey)
+					.getSingleResult();
+        		
+        		info.add(practice.getEventGmtStartDate());
+        		info.add(practice.getEventLocalStartDate());
+        		info.add(practice.getEventName());
+    		}
+    	} catch (NoResultException e) {
+        	// not a error - eventID passed in via API is bad. Null will be returned below.
+		} catch (NonUniqueResultException e) {
+			log.severe("should never happen - two or more games/practices have same key");
+		} finally {
+		    em.close();
+		}
+		
+		return info;
     }
 	
 	public static void updateAllLocations(Team theTeam, Practice thePractice) {

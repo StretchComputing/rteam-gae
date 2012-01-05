@@ -156,23 +156,18 @@ public class MessageThreadsResource extends ServerResource {
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
     			log.severe("user could not be retrieved from Request attributes!!");
+				return Utility.apiError(null);
     		}
     		//::BUSINESSRULE:: user must be network authenticated to send a message
     		else if(!currentUser.getIsNetworkAuthenticated()) {
-    			apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
+				return Utility.apiError(ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
     		}
     		// teamId is required
     		else if(this.teamId == null || this.teamId.length() == 0) {
-				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
+				return Utility.apiError(ApiStatusCode.TEAM_ID_REQUIRED);
     		} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
-				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
         	}
-    		
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
-			}
     		
 			///////////////////////////////////////////////////////////////////////////////////////////////////
     		// need to get membership of current user to check if user is a coordinator or member participant
@@ -202,141 +197,70 @@ public class MessageThreadsResource extends ServerResource {
 			
 			//::BUSINESSRULE:: user must be a coordinator or member to create a message thread
 			if(!isCoordinator && !isMember) {
-				apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR_OR_MEMBER_PARTICIPANT;
-				jsonReturn.put("apiStatus", apiStatus);
-				log.info(apiStatus);
-				return new JsonRepresentation(jsonReturn);
+				return Utility.apiError(ApiStatusCode.USER_NOT_A_COORDINATOR_OR_MEMBER_PARTICIPANT);
 			}
     		
 			messageThread = new MessageThread();
     		JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
 			
-			String subject = null;
-			if(json.has("subject")) {
-				subject = json.getString("subject");
-			}
-			
-			String body = null;
-			if(json.has("body")) {
-				body = json.getString("body");
-			}
-			
-			String type = null;
-			if(json.has("type")) {
-				type = json.getString("type");
-			}
-			
 			String eventIdStr = null;
 			if(json.has("eventId")) {
 				eventIdStr = json.getString("eventId");
+				messageThread.setEventId(eventIdStr);
 			}
-			
+
 			String eventTypeStr = null;
 			if(json.has("eventType")) {
 				eventTypeStr = json.getString("eventType");
 			}
-			
-			List<String> pollChoices = new ArrayList<String>();
-			if(json.has("pollChoices")) {
-				JSONArray pollChoicesJsonArray = json.getJSONArray("pollChoices");
-				int arraySize = pollChoicesJsonArray.length();
-				for(int i=0; i<arraySize; i++) {
-					pollChoices.add(pollChoicesJsonArray.getString(i));
-				}
+			if(eventIdStr != null && eventTypeStr == null) {
+				return Utility.apiError(ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_MUST_BE_SPECIFIED_TOGETHER);
 			}
-			
-			List<String> memberIds = new ArrayList<String>();
-			if(json.has("recipients")) {
-				JSONArray recipientsJsonArray = json.getJSONArray("recipients");
-				int arraySize = recipientsJsonArray.length();
-				log.info("json recipients array length = " + arraySize);
-				for(int i=0; i<arraySize; i++) {
-					log.info("storing member " + i);
-					memberIds.add(recipientsJsonArray.getString(i));
-				}
-			}
-			
-			// defaults to 'false' if not specified
-			Boolean coordinatorsOnly = false;
-			if(json.has("coordinatorsOnly")) {
-				coordinatorsOnly = json.getBoolean("coordinatorsOnly");
-				log.info("json coordinatorsOnly = " + coordinatorsOnly.toString());
-			}
-			
-			// defaults to 'false' if not specified
-			String isAlertStr = null;
-			if(json.has("isAlert")) {
-				isAlertStr = json.getString("isAlert");
-				log.info("json isAlert = " + isAlertStr);
-			}
-			Boolean isAlert = false;
-			if(isAlertStr != null && isAlertStr.equalsIgnoreCase("true")) {
-				isAlert = true;
-			}
-			
-			// defaults to 'true' if not specified
-			String includeFansStr = null;
-			if(json.has("includeFans")) {
-				includeFansStr = json.getString("includeFans");
-				log.info("json includeFans = " + includeFansStr);
-			}
-			Boolean includeFans = true;
-			if(includeFansStr != null && !includeFansStr.equalsIgnoreCase("true")) {
-				includeFans = false;
-			}
-			
-			// defaults to 'true' if not specified
-			String isPublicStr = null;
-			if(json.has("isPublic")) {
-				isPublicStr = json.getString("isPublic");
-				log.info("json isPublic = " + isPublicStr);
-			}
-			Boolean isPublic = true;
-			if(isPublicStr != null && !isPublicStr.equalsIgnoreCase("true")) {
-				isPublic = false;
-			}
-			
-			// Enforce Rules
-			if(subject == null || subject.length() == 0 || body ==  null || body.length() == 0 || type == null || type.length() == 0) {
-				apiStatus = ApiStatusCode.SUBJECT_BODY_AND_TYPE_REQUIRED;
-				log.info("required field missing");
-			}
-			else {
-				if(eventIdStr != null && eventTypeStr == null) {
-					apiStatus = ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_MUST_BE_SPECIFIED_TOGETHER;
-					log.info("event type should have been specified");
-				}
-				if(apiStatus.equals(ApiStatusCode.SUCCESS) && type.equalsIgnoreCase(MessageThread.POLL_TYPE) && pollChoices.size() == 0) {
-					apiStatus = ApiStatusCode.POLL_AND_POLL_CHOICES_MUST_BE_SPECIFIED_TOGETHER;
-					log.info("poll choices should have been speicified");
-				}
-				if(apiStatus.equals(ApiStatusCode.SUCCESS) && type.equalsIgnoreCase(MessageThread.POLL_TYPE)
-						                                   && pollChoices.size() > MessageThread.MAX_NUMBER_OF_POLL_CHOICES) {
-					apiStatus = ApiStatusCode.INVALID_NUMBER_OF_POLL_CHOICES_PARAMETER;
-					log.info("poll choices cannot exceed " + MessageThread.MAX_NUMBER_OF_POLL_CHOICES);
-				}
-				if(apiStatus.equals(ApiStatusCode.SUCCESS) && 
-				   !type.equalsIgnoreCase(MessageThread.CONFIRMED_TYPE) && 
-				   !type.equalsIgnoreCase(MessageThread.POLL_TYPE) &&	
-				   !type.equalsIgnoreCase(MessageThread.PLAIN_TYPE)) {
-					apiStatus = ApiStatusCode.INVALID_TYPE_PARAMETER;
-					log.info("message type not recognized");
-				}
-			}
-			
+			if(eventTypeStr != null) messageThread.setIsGame(eventTypeStr.equalsIgnoreCase(Game.GAME) ? true : false);
+
 			// if this message is associated with an event, get the date which will be stored in the message
 			Date eventDate = null;
-			if(apiStatus.equals(ApiStatusCode.SUCCESS) && eventIdStr != null && eventTypeStr != null) {
-				eventDate = Practice.getEventDate(eventIdStr, eventTypeStr);
-				if(eventDate == null) {
-					apiStatus = ApiStatusCode.EVENT_NOT_FOUND;
+			String localEventDateStr = null;
+			String eventName = null;
+			if(eventIdStr != null && eventTypeStr != null) {
+				List eventInfo = Practice.getEventInfo(eventIdStr, eventTypeStr);
+				if(eventInfo == null || eventInfo.size() == 0) {
+					return Utility.apiError(ApiStatusCode.EVENT_NOT_FOUND);
 				}
+				eventDate = (Date)eventInfo.get(0);
+				localEventDateStr = (String)eventInfo.get(1);
+				eventName = (String)eventInfo.get(2);
 			}
-    		
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
+
+			String type = null;
+			if(json.has("type")) {
+				type = json.getString("type");
+				messageThread.setType(type);
+			}
+			if(type == null || type.length() == 0) {
+				return Utility.apiError(ApiStatusCode.SUBJECT_BODY_AND_TYPE_REQUIRED);
+			}
+			if(!type.equalsIgnoreCase(MessageThread.CONFIRMED_TYPE) && 
+			   !type.equalsIgnoreCase(MessageThread.POLL_TYPE) &&	
+			   !type.equalsIgnoreCase(MessageThread.PLAIN_TYPE)) {
+				return Utility.apiError(ApiStatusCode.INVALID_TYPE_PARAMETER);
+			}
+			
+			// out parameters for 'handleJson' methods below
+			List<String> memberIds = new ArrayList<String>();
+			Boolean coordinatorsOnly = new Boolean(false);
+			Boolean includeFans = new Boolean(true);
+			if(type != null && type.equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
+				////////////////////////////////////////////////////////////////////////////////////////////////////////
+				// for who's coming message, only eventId and eventType are used -- all other fields are "predetermined"
+				////////////////////////////////////////////////////////////////////////////////////////////////////////
+				apiStatus = buildWhoIsComingMessageThreadApi(messageThread, localEventDateStr, coordinatorsOnly, includeFans);
+			} else {
+				apiStatus = handleJsonForCreateMessageThreadApi(json, type, messageThread, memberIds, coordinatorsOnly, includeFans);
+			}
+			if(!apiStatus.equals(ApiStatusCode.SUCCESS)) {
+				return Utility.apiError(apiStatus);
 			}
 			
 			String senderMemberId = "";
@@ -379,19 +303,12 @@ public class MessageThreadsResource extends ServerResource {
 				}
 			}
 
-			messageThread.setSubject(subject);
-			messageThread.setMessage(body);
 			messageThread.setStatus(MessageThread.ACTIVE_STATUS);
 			messageThread.setType(type);
-			messageThread.setEventId(eventIdStr);
 			messageThread.setEventGmtStartDate(eventDate);
-			if(eventTypeStr != null) messageThread.setIsGame(eventTypeStr.equalsIgnoreCase(Game.GAME) ? true : false);
 			messageThread.setTeamId(this.teamId);
 			messageThread.setTeamName(team.getTeamName());
 			messageThread.setSenderUserId(KeyFactory.keyToString(currentUser.getKey()));
-			messageThread.setIsAlert(isAlert);
-			messageThread.setIsPublic(isPublic);
-			messageThread.setPollChoices(pollChoices);
 			Integer autoArchiveDayCount = currentUser.getAutoArchiveDayCount();
 			if(autoArchiveDayCount != null) {
 				messageThread.setActiveThruGmtDate(GMT.addDaysToDate(new Date(), autoArchiveDayCount));
@@ -444,8 +361,8 @@ public class MessageThreadsResource extends ServerResource {
 				String memId = KeyFactory.keyToString(umi.getMember().getKey());
 				recipient.setMemberId(memId);
 				recipient.setMemberName(umi.getMember().getFullName());  // TODO setting to Primary member name - does it matter???
-				recipient.setSubject(subject);
-				recipient.setMessage(body);
+				recipient.setSubject(messageThread.getSubject());
+				recipient.setMessage(messageThread.getMessage());
 				recipient.setTeamId(this.teamId);
 				recipient.setTeamName(team.getTeamName());
 				recipient.setMessageLinkOnly(false);
@@ -470,9 +387,10 @@ public class MessageThreadsResource extends ServerResource {
 				recipient.setNumOfSends(1);
 				recipient.setIsGame(messageThread.getIsGame());
 				recipient.setEventId(messageThread.getEventId());
+				recipient.setEventName(eventName);
 				recipient.setEventGmtStartDate(messageThread.getEventGmtStartDate());
 				recipient.setReceivedGmtDate(new Date());
-				recipient.setPollChoices(pollChoices);
+				recipient.setPollChoices(messageThread.getPollChoices());
 				recipient.setSenderMemberId(senderMemberId);
 				recipient.setSenderName(currentUser.getFullName());
 				recipient.setWasViewed(false);
@@ -496,8 +414,8 @@ public class MessageThreadsResource extends ServerResource {
 		    String keyWebStr = KeyFactory.keyToString(messageThread.getKey());
 		    log.info("message thread " + messageThread.getSubject() + " with key " + keyWebStr + " created successfully");
 		    
-		    // emailer will filter and only send email if appropriate
-		    PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, subject, body, messageThread, team, false, currentUser.getFullName());
+		    // PubHub will filter and only send email if appropriate
+		    PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), messageThread.getMessage(), messageThread, team, false, currentUser.getFullName());
 		    
 			String baseUri = this.getRequest().getHostRef().getIdentifier();
 			this.getResponse().setLocationRef(baseUri + "/" + keyWebStr);
@@ -1468,5 +1386,138 @@ public class MessageThreadsResource extends ServerResource {
 			}
 		}
     }
-    
+ 
+    // theJson: JSON object with input to API
+    // theMessageThread: out parameter to hold data extracted from the input JSON object
+    // theMemberIds: out parameter to store member IDs extracted from the input JSON object
+    // theCoordinatorsOnly: out parameter
+    // theIncludeFans: out parameter
+    private String handleJsonForCreateMessageThreadApi(JSONObject theJson, String theType, MessageThread theMessageThread, List<String> theMemberIds,
+    		Boolean theCoordinatorsOnly, Boolean theIncludeFans)  throws JSONException {
+    	String subject = null;
+    	if(theJson.has("subject")) {
+    		subject = theJson.getString("subject");
+			theMessageThread.setSubject(subject);
+		}
+		
+		String body = null;
+    	if(theJson.has("body")) {
+    		body = theJson.getString("body");
+			theMessageThread.setMessage(body);
+		}
+		
+		List<String> pollChoices = new ArrayList<String>();
+		if(theJson.has("pollChoices")) {
+			JSONArray pollChoicesJsonArray = theJson.getJSONArray("pollChoices");
+			int arraySize = pollChoicesJsonArray.length();
+			for(int i=0; i<arraySize; i++) {
+				pollChoices.add(pollChoicesJsonArray.getString(i));
+			}
+			theMessageThread.setPollChoices(pollChoices);
+		}
+		
+		if(theJson.has("recipients")) {
+			JSONArray recipientsJsonArray = theJson.getJSONArray("recipients");
+			int arraySize = recipientsJsonArray.length();
+			log.info("json recipients array length = " + arraySize);
+			for(int i=0; i<arraySize; i++) {
+				log.info("storing member " + i);
+				theMemberIds.add(recipientsJsonArray.getString(i));
+			}
+		}
+		
+		// defaults to 'false' if not specified
+		theCoordinatorsOnly = false;
+		if(theJson.has("coordinatorsOnly")) {
+			theCoordinatorsOnly = theJson.getBoolean("coordinatorsOnly");
+			log.info("json coordinatorsOnly = " + theCoordinatorsOnly.toString());
+		}
+		
+		// defaults to 'false' if not specified
+		theMessageThread.setIsAlert(false);
+		String isAlertStr = null;
+		if(theJson.has("isAlert")) {
+			isAlertStr = theJson.getString("isAlert");
+			log.info("json isAlert = " + isAlertStr);
+		}
+		if(isAlertStr != null && isAlertStr.equalsIgnoreCase("true")) {
+			theMessageThread.setIsAlert(false);
+		}
+		
+		// defaults to 'true' if not specified
+		theIncludeFans = true;
+		String includeFansStr = null;
+		if(theJson.has("includeFans")) {
+			includeFansStr = theJson.getString("includeFans");
+			log.info("json includeFans = " + includeFansStr);
+		}
+		if(includeFansStr != null && !includeFansStr.equalsIgnoreCase("true")) {
+			theIncludeFans = false;
+		}
+		
+		// defaults to 'true' if not specified
+		theMessageThread.setIsPublic(true);
+		String isPublicStr = null;
+		if(theJson.has("isPublic")) {
+			isPublicStr = theJson.getString("isPublic");
+			log.info("json isPublic = " + isPublicStr);
+		}
+		if(isPublicStr != null && !isPublicStr.equalsIgnoreCase("true")) {
+			theMessageThread.setIsPublic(false);
+		}
+    	
+		// Enforce Rules
+		if(subject == null || subject.length() == 0 || body ==  null || body.length() == 0) {
+			return ApiStatusCode.SUBJECT_BODY_AND_TYPE_REQUIRED;
+		}
+		else {
+			if(theType.equalsIgnoreCase(MessageThread.POLL_TYPE) && pollChoices.size() == 0) {
+				return ApiStatusCode.POLL_AND_POLL_CHOICES_MUST_BE_SPECIFIED_TOGETHER;
+			}
+			if(theType.equalsIgnoreCase(MessageThread.POLL_TYPE) && pollChoices.size() > MessageThread.MAX_NUMBER_OF_POLL_CHOICES) {
+				return ApiStatusCode.INVALID_NUMBER_OF_POLL_CHOICES_PARAMETER;
+			}
+		}
+		
+		return ApiStatusCode.SUCCESS;
+    }
+
+    // theJson: JSON object with input to API
+    // theMessageThread: out parameter to hold data extracted from the input JSON object and values set by this method
+    // theMemberIds: out parameter to store member IDs extracted from the input JSON object
+    // theCoordinatorsOnly: out parameter
+    // theIncludeFans: out parameter
+    private String buildWhoIsComingMessageThreadApi(MessageThread theMessageThread, String theLocalEventDateStr, Boolean theCoordinatorsOnly, Boolean theIncludeFans)  throws JSONException {
+		if(theMessageThread.getEventId() == null && theMessageThread.getIsGame() == null) {
+			return ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_REQUIRED;
+		}
+    	
+    	String subject = "Who's coming?";
+    	theMessageThread.setSubject(subject);
+		
+    	String eventTypeStr = theMessageThread.getIsGame() ? Practice.GAME_EVENT_TYPE : Practice.PRACTICE_EVENT_TYPE;
+		String body = "Are you coming to the " + eventTypeStr + " on " + theLocalEventDateStr + "?";
+		theMessageThread.setMessage(body);
+		
+		List<String> pollChoices = new ArrayList<String>();
+		pollChoices.add(MessageThread.YES_WHO_IS_COMING_CHOICE);
+		pollChoices.add(MessageThread.NO_WHO_IS_COMING_CHOICE);
+		pollChoices.add(MessageThread.MAYBE_WHO_IS_COMING_CHOICE);
+		theMessageThread.setPollChoices(pollChoices);
+		
+		// who's coming is not just for coordinators
+		theCoordinatorsOnly = false;
+		
+		// who's coming is always an alert
+		theMessageThread.setIsAlert(true);
+		
+		// who's coming is always visible to all members
+		theMessageThread.setIsPublic(true);
+		
+		// who's coming never includes fans
+		theIncludeFans = false;
+    	
+    	return ApiStatusCode.SUCCESS;
+    }
+
 }  

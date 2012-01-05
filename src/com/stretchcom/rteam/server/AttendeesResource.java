@@ -480,7 +480,10 @@ public class AttendeesResource extends ServerResource {
     		for(Attendee a : attendees) {
     			JSONObject jsonAttendeeObj = new JSONObject();
     			jsonAttendeeObj.put("teamId", this.teamId);
-    			jsonAttendeeObj.put("present", a.getIsPresent() ? Attendee.PRESENT : Attendee.NOT_PRESENT);
+    			
+    			if(a.getIsPresent() != null) {
+        			jsonAttendeeObj.put("present", a.getIsPresent() ? Attendee.PRESENT : Attendee.NOT_PRESENT);
+    			}
     			jsonAttendeeObj.put("preGameStatus", a.getPreGameStatus());
     			
     			if(isEventSearch) {
