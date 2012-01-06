@@ -243,7 +243,8 @@ public class MessageThreadsResource extends ServerResource {
 			}
 			if(!type.equalsIgnoreCase(MessageThread.CONFIRMED_TYPE) && 
 			   !type.equalsIgnoreCase(MessageThread.POLL_TYPE) &&	
-			   !type.equalsIgnoreCase(MessageThread.PLAIN_TYPE)) {
+			   !type.equalsIgnoreCase(MessageThread.PLAIN_TYPE) &&
+			   !type.equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
 				return Utility.apiError(ApiStatusCode.INVALID_TYPE_PARAMETER);
 			}
 			
@@ -376,7 +377,7 @@ public class MessageThreadsResource extends ServerResource {
 				recipient.setUserId(umi.getUserId());
 				
 				// add unique/email oneUseToken to any message types that have one or more embedded message response links
-				if(type.equalsIgnoreCase(MessageThread.CONFIRMED_TYPE) || type.equalsIgnoreCase(MessageThread.POLL_TYPE)) {
+				if(messageThread.isConfirm() || messageThread.isPoll()) {
     				recipient.setOneUseToken(umi.getOneUseToken());
 				}
 				// SMS unsolicited replies are handled by finding the recipient using SMS token, so SMS token always needs to be set
@@ -1471,10 +1472,10 @@ public class MessageThreadsResource extends ServerResource {
 			return ApiStatusCode.SUBJECT_BODY_AND_TYPE_REQUIRED;
 		}
 		else {
-			if(theType.equalsIgnoreCase(MessageThread.POLL_TYPE) && pollChoices.size() == 0) {
+			if(MessageThread.isPoll(theType) && pollChoices.size() == 0) {
 				return ApiStatusCode.POLL_AND_POLL_CHOICES_MUST_BE_SPECIFIED_TOGETHER;
 			}
-			if(theType.equalsIgnoreCase(MessageThread.POLL_TYPE) && pollChoices.size() > MessageThread.MAX_NUMBER_OF_POLL_CHOICES) {
+			if(MessageThread.isPoll(theType) && pollChoices.size() > MessageThread.MAX_NUMBER_OF_POLL_CHOICES) {
 				return ApiStatusCode.INVALID_NUMBER_OF_POLL_CHOICES_PARAMETER;
 			}
 		}

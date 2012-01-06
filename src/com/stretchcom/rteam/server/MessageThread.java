@@ -407,4 +407,49 @@ public class MessageThread {
     	return;
     }
 	
+	public static Boolean isConfirmOrPoll(String theType) {
+		if(theType == null) {return false;}
+		
+		if(theType.equalsIgnoreCase(CONFIRMED_TYPE) || theType.equalsIgnoreCase(POLL_TYPE) || theType.equalsIgnoreCase(WHO_IS_COMING_TYPE)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Boolean isPoll() {
+		if(this.type == null) {return false;}
+		
+		if(this.type.equalsIgnoreCase(POLL_TYPE) || this.type.equalsIgnoreCase(WHO_IS_COMING_TYPE)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static Boolean isPoll(String theType) {
+		if(theType == null) {return false;}
+		
+		if(theType.equalsIgnoreCase(POLL_TYPE) || theType.equalsIgnoreCase(WHO_IS_COMING_TYPE)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Boolean isConfirm() {
+		if(this.type == null) {return false;}
+		
+		if(this.type.equalsIgnoreCase(CONFIRMED_TYPE)) {
+			return true;
+		}
+		return false;
+	}
+	
+	
+	public static Boolean isConfirm(String theType) {
+		if(theType == null) {return false;}
+		
+		if(theType.equalsIgnoreCase(CONFIRMED_TYPE)) {
+			return true;
+		}
+		return false;
+	}
 }

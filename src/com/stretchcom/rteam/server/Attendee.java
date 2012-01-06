@@ -226,22 +226,4 @@ public class Attendee {
 			em.close();
 		}
 	}
-
-	public static List<Attendee> getAttendeesForEvent(String theEventId, String theEventType) {
-    	EntityManager em = EMF.get().createEntityManager();
-    	List<Attendee> attendees = null;
-    	
-    	try {
-    		attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByEventIdAndEventType")
-					.setParameter("eventId", theEventId)
-					.setParameter("eventType", theEventType)
-					.getResultList();
-    	} catch (Exception e) {
-    		log.severe("getAttendeesForEvent exception = " + e.getMessage());
-    		e.printStackTrace();
-    	} finally {
-    		em.close();
-    	}
-    	return attendees;
-    }
 }

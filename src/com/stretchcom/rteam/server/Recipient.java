@@ -213,7 +213,7 @@ import com.google.appengine.api.datastore.Text;
 public class Recipient {
 	private static final Logger log = Logger.getLogger(Recipient.class.getName());
 	
-	//constants
+	// Recipient STATUS
 	public static final String PENDING_NETWORK_AUTHENTICATION_STATUS = "pending_network_authentication";
 	public static final String SENT_STATUS = "sent";
 	public static final String SPECIAL_ATTENTION_STATUS = "special_attention";
@@ -223,6 +223,7 @@ public class Recipient {
 	
 	public static final String CONFIRMED_REPLY_MESSAGE = "confirmed"; // when confirmed, reply field is set to this string
 	
+	// TOKEN_STATUS
 	public static final String NEW_TOKEN_STATUS = "new";
 	public static final String USED_TOKEN_STATUS = "used";
 
@@ -638,7 +639,7 @@ public class Recipient {
 	    		Boolean unsolicitiedReplySuccessful = false;
 				for(Recipient r : recipients) {
 					MessageThread messageThread = r.getMessageThread();
-	    			if(messageThread.getType().equalsIgnoreCase(MessageThread.POLL_TYPE)) {
+	    			if(messageThread.isPoll()) {
 	    				totalPollCount++;
 	    				
 	    				String matchingPollChoice = doesResponseMatchPollChoices(theSmsResponse, r.getPollChoices());
@@ -668,7 +669,7 @@ public class Recipient {
 										r.getTeamId(), r.getEventGmtStartDate(), eventName, theSmsResponse);
 							}
 	        			}
-	    			} else if(messageThread.getType().equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
+	    			} else if(messageThread.isConfirm()) {
 	    				r.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
 	    				r.setReply(Recipient.CONFIRMED_REPLY_MESSAGE);
 	    				r.setReplyGmtDate(new Date());
@@ -922,6 +923,18 @@ public class Recipient {
 			}
 		}
 		return null;
+	}
+	
+	public Boolean isPendingReply() {
+		if(this.status == null) {return false;}
+		
+		// Pending -- sent_status or MAYBE reply for a who's coming message
+		if(this.status.equalsIgnoreCase(SENT_STATUS) ||
+		   (this.type != null && this.type.equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE) &&
+		    this.status.equalsIgnoreCase(REPLIED_STATUS) && this.reply.equalsIgnoreCase(MessageThread.MAYBE_WHO_IS_COMING_CHOICE)) ) {
+			return true;
+		}
+		return false;
 	}
 
 }

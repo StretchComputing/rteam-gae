@@ -542,7 +542,7 @@ public class MessageThreadResource extends ServerResource {
     	    					for(int i=0; i<numOfJsonRecipients; i++) {
     								if(recipientsJsonArray.getString(i).equals(r.getMemberId())) {
     									// will only be notified if they have NOT yet replied to the poll/confirm message
-    									if(r.getStatus().equalsIgnoreCase(Recipient.SENT_STATUS)) {
+    									if(r.isPendingReply()) {
         									memberIdsToBeNotified.add(r.getMemberId());
         									memberToBeNotified = true;
     									}
@@ -552,7 +552,7 @@ public class MessageThreadResource extends ServerResource {
     							
     						} else {
     							// No members provided, so build memberIds list to include ALL recipients in messageThread that have NOT yet replied
-    							if(r.getStatus().equalsIgnoreCase(Recipient.SENT_STATUS)) {
+    							if(r.isPendingReply()) {
         							memberIdsToBeNotified.add(r.getMemberId());
         							memberToBeNotified = true;
     							}
@@ -636,7 +636,7 @@ public class MessageThreadResource extends ServerResource {
     					Boolean oldWasViewed = recipientOfThisUser.getWasViewed();
     					recipientOfThisUser.setWasViewed(wasViewed);
     					// for a user, viewing is also a confirmation if this is a messageThread requesting confirmation
-    					if(messageThread.getType().equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
+    					if(messageThread.isConfirm()) {
         					messageThread.addMemberIdThatReplied(recipientOfThisUser.getMemberId());
         					recipientOfThisUser.setReplyGmtDate(new Date());
     					}

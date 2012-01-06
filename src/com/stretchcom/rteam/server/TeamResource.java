@@ -354,7 +354,7 @@ public class TeamResource extends ServerResource {
     	        	log.info("archiving " + nonarchivedOutboxMessages.size() + " user's outbox messages for the team they are no longer part of");
     	        	for(MessageThread mt : nonarchivedOutboxMessages) {
     	        		// finalize polls, archive the rest
-    	        		if(mt.getType().equalsIgnoreCase(MessageThread.POLL_TYPE)) {
+    	        		if(mt.isPoll()) {
     	        			mt.setStatus(MessageThread.FINALIZED_STATUS);
     	        		} else {
         	        		mt.setStatus(MessageThread.ARCHIVED_STATUS);

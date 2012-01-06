@@ -31,7 +31,7 @@ public class PubHub {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// #0 Overview
 	//      Purpose: Add additional communication to message thread already created by calling routine.
-	//      Type(s): MessageThread.CONFIRMED_TYPE, MessageThread.POLL_TYPE, MessageThread.PLAIN_TYPE
+	//      Type(s): MessageThread.CONFIRMED_TYPE, MessageThread.POLL_TYPE, MessageThread.WHO_IS_COMING, MessageThread.PLAIN_TYPE
 	//      Recipients: passed in as a parameter
 	//      Options: depends on message type -- could be a confirmation or poll.
 	//      Conditional: Yes. Based on member access preferences.
@@ -100,7 +100,11 @@ public class PubHub {
 		String fromUserName = theMessageThread.getType();
 		if(fromUserName == null){
 			fromUserName = Emailer.REPLY;
-		} else if(!fromUserName.equalsIgnoreCase(MessageThread.CONFIRMED_TYPE) && !fromUserName.equalsIgnoreCase(MessageThread.POLL_TYPE)) {
+		} else if(MessageThread.isPoll(fromUserName)) {
+			fromUserName = Emailer.POLL;
+		} else if(MessageThread.isConfirm(fromUserName)) {
+			fromUserName = Emailer.CONFIRM;
+		} else {
 			fromUserName = Emailer.REPLY;
 		}
 
@@ -116,9 +120,9 @@ public class PubHub {
     		String fullName = umi.getFirstName() + " " + umi.getLastName();
     		String body = null;
     		List<String> pollChoices = theMessageThread.getPollChoices();
-    		if(theMessageThread.getType().equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
+    		if(theMessageThread.isConfirm()) {
     			body = Emailer.getConfirmedMessageThreadEmailBody(fullName, theBody, umi.getOneUseToken(), theTeam.getTeamName(), theTeam.getTwitterScreenName(), theSenderName);
-    		} else if(theMessageThread.getType().equalsIgnoreCase(MessageThread.POLL_TYPE)) {
+    		} else if(theMessageThread.isPoll()) {
     			if(theIsFollowup) {
         			body = Emailer.getFollowupMessageThreadEmailBody(fullName, theBody, umi.getOneUseToken(), pollChoices, theTeam.getTeamName(), theTeam.getTwitterScreenName(), theSenderName);
     			} else {
@@ -148,7 +152,7 @@ public class PubHub {
 		Boolean isEventMessage = theMessageThread.getEventId() != null ? true : false;
 		if(includeEntireTeam && !isEventMessage) {
 			String messageTypeStr = "msg";
-    		if(theMessageThread.getType().equalsIgnoreCase(MessageThread.POLL_TYPE)) {
+    		if(theMessageThread.isPoll()) {
     			if(theIsFollowup) {
     				messageTypeStr = "poll finalized";
     			} else {
@@ -200,20 +204,20 @@ public class PubHub {
 													 Boolean theIsFollowup, Boolean theIsSmsAddress) {
 		StringBuffer sb = new StringBuffer();
 		sb.append(" ");
-		if(theMessageThread.getType().equalsIgnoreCase(MessageThread.POLL_TYPE) && theIsFollowup) {
+		if(theMessageThread.isPoll() && theIsFollowup) {
 			sb.append("(poll finalized)");
 			sb.append("\n");
 		}
 		sb.append(theBody);
 		sb.append("\n");
 		
-		if(theMessageThread.getType().equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
+		if(theMessageThread.isConfirm()) {
 			if(theIsSmsAddress) {
 				sb.append("[Please reply with any message to confirm]");
 			} else {
 				sb.append("Please reply\nrTeam confirm\n");
 			}
-		} else if(theMessageThread.getType().equalsIgnoreCase(MessageThread.POLL_TYPE)) {
+		} else if(theMessageThread.isPoll()) {
 			List<String> pollChoices = theMessageThread.getPollChoices();
 			if(theIsFollowup) {
 				Map<String, Integer> pollResults =  theMessageThread.getPollResults();
@@ -1114,7 +1118,7 @@ public class PubHub {
         	List<UserMemberInfo> authorizedMembershipRecipients = m.getAuthorizedRecipients(theTeam);
         	for(UserMemberInfo umi : authorizedMembershipRecipients) {
     			umi.setOneUseToken(TF.get());
-            	if(theMessageType.equalsIgnoreCase(MessageThread.CONFIRMED_TYPE)) {
+            	if(MessageThread.isConfirm(theMessageType)) {
         			umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
             	}
     			authorizedTeamRecipients.add(umi);

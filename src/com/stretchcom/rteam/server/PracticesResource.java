@@ -732,28 +732,41 @@ public class PracticesResource extends ServerResource {
     }
     
     private JSONArray buildAttendeeArray(String theEventId, String theEventType, Team theTeam) throws JSONException{
-		List<Attendee> attendees = Attendee.getAttendeesForEvent(theEventId, theEventType);
-		
-		List<String> memberIdsWithAttendance = new ArrayList<String>();
+    	EntityManager em = EMF.get().createEntityManager();
+    	List<Attendee> attendees = null;
 		JSONArray jsonAttendeesArray = new JSONArray();
-		for(Attendee a : attendees) {
-			memberIdsWithAttendance.add(a.getMemberId());
-			JSONObject jsonAttendeeObj = new JSONObject();
-			jsonAttendeeObj.put("memberId", a.getMemberId());
-			jsonAttendeeObj.put("preGameStatus", a.getPreGameStatus());
-			jsonAttendeesArray.put(jsonAttendeeObj);
-		}
-		
-		// now, for all team members without attendance
-		for(Member m : theTeam.getMembers()) {
-			String memberId = KeyFactory.keyToString(m.getKey());
-			if(!memberIdsWithAttendance.contains(memberId)) {
+    	
+    	try {
+    		attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByEventIdAndEventType")
+					.setParameter("eventId", theEventId)
+					.setParameter("eventType", theEventType)
+					.getResultList();
+    		
+    		List<String> memberIdsWithAttendance = new ArrayList<String>();
+    		for(Attendee a : attendees) {
+    			memberIdsWithAttendance.add(a.getMemberId());
     			JSONObject jsonAttendeeObj = new JSONObject();
-				jsonAttendeeObj.put("memberId", memberId);
-    			jsonAttendeeObj.put("preGameStatus", Attendee.NO_REPLY_STATUS);
+    			jsonAttendeeObj.put("memberId", a.getMemberId());
+    			jsonAttendeeObj.put("preGameStatus", a.getPreGameStatus());
     			jsonAttendeesArray.put(jsonAttendeeObj);
-			}
-		}
+    		}
+    		
+    		// now, for all team members without attendance
+    		for(Member m : theTeam.getMembers()) {
+    			String memberId = KeyFactory.keyToString(m.getKey());
+    			if(!memberIdsWithAttendance.contains(memberId)) {
+        			JSONObject jsonAttendeeObj = new JSONObject();
+    				jsonAttendeeObj.put("memberId", memberId);
+        			jsonAttendeeObj.put("preGameStatus", Attendee.NO_REPLY_STATUS);
+        			jsonAttendeesArray.put(jsonAttendeeObj);
+    			}
+    		}
+    	} catch (Exception e) {
+    		log.severe("getAttendeesForEvent exception = " + e.getMessage());
+    		e.printStackTrace();
+    	} finally {
+    		em.close();
+    	}
 		return jsonAttendeesArray;
     }
     
