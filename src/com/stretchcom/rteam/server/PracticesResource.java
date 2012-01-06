@@ -615,6 +615,7 @@ public class PracticesResource extends ServerResource {
     		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray, Boolean theIsHappeningNow) throws JSONException {
 		for(Practice p : thePractices) {
 			Team t = null;
+			Member currentUserMember = null;
 			JSONObject jsonPracticeObj = new JSONObject();
 			if(this.teamId == null) {
 				// no team specified, so practices returned are for all teams
@@ -630,6 +631,7 @@ public class PracticesResource extends ServerResource {
 					String participantRole = null;
 					for(Member m : t.getMembers()) {
 						if(m.isUserParticipant(theUser)) {
+							currentUserMember = m;
 							if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
 									(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
 								participantRole = m.getParticipantRole();
@@ -660,8 +662,13 @@ public class PracticesResource extends ServerResource {
 			if(theIsHappeningNow) {
 				String eventId = KeyFactory.keyToString(p.getKey());
 				// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
-				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.PRACTICE_EVENT_TYPE, t);
+				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.PRACTICE_EVENT_TYPE, t, currentUserMember);
 				jsonPracticeObj.put("attendees", jsonAttendeesArray);
+	    		
+	    		MessageThread whoIsComingMessageThread = MessageThread.getWhoIsComingMessageThread(eventId);		
+	    		if(whoIsComingMessageThread != null) {
+	    			jsonPracticeObj.put("messageThreadId", KeyFactory.keyToString(whoIsComingMessageThread.getKey()));
+	    		}
 			}
 			
 			theJsonArray.put(jsonPracticeObj);
@@ -672,6 +679,7 @@ public class PracticesResource extends ServerResource {
     		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray, Boolean theIsHappeningNow) throws JSONException {
 		for(Game g : theGames) {
 			Team t = null;
+			Member currentUserMember = null;
 			JSONObject jsonGameObj = new JSONObject();
 			if(this.teamId == null) {
 				// no team specified, so games returned are for all teams
@@ -687,6 +695,7 @@ public class PracticesResource extends ServerResource {
 					String participantRole = null;
 					for(Member m : t.getMembers()) {
 						if(m.isUserParticipant(theUser)) {
+							currentUserMember = m;
 							if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
 									(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
 								participantRole = m.getParticipantRole();
@@ -723,31 +732,41 @@ public class PracticesResource extends ServerResource {
 			if(theIsHappeningNow) {
 				String eventId = KeyFactory.keyToString(g.getKey());
 				// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
-				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.GAME_EVENT_TYPE, t);
+				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.GAME_EVENT_TYPE, t, currentUserMember);
 	    		jsonGameObj.put("attendees", jsonAttendeesArray);
+	    		
+	    		MessageThread whoIsComingMessageThread = MessageThread.getWhoIsComingMessageThread(eventId);		
+	    		if(whoIsComingMessageThread != null) {
+	    			jsonGameObj.put("messageThreadId", KeyFactory.keyToString(whoIsComingMessageThread.getKey()));
+	    		}
 			}
 
 			theJsonArray.put(jsonGameObj);
 		}
     }
     
-    private JSONArray buildAttendeeArray(String theEventId, String theEventType, Team theTeam) throws JSONException{
+    private JSONArray buildAttendeeArray(String theEventId, String theEventType, Team theTeam, Member theCurrentUserMember) throws JSONException{
     	EntityManager em = EMF.get().createEntityManager();
     	List<Attendee> attendees = null;
 		JSONArray jsonAttendeesArray = new JSONArray();
-    	
+		
     	try {
     		attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByEventIdAndEventType")
 					.setParameter("eventId", theEventId)
 					.setParameter("eventType", theEventType)
 					.getResultList();
     		
+    		Boolean isCurrentUser = null;
+			String currentUserMemberId = KeyFactory.keyToString(theCurrentUserMember.getKey());
     		List<String> memberIdsWithAttendance = new ArrayList<String>();
     		for(Attendee a : attendees) {
+				isCurrentUser = false;
     			memberIdsWithAttendance.add(a.getMemberId());
     			JSONObject jsonAttendeeObj = new JSONObject();
     			jsonAttendeeObj.put("memberId", a.getMemberId());
     			jsonAttendeeObj.put("preGameStatus", a.getPreGameStatus());
+    			if(currentUserMemberId.equals(a.getMemberId())) {isCurrentUser = true;}
+    			jsonAttendeeObj.put("isCurrentUser", isCurrentUser);
     			jsonAttendeesArray.put(jsonAttendeeObj);
     		}
     		
@@ -755,9 +774,12 @@ public class PracticesResource extends ServerResource {
     		for(Member m : theTeam.getMembers()) {
     			String memberId = KeyFactory.keyToString(m.getKey());
     			if(!memberIdsWithAttendance.contains(memberId)) {
+    				isCurrentUser = false;
         			JSONObject jsonAttendeeObj = new JSONObject();
     				jsonAttendeeObj.put("memberId", memberId);
         			jsonAttendeeObj.put("preGameStatus", Attendee.NO_REPLY_STATUS);
+        			if(currentUserMemberId.equals(memberId)) {isCurrentUser = true;}
+        			jsonAttendeeObj.put("isCurrentUser", isCurrentUser);
         			jsonAttendeesArray.put(jsonAttendeeObj);
     			}
     		}

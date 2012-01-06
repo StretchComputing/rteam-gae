@@ -16,6 +16,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
@@ -89,6 +91,12 @@ import com.google.appengine.api.datastore.Text;
     		query="SELECT mt FROM MessageThread mt WHERE " + 
     				"mt.activeThruGmtDate < :currentDate"  + " AND " +
     				"mt.status = :status"
+      ),
+  	@NamedQuery(
+    		name="MessageThread.getByEventIdAndType",
+    		query="SELECT mt FROM MessageThread mt WHERE " + 
+	   				"mt.eventId = :eventId" + " AND " +
+    				"mt.type = :type"
       ),
   	@NamedQuery(
     		name="MessageThread.getByStatus",
@@ -451,5 +459,26 @@ public class MessageThread {
 			return true;
 		}
 		return false;
+	}
+	
+	public static MessageThread getWhoIsComingMessageThread(String theEventId) {
+    	EntityManager em = EMF.get().createEntityManager();
+
+    	// Need to get the MessageThread -- need to return the messageThreadId
+		MessageThread messageThread = null;
+		try {
+    		messageThread = (MessageThread)em.createNamedQuery("MessageThread.getByEventIdAndType")
+				.setParameter("eventId", theEventId)
+				.setParameter("type", MessageThread.WHO_IS_COMING_TYPE)
+				.getSingleResult();
+		} catch (NoResultException e) {
+			// NOT and error,there may not be a Who's Coming poll yet for this event
+		} catch (NonUniqueResultException e) {
+			log.severe("should never happen - two users have the same key");
+		} finally {
+    		em.close();
+    	}
+		
+		return messageThread;
 	}
 }
