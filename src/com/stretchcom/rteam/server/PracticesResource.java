@@ -575,17 +575,17 @@ public class PracticesResource extends ServerResource {
 			
     		if(this.happening != null) {
         		JSONArray jsonTodayArray = new JSONArray();
-        		buildPracticeJsonArray(teams, todayPractices, currentUser, tz, "eventId", jsonTodayArray);
-        		buildGameJsonArray(teams, todayGames, currentUser, tz, "eventId", jsonTodayArray);
+        		buildPracticeJsonArray(teams, todayPractices, currentUser, tz, "eventId", jsonTodayArray, true);
+        		buildGameJsonArray(teams, todayGames, currentUser, tz, "eventId", jsonTodayArray, true);
         		jsonReturn.put("today", jsonTodayArray);
         		
         		JSONArray jsonTomorrowArray = new JSONArray();
-        		buildPracticeJsonArray(teams, tomorrowPractices, currentUser, tz, "eventId", jsonTomorrowArray);
-        		buildGameJsonArray(teams, tomorrowGames, currentUser, tz, "eventId", jsonTomorrowArray);
+        		buildPracticeJsonArray(teams, tomorrowPractices, currentUser, tz, "eventId", jsonTomorrowArray, true);
+        		buildGameJsonArray(teams, tomorrowGames, currentUser, tz, "eventId", jsonTomorrowArray, true);
         		jsonReturn.put("tomorrow", jsonTomorrowArray);
     		} else {
         		JSONArray jsonArray = new JSONArray();
-        		buildPracticeJsonArray(teams, practices, currentUser, tz, "practiceId", jsonArray);
+        		buildPracticeJsonArray(teams, practices, currentUser, tz, "practiceId", jsonArray, false);
         		jsonReturn.put("practices", jsonArray);
     		}
 		} catch (JSONException e) {
@@ -612,13 +612,14 @@ public class PracticesResource extends ServerResource {
     }
     
     private void buildPracticeJsonArray(List<Team> theTeams, List<Practice> thePractices, User theUser, 
-    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray) throws JSONException {
+    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray, Boolean theIsHappeningNow) throws JSONException {
 		for(Practice p : thePractices) {
+			Team t = null;
 			JSONObject jsonPracticeObj = new JSONObject();
 			if(this.teamId == null) {
 				// no team specified, so practices returned are for all teams
 				Set<Key> teamKeys = p.getTeams();
-				Team t = getTeamFromList(teamKeys, theTeams);
+				t = getTeamFromList(teamKeys, theTeams);
 				if(t != null) {
 					jsonPracticeObj.put("teamId", KeyFactory.keyToString(t.getKey()));
 					jsonPracticeObj.put("teamName", t.getTeamName());
@@ -655,18 +656,27 @@ public class PracticesResource extends ServerResource {
 			jsonPracticeObj.put("eventName", p.getEventName());
 			jsonPracticeObj.put("opponent", p.getOpponent());
 			jsonPracticeObj.put("isCanceled", p.getIsCanceled());
+			
+			if(theIsHappeningNow) {
+				String eventId = KeyFactory.keyToString(p.getKey());
+				// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
+				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.PRACTICE_EVENT_TYPE, t);
+				jsonPracticeObj.put("attendees", jsonAttendeesArray);
+			}
+			
 			theJsonArray.put(jsonPracticeObj);
 		}
     }
     
     private void buildGameJsonArray(List<Team> theTeams, List<Game> theGames, User theUser, 
-    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray) throws JSONException {
+    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray, Boolean theIsHappeningNow) throws JSONException {
 		for(Game g : theGames) {
+			Team t = null;
 			JSONObject jsonGameObj = new JSONObject();
 			if(this.teamId == null) {
 				// no team specified, so games returned are for all teams
 				Set<Key> teamKeys = g.getTeams();
-				Team t = getTeamFromList(teamKeys, theTeams);
+				t = getTeamFromList(teamKeys, theTeams);
 				if(t != null) {
 					jsonGameObj.put("teamId", KeyFactory.keyToString(t.getKey()));
 					jsonGameObj.put("teamName", t.getTeamName());
@@ -709,8 +719,42 @@ public class PracticesResource extends ServerResource {
         	jsonGameObj.put("scoreUs", scoreUs);
         	Integer scoreThem = g.getScoreThem() == null ? 0 : g.getScoreThem();
         	jsonGameObj.put("scoreThem", scoreThem);
+			
+			if(theIsHappeningNow) {
+				String eventId = KeyFactory.keyToString(g.getKey());
+				// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
+				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.GAME_EVENT_TYPE, t);
+	    		jsonGameObj.put("attendees", jsonAttendeesArray);
+			}
+
 			theJsonArray.put(jsonGameObj);
 		}
+    }
+    
+    private JSONArray buildAttendeeArray(String theEventId, String theEventType, Team theTeam) throws JSONException{
+		List<Attendee> attendees = Attendee.getAttendeesForEvent(theEventId, theEventType);
+		
+		List<String> memberIdsWithAttendance = new ArrayList<String>();
+		JSONArray jsonAttendeesArray = new JSONArray();
+		for(Attendee a : attendees) {
+			memberIdsWithAttendance.add(a.getMemberId());
+			JSONObject jsonAttendeeObj = new JSONObject();
+			jsonAttendeeObj.put("memberId", a.getMemberId());
+			jsonAttendeeObj.put("preGameStatus", a.getPreGameStatus());
+			jsonAttendeesArray.put(jsonAttendeeObj);
+		}
+		
+		// now, for all team members without attendance
+		for(Member m : theTeam.getMembers()) {
+			String memberId = KeyFactory.keyToString(m.getKey());
+			if(!memberIdsWithAttendance.contains(memberId)) {
+    			JSONObject jsonAttendeeObj = new JSONObject();
+				jsonAttendeeObj.put("memberId", memberId);
+    			jsonAttendeeObj.put("preGameStatus", Attendee.NO_REPLY_STATUS);
+    			jsonAttendeesArray.put(jsonAttendeeObj);
+			}
+		}
+		return jsonAttendeesArray;
     }
     
     private Team getTeamFromList(Set<Key> theTeamKeys, List<Team> theTeams) {

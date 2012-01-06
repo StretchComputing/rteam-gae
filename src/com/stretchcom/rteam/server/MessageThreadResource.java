@@ -551,7 +551,7 @@ public class MessageThreadResource extends ServerResource {
     	    					}
     							
     						} else {
-    							// No members provided, so build memberIds list. Only include if recipient has not replied yet
+    							// No members provided, so build memberIds list to include ALL recipients in messageThread that have NOT yet replied
     							if(r.getStatus().equalsIgnoreCase(Recipient.SENT_STATUS)) {
         							memberIdsToBeNotified.add(r.getMemberId());
         							memberToBeNotified = true;
