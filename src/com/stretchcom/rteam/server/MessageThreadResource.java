@@ -520,7 +520,7 @@ public class MessageThreadResource extends ServerResource {
         			}
         		}
     			
-    			List<String> memberIds = new ArrayList<String>();
+    			List<String> memberIdsToBeNotified = new ArrayList<String>();
     			String reply = "";
     			String followupMessage = "";
     			Boolean wasWhoIsComingReply = false;
@@ -529,35 +529,38 @@ public class MessageThreadResource extends ServerResource {
     				if(messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
     					
     					JSONArray recipientsJsonArray = json.getJSONArray("sendReminder");
-    					int arraySize = recipientsJsonArray.length();
-    					log.info("json recipients array length = " + arraySize);
-    					for(int i=0; i<arraySize; i++) {
-    						log.info("storing member " + i);
-    						memberIds.add(recipientsJsonArray.getString(i));
-    					}
+    					int numOfJsonRecipients = recipientsJsonArray.length();
+    					log.info("json recipients array length = " + numOfJsonRecipients);
     					
-    					boolean memberIdsProvided = memberIds.size() == 0 ? false : true;
+    					boolean memberIdsProvided = numOfJsonRecipients == 0 ? false : true;
     					
     					List<Recipient> recipients = messageThread.getRecipients();
     					for(Recipient r: recipients) {
-    						boolean matchingMember = false;
+    						boolean memberToBeNotified = false;
     						if(memberIdsProvided) {
     							// see if this recipient is one of the members provided/specified
-    							for(String memId : memberIds) {
-    								if(memId.equals(r.getMemberId())) {
-    									matchingMember = true;
+    	    					for(int i=0; i<numOfJsonRecipients; i++) {
+    								if(recipientsJsonArray.getString(i).equals(r.getMemberId())) {
+    									// will only be notified if they have NOT yet replied to the poll/confirm message
+    									if(r.getStatus().equalsIgnoreCase(Recipient.SENT_STATUS)) {
+        									memberIdsToBeNotified.add(r.getMemberId());
+        									memberToBeNotified = true;
+    									}
     									break;
     								}
-    							}
+    	    					}
     							
     						} else {
-    							// no members provided, so build memberIds list needed to send message below
-    							memberIds.add(r.getMemberId());
-    							matchingMember = true;
+    							// No members provided, so build memberIds list. Only include if recipient has not replied yet
+    							if(r.getStatus().equalsIgnoreCase(Recipient.SENT_STATUS)) {
+        							memberIdsToBeNotified.add(r.getMemberId());
+        							memberToBeNotified = true;
+    							}
     						}
     						
     						// only update recipient if member is to receive the reminder message
-    						if(matchingMember == true && r.getStatus().equalsIgnoreCase(Recipient.SENT_STATUS)) {
+    						// updating recipient will make poll show up for rTeam user again
+    						if(memberToBeNotified == true) {
     							int numOfSends = r.getNumOfSends();
     							numOfSends++;
     							r.setNumOfSends(numOfSends);
@@ -609,7 +612,7 @@ public class MessageThreadResource extends ServerResource {
     						r.setFollowupMessage(followupMessage);
     						r.setStatus(MessageThread.FINALIZED_STATUS);
     						r.setWasViewed(false);
-    						memberIds.add(r.getMemberId());
+    						memberIdsToBeNotified.add(r.getMemberId());
     					}
     				}
     			} else if(json.has("status")) {
@@ -661,7 +664,7 @@ public class MessageThreadResource extends ServerResource {
     			if(followupMessage.length() > 0 && !followupMessage.equalsIgnoreCase("none")) {
     				// convert memberIds to keys
     				Set<Key> memberKeys = new HashSet<Key>();
-    				for(String mId : memberIds) {
+    				for(String mId : memberIdsToBeNotified) {
     					memberKeys.add(KeyFactory.stringToKey(mId));
     				}
     				
