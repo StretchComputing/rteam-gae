@@ -84,8 +84,8 @@ public class EmailTaskServlet extends HttpServlet {
 //			        msg.setReplyTo(replyToAddresses);
 			        msg.addRecipient(Message.RecipientType.TO, new InternetAddress(emailAddress));
 			        //::TODO:: only for testing **********************************************************
-			        msg.addRecipient(Message.RecipientType.BCC, new InternetAddress("joepwro@gmail.com"));
-			        msg.addRecipient(Message.RecipientType.BCC, new InternetAddress("njw438@gmail.com"));
+			        //msg.addRecipient(Message.RecipientType.BCC, new InternetAddress("joepwro@gmail.com"));
+			        //msg.addRecipient(Message.RecipientType.BCC, new InternetAddress("njw438@gmail.com"));
 			        //************************************************************************************
 			        if(subject == null || subject.trim().length() == 0) {
 			        	subject = "...";

@@ -196,6 +196,13 @@ import com.google.appengine.api.datastore.Text;
     		      "r.status <> :status"
     ),
     @NamedQuery(
+    		name="Recipient.getByOneUseSmsTokenAndTokenStatusAndStatus",
+    		query="SELECT r FROM Recipient r WHERE " +
+    		      "r.oneUseSmsToken = :oneUseSmsToken" + " AND " +
+    		      "r.oneUseTokenStatus = :oneUseTokenStatus" + " AND " +
+    		      "r.status = :status"
+    ),
+    @NamedQuery(
     		name="Recipient.getOldActiveThru",
     		query="SELECT r FROM Recipient r WHERE " + 
     				"r.activeThruGmtDate < :currentDate"  + " AND " +
@@ -607,10 +614,10 @@ public class Recipient {
 		// It is possible this member has multiple outstanding confirm/poll responses. This one
 		// response will answer all "matching" confirms/polls.
 		try {
-			List<Recipient> recipients = (List<Recipient>)emRecipient.createNamedQuery("Recipient.getByOneUseSmsTokenAndTokenStatusAndNotStatus")
+			List<Recipient> recipients = (List<Recipient>)emRecipient.createNamedQuery("Recipient.getByOneUseSmsTokenAndTokenStatusAndStatus")
 				.setParameter("oneUseSmsToken", theToken)
 				.setParameter("oneUseTokenStatus", Recipient.NEW_TOKEN_STATUS)
-				.setParameter("status", Recipient.ARCHIVED_STATUS)
+				.setParameter("status", Recipient.SENT_STATUS)
 				.getResultList();
 			
 			if(recipients.size() == 0) {
@@ -640,11 +647,13 @@ public class Recipient {
 				log.info("empty unsolicited SMS message received");
 			} else {
 				// REPLY to rTeam MESSAGE SENT
+				log.info("processing rTeam SMS message = " + theSmsResponse);
 	    		int matchingPollCount = 0;
 	    		int totalPollCount = 0;
 	    		int confirmedMessageCount = 0;
 	    		Boolean unsolicitiedReplySuccessful = false;
 				for(Recipient r : recipients) {
+					log.info("processing recipient with status=" + r.getStatus());
 					MessageThread messageThread = r.getMessageThread();
 	    			if(messageThread.isPoll()) {
 	    				totalPollCount++;
@@ -712,7 +721,7 @@ public class Recipient {
 	    		log.info("number of recipients with token " + theToken + " confirmed via SMS = " + confirmedMessageCount);
 			}
 		} catch (Exception e) {
-    		log.severe("handleSmsResponse(): Query Recipient.getByOneUseSmsTokenAndTokenStatusAndNotStatus failed. exception = " + e.getMessage());
+    		log.severe("handleSmsResponse(): Query Recipient.getByOneUseSmsTokenAndTokenStatusAndStatus failed. exception = " + e.getMessage());
     		return UserInterfaceMessage.SERVER_ERROR;
     	} finally {
     		emRecipient.close();

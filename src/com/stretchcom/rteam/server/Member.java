@@ -926,9 +926,9 @@ public class Member {
 		umiPrimary.setLastName(this.lastName);
 		umiPrimary.setFullName(getDisplayName(this.firstName, this.lastName, this.emailAddress, this.phoneNumber));
 		umiPrimary.setAutoArchiveDayCount(this.autoArchiveDayCount);
-		umiPrimary.setHasRteamMessageAccessEnabled(this.hasRteamMessageAccessEnabled);
-		umiPrimary.setHasEmailMessageAccessEnabled(this.hasEmailMessageAccessEnabled);
-		umiPrimary.setHasSmsMessageAccessEnabled(this.hasSmsMessageAccessEnabled);
+		umiPrimary.setHasRteamMessageAccessEnabled(this.hasRteamMessageAccessEnabled == null ? false : this.hasRteamMessageAccessEnabled);
+		umiPrimary.setHasEmailMessageAccessEnabled(this.hasEmailMessageAccessEnabled == null ? false : this.hasEmailMessageAccessEnabled);
+		umiPrimary.setHasSmsMessageAccessEnabled(this.hasSmsMessageAccessEnabled == null ? false: this.hasSmsMessageAccessEnabled);
 		
 		// only add to participant list if NA or confirmed
 		if(umiPrimary.getEmailAddress() != null || umiPrimary.getPhoneNumber() != null) {

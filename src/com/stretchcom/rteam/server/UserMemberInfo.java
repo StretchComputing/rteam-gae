@@ -221,6 +221,7 @@ public class UserMemberInfo {
 	}
 
 	public Boolean getHasRteamMessageAccessEnabled() {
+		if(hasRteamMessageAccessEnabled == null) {return false;}
 		return hasRteamMessageAccessEnabled;
 	}
 
@@ -229,6 +230,7 @@ public class UserMemberInfo {
 	}
 
 	public Boolean getHasEmailMessageAccessEnabled() {
+		if(hasEmailMessageAccessEnabled == null) {return false;}
 		return hasEmailMessageAccessEnabled;
 	}
 
@@ -237,6 +239,7 @@ public class UserMemberInfo {
 	}
 
 	public Boolean getHasSmsMessageAccessEnabled() {
+		if(hasSmsMessageAccessEnabled == null) {return false;}
 		return hasSmsMessageAccessEnabled;
 	}
 
@@ -245,6 +248,7 @@ public class UserMemberInfo {
 	}
 	
 	public Boolean getHasCcToSelfEnabled() {
+		if(hasCcToSelfEnabled == null) {return false;}
 		return hasCcToSelfEnabled;
 	}
 

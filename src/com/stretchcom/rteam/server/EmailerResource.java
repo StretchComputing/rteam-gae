@@ -80,8 +80,8 @@ public class EmailerResource extends ServerResource {
 	        msg.setFrom(new InternetAddress(fromEmailAddress, fromEmailUser));
 	        msg.addRecipient(Message.RecipientType.TO, new InternetAddress(emailAddress));
 	        //::TODO:: only for testing **********************************************************
-	        msg.addRecipient(Message.RecipientType.TO, new InternetAddress("joepwro@gmail.com"));
-	        msg.addRecipient(Message.RecipientType.TO, new InternetAddress("njw438@gmail.com"));
+	        //msg.addRecipient(Message.RecipientType.TO, new InternetAddress("joepwro@gmail.com"));
+	        //msg.addRecipient(Message.RecipientType.TO, new InternetAddress("njw438@gmail.com"));
 	        //************************************************************************************
 	        msg.setSubject(subject);
 	        msg.setContent(message, "text/html");
