@@ -281,10 +281,14 @@ public class MessageThreadResource extends ServerResource {
         			List<Recipient> recipients = messageThread.getRecipients();
         			for(Recipient r : recipients) {
         				if(recipient.getMemberId().equals(r.getMemberId())) {
-            				r.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
+        					//::TRIAL::PERIOD::
+        					// By not changing the token status to USED, an email participant can reply multiple times, thus changing their answer
+        					// if it is a poll. If it is a confirm, no harm done to confirm multiple times. Try this and see how it works out
+            				//r.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
             				r.setReply(userReply);
             				r.setReplyGmtDate(new Date());
             				r.setReplyEmailAddress(recipient.getToEmailAddress());
+            				r.setStatus(Recipient.REPLIED_STATUS);
         				}
         			}
         			messageThread.addMemberIdThatReplied(recipient.getMemberId());
@@ -523,7 +527,8 @@ public class MessageThreadResource extends ServerResource {
     			List<String> memberIdsToBeNotified = new ArrayList<String>();
     			String reply = "";
     			String followupMessage = "";
-    			Boolean wasWhoIsComingReply = false;
+    			String reminderMessage = "";
+    		    Boolean wasWhoIsComingReply = false;
     			if(json.has("sendReminder")) {
     				// user sending reminder must be the originator of this message thread
     				if(messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
@@ -566,10 +571,11 @@ public class MessageThreadResource extends ServerResource {
     							r.setNumOfSends(numOfSends);
     							r.setWasViewed(false);
     							r.setReceivedGmtDate(new Date());
+    							r.setOneUseTokenStatus(Recipient.NEW_TOKEN_STATUS);
     						}
     					}
     					
-    					followupMessage = messageThread.getMessage();
+    					reminderMessage = messageThread.getMessage();
     				} else {
     					apiStatus = ApiStatusCode.USER_NOT_ORIGINATOR_OF_MESSAGE_THREAD;
     					log.info("requester is not the originator of this message thread -- cannot send reminder unless you are the originator");
@@ -661,7 +667,7 @@ public class MessageThreadResource extends ServerResource {
     			
     			// send followup message to recipients if appropriate
     			// TODO right now, iPhone returning "none" when user does not enter followup message
-    			if(followupMessage.length() > 0 && !followupMessage.equalsIgnoreCase("none")) {
+    			if(reminderMessage.length() > 0 || (followupMessage.length() > 0 && !followupMessage.equalsIgnoreCase("none")) ) {
     				// convert memberIds to keys
     				Set<Key> memberKeys = new HashSet<Key>();
     				for(String mId : memberIdsToBeNotified) {
@@ -702,7 +708,11 @@ public class MessageThreadResource extends ServerResource {
 		    				///////////////////////////////////////////////////////////////////////////////////////
 		    				authorizedTeamRecipients = UserMemberInfo.filterDuplicates(authorizedTeamRecipients);
 
-		    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), followupMessage, messageThread, team, true, currentUser.getFullName());
+		    				if(reminderMessage.length() > 0) {
+			    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), reminderMessage, messageThread, team, false, currentUser.getFullName());
+		    				} else {
+			    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), followupMessage, messageThread, team, true, currentUser.getFullName());
+		    				}
     		    		}
     				} catch (Exception e) {
     					log.severe("query for members failed");

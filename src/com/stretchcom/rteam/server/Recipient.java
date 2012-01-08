@@ -649,9 +649,13 @@ public class Recipient {
 	            			List<Recipient> sameMemberRecipients = messageThread.getRecipients();
 	            			for(Recipient smr : sameMemberRecipients) {
 	            				if(r.getMemberId().equals(smr.getMemberId())) {
-	                    			smr.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
+	            					//::TRIAL::PERIOD::
+	            					// By not changing the token status to USED, an email participant can reply multiple times, thus changing their answer
+	            					// if it is a poll. If it is a confirm, no harm done to confirm multiple times. Try this and see how it works out
+	                    			//smr.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
 	                    			smr.setReply(matchingPollChoice);
 	                    			smr.setReplyGmtDate(new Date());
+	                    			smr.setStatus(Recipient.REPLIED_STATUS);
 	                				messageThread.addMemberIdThatReplied(smr.getMemberId());
 	            				}
 	            			}
@@ -926,12 +930,14 @@ public class Recipient {
 	}
 	
 	public Boolean isPendingReply() {
+		log.info("isPendingReply(): memberName=" + this.memberName + " status=" + this.status + " reply=" + this.reply + " type=" + this.type);
 		if(this.status == null) {return false;}
 		
 		// Pending -- sent_status or MAYBE reply for a who's coming message
 		if(this.status.equalsIgnoreCase(SENT_STATUS) ||
 		   (this.type != null && this.type.equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE) &&
 		    this.status.equalsIgnoreCase(REPLIED_STATUS) && this.reply.equalsIgnoreCase(MessageThread.MAYBE_WHO_IS_COMING_CHOICE)) ) {
+			log.info("isPending true for memberName=" + this.memberName);
 			return true;
 		}
 		return false;

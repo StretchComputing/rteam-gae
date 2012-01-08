@@ -106,12 +106,8 @@ public class AttendeesResource extends ServerResource {
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
     			log.severe("user could not be retrieved from Request attributes!!");
+    			return Utility.apiError(null);
     		} 
-    		
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
-			}
     		
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
@@ -158,15 +154,13 @@ public class AttendeesResource extends ServerResource {
 			// all JSON fields are required
 			Team team = null;
 			if(teamIdStr == null || eventIdStr ==  null || eventType == null || attendeesJsonArray == null) {
-				apiStatus = ApiStatusCode.ALL_PARAMETERS_REQUIRED;
+				return Utility.apiError(ApiStatusCode.ALL_PARAMETERS_REQUIRED);
 			}
 			else if(!Practice.isEventTypeValid(eventType)) {
-				apiStatus = ApiStatusCode.INVALID_EVENT_TYPE_PARAMETER;
-				log.info(apiStatus);
+				return Utility.apiError(ApiStatusCode.INVALID_EVENT_TYPE_PARAMETER);
 			}
 			else if(!currentUser.isUserMemberOfTeam(teamIdStr)) {
-				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
         	}
 			else {
 	    		team = (Team)em.createNamedQuery("Team.getByKey")
@@ -175,8 +169,9 @@ public class AttendeesResource extends ServerResource {
 				log.info("team retrieved = " + team.getTeamName());
 				
        			Boolean isNetworkedAuthenticatedCoordinator = false;
+       			List<Member> memberships = null;
     			if(currentUser.getIsNetworkAuthenticated()) {
-    				List<Member> memberships = Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
+    				memberships = Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
     				for(Member m : memberships) {
         	    		if(m.isCoordinator()) {
         	    			isNetworkedAuthenticatedCoordinator = true;
@@ -184,17 +179,24 @@ public class AttendeesResource extends ServerResource {
         	    		}
     				}
     			}
-    			//::BUSINESSRULE:: user must be the team creator or network authenticated coordinator to update attendees
+    			//::BUSINESSRULE:: for FULL update access, user must be the team creator or network authenticated coordinator to update attendees
     			Boolean isCreator = team.isCreator(currentUser.getEmailAddress());
     			if(!isCreator && !isNetworkedAuthenticatedCoordinator) {
-    				apiStatus = ApiStatusCode.USER_NOT_CREATOR_NOR_NETWORK_AUTHENTICATED_COORDINATOR;
-    				log.info("user is not the team creator nor network authenticated coordinator");
+    				// a non-coordinator can update their own attendance, but nobody else's
+    				Boolean doesOnlyMemberIdBelongToCurrentUser = false;
+    				if(memberships != null && memberIds.size() == 1) {
+        				for(Member m : memberships) {
+        					if(memberIds.get(0).equals(KeyFactory.keyToString(m.getKey()))) {
+        						doesOnlyMemberIdBelongToCurrentUser = true;
+        						break;
+        					}
+        				}
+    				}
+    				
+    				if(!doesOnlyMemberIdBelongToCurrentUser) {
+    					return Utility.apiError(ApiStatusCode.USER_NOT_CREATOR_NOR_NETWORK_AUTHENTICATED_COORDINATOR);
+    				}
     			} 
-			}
-			
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
 			}
 
 			Date eventDate = null;

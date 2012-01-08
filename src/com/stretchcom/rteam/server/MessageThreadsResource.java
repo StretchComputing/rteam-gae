@@ -359,6 +359,7 @@ public class MessageThreadsResource extends ServerResource {
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			for(UserMemberInfo umi : authorizedTeamRecipients) {
 				Recipient recipient = new Recipient();
+				recipient.setType(messageThread.getType());
 				String memId = KeyFactory.keyToString(umi.getMember().getKey());
 				recipient.setMemberId(memId);
 				recipient.setMemberName(umi.getMember().getFullName());  // TODO setting to Primary member name - does it matter???
