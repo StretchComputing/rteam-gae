@@ -162,42 +162,43 @@ public class AttendeesResource extends ServerResource {
 			else if(!currentUser.isUserMemberOfTeam(teamIdStr)) {
 				return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
         	}
-			else {
-	    		team = (Team)em.createNamedQuery("Team.getByKey")
-					.setParameter("key", KeyFactory.stringToKey(teamIdStr))
-					.getSingleResult();
-				log.info("team retrieved = " + team.getTeamName());
-				
-       			Boolean isNetworkedAuthenticatedCoordinator = false;
-       			List<Member> memberships = null;
-    			if(currentUser.getIsNetworkAuthenticated()) {
-    				memberships = Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
-    				for(Member m : memberships) {
-        	    		if(m.isCoordinator()) {
-        	    			isNetworkedAuthenticatedCoordinator = true;
-        	    			break;
-        	    		}
-    				}
-    			}
-    			//::BUSINESSRULE:: for FULL update access, user must be the team creator or network authenticated coordinator to update attendees
-    			Boolean isCreator = team.isCreator(currentUser.getEmailAddress());
-    			if(!isCreator && !isNetworkedAuthenticatedCoordinator) {
-    				// a non-coordinator can update their own attendance, but nobody else's
-    				Boolean doesOnlyMemberIdBelongToCurrentUser = false;
-    				if(memberships != null && memberIds.size() == 1) {
-        				for(Member m : memberships) {
-        					if(memberIds.get(0).equals(KeyFactory.keyToString(m.getKey()))) {
-        						doesOnlyMemberIdBelongToCurrentUser = true;
-        						break;
-        					}
-        				}
-    				}
-    				
-    				if(!doesOnlyMemberIdBelongToCurrentUser) {
-    					return Utility.apiError(ApiStatusCode.USER_NOT_CREATOR_NOR_NETWORK_AUTHENTICATED_COORDINATOR);
-    				}
-    			} 
+			
+    		team = (Team)em.createNamedQuery("Team.getByKey")
+				.setParameter("key", KeyFactory.stringToKey(teamIdStr))
+				.getSingleResult();
+			log.info("team retrieved = " + team.getTeamName());
+			
+   			Boolean isNetworkedAuthenticatedCoordinator = false;
+   			List<Member> memberships = null;
+			if(currentUser.getIsNetworkAuthenticated()) {
+				log.info("user is network authenticated");
+				memberships = Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
+				for(Member m : memberships) {
+    	    		if(m.isCoordinator()) {
+    	    			isNetworkedAuthenticatedCoordinator = true;
+    	    			break;
+    	    		}
+				}
 			}
+			
+			// a non-coordinator can update their own attendance, but nobody else's
+			Boolean onlyMemberIdBelongsToCurrentUser = false;
+			if(memberships != null && memberIds.size() == 1) {
+				log.info("only one member ID specified -- Who's coming response");
+				for(Member m : memberships) {
+					if(memberIds.get(0).equals(KeyFactory.keyToString(m.getKey()))) {
+						onlyMemberIdBelongsToCurrentUser = true;
+						log.info("onlyMemberIdBelongsToCurrentUser is TRUE");
+						break;
+					}
+				}
+			}
+			
+			//::BUSINESSRULE:: for FULL update access, user must be the team creator or network authenticated coordinator to update attendees
+			Boolean isCreator = team.isCreator(currentUser.getEmailAddress());
+			if(!isCreator && !isNetworkedAuthenticatedCoordinator && !onlyMemberIdBelongsToCurrentUser) {
+				return Utility.apiError(ApiStatusCode.USER_NOT_CREATOR_NOR_NETWORK_AUTHENTICATED_COORDINATOR);
+			} 
 
 			Date eventDate = null;
 			String eventName = null;
@@ -328,6 +329,12 @@ public class AttendeesResource extends ServerResource {
 				} finally {
 					emEvent.close();
 				}
+			}
+			
+			// if a single member attendance was updated from the who's coming, then check if one or more polls were sent
+			// out to this member and update the status of the recipient
+			if(onlyMemberIdBelongsToCurrentUser) {
+				Recipient.updateWhoIsComingPollForMember(eventIdStr, memberIds.get(0), preGameStatuses.get(0));
 			}
 			
 		} catch (IOException e) {

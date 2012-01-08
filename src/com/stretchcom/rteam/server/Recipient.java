@@ -209,6 +209,13 @@ import com.google.appengine.api.datastore.Text;
       				"r.status <> :status" + " AND " +
       				"r.messageLinkOnly = FALSE"
       ),
+      @NamedQuery(
+      		name="Recipient.getByEventIdAndMemberIdAndType",
+      		query="SELECT r FROM Recipient r WHERE " +
+      				"r.eventId = :eventId" + " AND " +
+      				"r.memberId = :memberId" + " AND " +
+      				"r.type = :type"
+      ),
 })
 public class Recipient {
 	private static final Logger log = Logger.getLogger(Recipient.class.getName());
@@ -941,6 +948,51 @@ public class Recipient {
 			return true;
 		}
 		return false;
+	}
+	
+	public static void updateWhoIsComingPollForMember(String theEventId, String theMemberId, String thePreGameStatus) {
+		EntityManager emRecipient = EMF.get().createEntityManager();
+		
+		try {
+			emRecipient.getTransaction().begin();
+			Recipient recipient = (Recipient)emRecipient.createNamedQuery("Recipient.getByEventIdAndMemberIdAndType")
+				.setParameter("eventId", theEventId)
+				.setParameter("memberId", theMemberId)
+				.setParameter("type", MessageThread.WHO_IS_COMING_TYPE)
+				.getSingleResult();
+			log.info("updateAllMemberPollsForEvent(): recipient found");
+			
+			// This is a "first" response wins scenario. So mark other individuals that are part of this same
+			// membership as having replied.
+			MessageThread messageThread = recipient.getMessageThread();
+			List<Recipient> recipients = messageThread.getRecipients();
+			for(Recipient r : recipients) {
+				if(recipient.getMemberId().equals(r.getMemberId())) {
+					//::TRIAL::PERIOD::
+					// By not changing the token status to USED, an email participant can reply multiple times, thus changing their answer
+					// if it is a poll. If it is a confirm, no harm done to confirm multiple times. Try this and see how it works out
+    				//r.setOneUseTokenStatus(Recipient.USED_TOKEN_STATUS);
+    				r.setReply(thePreGameStatus);
+    				r.setReplyGmtDate(new Date());
+    				r.setReplyEmailAddress(recipient.getToEmailAddress());
+    				r.setStatus(Recipient.REPLIED_STATUS);
+				}
+			}
+			messageThread.addMemberIdThatReplied(recipient.getMemberId());
+
+			emRecipient.getTransaction().commit();
+		} catch (NoResultException e) {
+			// NOT an error -- there may not have been a poll sent out
+			log.info("updateWhoIsComingPollForMember(): no who's coming poll found for the member and event");
+			return;
+		} catch (NonUniqueResultException e) {
+			log.severe("sendReplyMessage(): should never happen - two or more active polls found for same member and same event");
+			return;
+		} finally {
+    		emRecipient.close();
+    	}
+    	
+    	return;
 	}
 
 }
