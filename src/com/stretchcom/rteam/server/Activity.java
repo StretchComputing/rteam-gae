@@ -5,18 +5,14 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
 
-import com.google.appengine.api.datastore.Blob;
 import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Text;
 
 @Entity
@@ -59,6 +55,9 @@ public class Activity implements Comparable<Activity> {
 	private Text photoBase64;
 	private Text thumbNailBase64;
 	private Text videoBase64;
+	private String eventId;
+	private String eventType;
+	private String eventDetailsId; // not sure I want to keep this -- maybe too much overhead to set this
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -248,4 +247,27 @@ public class Activity implements Comparable<Activity> {
 		this.videoBase64 = new Text(videoBase64);
 	}
 	
+	public String getEventType() {
+		return eventType;
+	}
+
+	public void setEventType(String eventType) {
+		this.eventType = eventType;
+	}
+
+	public String getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(String eventId) {
+		this.eventId = eventId;
+	}
+
+	public String getEventDetailsId() {
+		return eventDetailsId;
+	}
+
+	public void setEventDetailsId(String eventDetailsId) {
+		this.eventDetailsId = eventDetailsId;
+	}
 }

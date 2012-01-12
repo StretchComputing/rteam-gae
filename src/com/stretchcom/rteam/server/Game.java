@@ -1,6 +1,5 @@
 package com.stretchcom.rteam.server;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -9,23 +8,16 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
-import javax.persistence.Id;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
-import javax.persistence.ManyToOne;
-import javax.persistence.FetchType;
+import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
 import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 
 @Entity
 @NamedQueries({
@@ -81,6 +73,7 @@ public class Game implements Cloneable {
 	private String mvpMemberId;
 	private String mvpDisplayName; //could be full name, email address, phone number -- depending on what was entered
 	private String pollStatus = OPEN_POLL_STATUS; // open for voting as soon as game is created. Later may wait until game starts.
+	private String lastEventDetails; // fast way to determine last EventDetails for a game so Activity can be associated with it
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -316,6 +309,14 @@ public class Game implements Cloneable {
 
 	public void setPollStatus(String pollStatus) {
 		this.pollStatus = pollStatus;
+	}
+	
+	public String getLastEventDetails() {
+		return lastEventDetails;
+	}
+
+	public void setLastEventDetails(String lastEventDetails) {
+		this.lastEventDetails = lastEventDetails;
 	}
 
 	public String getMvpDisplayName() {
