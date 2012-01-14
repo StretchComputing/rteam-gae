@@ -17,6 +17,7 @@ import org.restlet.data.Status;
 
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Text;
 
 public class PubHub {
 	private static final Logger log = Logger.getLogger(PubHub.class.getName());
@@ -2084,7 +2085,10 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-	    		String emailBody = Emailer.getGameSummaryEmailBody(umi.getFullName(), theTeam, umi.getOneUseToken(), theGame);
+				String activityId = Activity.getActivityIdOfEventPhoto(KeyFactory.keyToString(theGame.getKey()), Practice.GAME_EVENT_TYPE);
+				String photoUrl = null;
+				if(activityId != null) {photoUrl = RteamApplication.BASE_URL_WITH_SLASH + "photo/" + activityId;}
+	    		String emailBody = Emailer.getGameSummaryEmailBody(umi.getFullName(), theTeam, umi.getOneUseToken(), theGame, photoUrl);
 		    	Emailer.send(umi.getEmailAddress(), subject, emailBody, Emailer.REPLY);
 			}
 			if( (umi.getPhoneNumber() != null || umi.getSmsEmailAddress() != null) && umi.getHasSmsMessageAccessEnabled()) {

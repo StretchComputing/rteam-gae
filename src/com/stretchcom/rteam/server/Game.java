@@ -360,5 +360,4 @@ public class Game implements Cloneable {
 			em.close();
 		}
 	}
-	
 }

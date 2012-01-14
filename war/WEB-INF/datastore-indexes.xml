@@ -138,6 +138,12 @@
         <property name="cacheId" direction="desc"/>
     </datastore-index>
     
+    <datastore-index kind="Activity" ancestor="false" source="auto">
+        <property name="eventId" direction="asc"/>
+        <property name="eventType" direction="asc"/>
+        <property name="photoBase64" direction="asc"/>
+    </datastore-index>
+
     <!-- Used 2 times in query history -->
     <datastore-index kind="Attendee" ancestor="false" source="auto">
         <property name="eventType" direction="asc"/>

@@ -525,7 +525,7 @@ public class Emailer {
     	return sb.toString();
     }
     
-    public static String getGameSummaryEmailBody(String theFullName, Team theTeam, String theOneUseToken, Game theGame) {
+    public static String getGameSummaryEmailBody(String theFullName, Team theTeam, String theOneUseToken, Game theGame, String thePhotoUrl) {
     	StringBuffer sb = new StringBuffer();
     	buildStandardEmailHeader(sb);
     	
@@ -550,6 +550,12 @@ public class Emailer {
 	    	sb.append("</span>");
 	    	sb.append("</div>");
     	sb.append("</div>");
+    	
+    	if(thePhotoUrl != null) {
+        	sb.append("<div style='height:10px;'></div>");
+        	sb.append("<div style='margin: auto;'><img src='" + thePhotoUrl + "' border='0' alt='Game Photo'></div>");
+        	sb.append("<div style='height:10px;'></div>");
+    	}
     	
     	buildStandardEmailSignature(sb, null, theTeam.getTwitterScreenName(), theOneUseToken);
     	return sb.toString();

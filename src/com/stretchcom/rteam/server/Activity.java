@@ -3,16 +3,21 @@ package com.stretchcom.rteam.server;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.persistence.Basic;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Text;
 
 @Entity
@@ -41,8 +46,13 @@ import com.google.appengine.api.datastore.Text;
     				"a.createdGmtDate <= :mostCurrentDate"  + " AND " +
     				"a.createdGmtDate >= :leastCurrentDate ORDER BY a.createdGmtDate DESC"
     ),
+    @NamedQuery(
+    		name="Activity.getByEventIdAndEventTypeWithPhoto",
+    		query="SELECT a FROM Activity a WHERE a.eventId = :eventId AND a.eventType = :eventType AND photoBase64 <> NULL"
+    ),
 })
 public class Activity implements Comparable<Activity> {
+	private static final Logger log = Logger.getLogger(Activity.class.getName());
 	
 	private Long twitterId;
 	private Long cacheId;    // rTeam cache ID that is always SEQUENTIAL
@@ -269,5 +279,33 @@ public class Activity implements Comparable<Activity> {
 
 	public void setEventDetailsId(String eventDetailsId) {
 		this.eventDetailsId = eventDetailsId;
+	}
+	
+	// returns activity ID of an activity associated with event that has a photo. If more than one, photo chosen randomly.
+	// returns null if no activity associated with event or no activity that is associated with the event has a photo
+	public static String getActivityIdOfEventPhoto(String theEventId, String theEventType) {
+		String activityIdWithPhoto = null;
+		
+    	EntityManager em = EMF.get().createEntityManager();
+    	try {
+			List<Activity> activitiesWithPhotos = (List<Activity>)em.createNamedQuery("Activity.getByEventIdAndEventTypeWithPhoto")
+				.setParameter("eventId", theEventId)
+				.setParameter("eventType", theEventType)
+				.getResultList();
+			if(activitiesWithPhotos.size() > 0) {
+				// TODO for now, just pick the first one returned. Later make it random or use some other algorithm
+				activityIdWithPhoto = KeyFactory.keyToString(activitiesWithPhotos.get(0).getKey());
+			} else {
+				log.severe("REMOVE THE TEST CODE IN Activity.getActivityIdOfEventPhotof() THAT IS ALWAYS RETURNING AN ACTIVITY ID");
+				return "aglydGVhbXRlc3RyEQsSCEFjdGl2aXR5GJfuvgEM";
+			}
+    	} catch (Exception e) {
+			log.severe("getActivityIdOfEventPhoto() exception = " + e.getMessage());
+			e.printStackTrace();
+		} finally {
+		    em.close();
+		}
+
+    	return activityIdWithPhoto;
 	}
 }
