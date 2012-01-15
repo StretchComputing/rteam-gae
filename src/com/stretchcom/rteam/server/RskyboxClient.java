@@ -34,9 +34,9 @@ public class RskyboxClient {
 	// rSkybox URL https://rskybox-stretchcom.appspot.com/rest/v1/applications/<applicationId>/clientLogs
 	private static final String RSKYBOX_BASE_URL_WITH_SLASH = "https://rskybox-stretchcom.appspot.com/rest/v1/applications/";
 	
-	public static void log(String theName, String theMessage, String theStackBackTrace, Request theRequest, Boolean theIncludeLocalLog) {
+	public static void log(String theName, String theMessage, StackTraceElement[] theStackTraceElements, Request theRequest, Boolean theIncludeLocalLog) {
 		// default log level is ERROR
-		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, theStackBackTrace, theRequest, theIncludeLocalLog);
+		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, theStackTraceElements, theRequest, theIncludeLocalLog);
 	}
 	
 	// --------------
