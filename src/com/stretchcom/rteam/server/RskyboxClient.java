@@ -76,7 +76,7 @@ public class RskyboxClient {
 		
 		// check to see if request LOG is enabled
 		if(!isLogEnabled(theName, theLevel, endUser)) {
-			log.info("log " + theName + " is inactive");
+			//log.info("log " + theName + " is inactive");
 			return;
 		}
 		
@@ -114,13 +114,13 @@ public class RskyboxClient {
 					JSONObject jsonReturn = new JSONObject(response);
 					if(jsonReturn.has("apiStatus")) {
 						String apiStatus = jsonReturn.getString("apiStatus");
-						log.info("apiStatus of rSkybox API call = " + apiStatus);
+						//log.info("apiStatus of rSkybox API call = " + apiStatus);
 					}
 					
 					// see if rSkybox is turning off this log
 					if(jsonReturn.has("logStatus")) {
 						String logStatus = jsonReturn.getString("logStatus");
-						log.info("logStatus of rSkybox API call = " + logStatus);
+						//log.info("logStatus of rSkybox API call = " + logStatus);
 						if(logStatus.equalsIgnoreCase(RskyboxLog.INACTIVE_STATUS)) {
 							RskyboxLog.setLog(theName, RskyboxLog.INACTIVE_STATUS);
 						}
@@ -199,7 +199,7 @@ public class RskyboxClient {
 				while (true) {
 					String inputLine = in.readLine();
 					if(inputLine == null) {break;}
-					log.info("response inputLine = " + inputLine);
+					//log.info("response inputLine = " + inputLine);
 					responseBuffer.append(inputLine);
 				}
 				in.close();
