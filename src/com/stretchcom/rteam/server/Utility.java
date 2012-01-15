@@ -7,10 +7,14 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.restlet.Request;
 import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.ext.servlet.ServletUtils;
 
 import sun.misc.BASE64Encoder;
 
@@ -229,5 +233,10 @@ public class Utility {
 			log.severe("Utility::apiError()  exception = " + e.getMessage());
 		}
 		return new JsonRepresentation(json);
+	}
+    
+	public static User getCurrentUser(Request theRequest) {
+    	HttpServletRequest servletRequest = ServletUtils.getRequest(theRequest);
+    	return (User)servletRequest.getAttribute(RteamApplication.CURRENT_USER);
 	}
 }

@@ -13,6 +13,7 @@ import javax.persistence.Query;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.restlet.Request;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Put;
@@ -148,7 +149,7 @@ public class UserResource extends ServerResource {
 				// This is the 'Get User Token' API call
     			// -------------------------------------
     			// this API is not authorized via token
-    			log.info("This is the 'Get User Token' API call");
+    			RskyboxClient.log("user_token_requested", RskyboxClient.INFO, "user token has been requested", null, this.getRequest(), true);
     			
     			User user = null;
     			try {
