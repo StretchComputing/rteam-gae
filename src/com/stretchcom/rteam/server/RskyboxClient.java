@@ -31,27 +31,54 @@ public class RskyboxClient {
 	private static final String RSKYBOX_SERVICE_PROVIDER = "GAE Server";
 	private static final String RSKYBOX_USER_NAME = "rTeam Common Code";
 	
-	// Log Levels
-	public static final String DEBUG = "debug";
-	public static final String INFO = "info";
-	public static final String ERROR = "error";
-	public static final String EXCEPTION = "exception";
-	
 	// rSkybox URL https://rskybox-stretchcom.appspot.com/rest/v1/applications/<applicationId>/clientLogs
 	private static final String RSKYBOX_BASE_URL_WITH_SLASH = "https://rskybox-stretchcom.appspot.com/rest/v1/applications/";
 	
 	public static void log(String theName, String theMessage, String theStackBackTrace, Request theRequest, Boolean theIncludeLocalLog) {
 		// default log level is ERROR
-		log(theName, ERROR, theMessage, theStackBackTrace, theRequest, theIncludeLocalLog);
+		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, theStackBackTrace, theRequest, theIncludeLocalLog);
 	}
 	
-	public static void log(String theName, String theLevel, String theMessage, String theStackBackTrace, Request theRequest, Boolean theIncludeLocalLog) {
+	// --------------
+	// rSkybox Rules:
+	// --------------
+	// * DEBUG and INFO logs can NOT be enabled/disabled as a LEVEL for all users
+	//      (rational: turning on these levels for all users could generate excessive traffic so just don't allow it)
+	// * DEBUG and INFO logs can be enabled/disabled as a LEVEL for individual users
+	//      (rational: want to be able to do detailed debugging for indidual users)
+	// * DEBUG and INFO logs can NOT be enabled/disabled as individual LOGs/insertion points
+	//      (rational: it would be expensive to if active/inactive for logs that can occur so frequently. Also, too much maintenance for rSkybox member to do this)
+	// * ERROR and EXCEPTION logs can NOT be disabled as a LEVEL
+	//      (rational: dangerous to turn off all error reporting. May be needed for rSkybox to throttle application if quotas have been exceeded)
+	// * ERROR and EXCEPTION logs can be enabled/disabled as individual LOGs/insertion points
+	//      (rational: no sense to keep getting the same error if it keeps happening. Also, allows member to control logging volume)
+	public static void log(String theName, String theLevel, String theMessage, StackTraceElement[] theStackTraceElements, Request theRequest, Boolean theIncludeLocalLog) {
+		// theLevel must be valid, or pack up our books and go home!
+		if(!RskyboxLog.isLogLevelValid(theLevel)) {
+			log.severe("bad log level = " + theLevel);
+			return;
+		}
+
+		// No matter what, do the local logging if it is turned on
 		if(theIncludeLocalLog != null && theIncludeLocalLog) {
-			if(theLevel.equalsIgnoreCase(DEBUG) || theLevel.equalsIgnoreCase(INFO)) {log.info(theMessage);}
-			if(theLevel.equalsIgnoreCase(ERROR) || theLevel.equalsIgnoreCase(EXCEPTION)) {log.severe(theMessage);}
+			if(theLevel.equalsIgnoreCase(RskyboxLog.DEBUG_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.INFO_LEVEL)) {log.info(theMessage);}
+			if(theLevel.equalsIgnoreCase(RskyboxLog.ERROR_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.EXCEPTION_LEVEL)) {log.severe(theMessage);}
 		}
 		
-		if(!isLogLevelValid(theLevel)) {log.severe("bad log level = " + theLevel);}
+		// Identify end user if possible
+		String endUser = RSKYBOX_USER_NAME;
+		if(theRequest != null) {
+			User currentUser = Utility.getCurrentUser(theRequest);
+			if(currentUser != null) {
+				endUser = currentUser.getEmailAddress();
+			}
+		}
+		
+		// check to see if request LOG is enabled
+		if(!isLogEnabled(theName, theLevel, endUser)) {
+			log.info("log " + theName + " is inactive");
+			return;
+		}
 		
 		//////////////////////////
 		// Create the JSON Payload
@@ -62,16 +89,17 @@ public class RskyboxClient {
 			jsonPayload.put("logLevel", theLevel);
 			jsonPayload.put("logName", theName);
 			jsonPayload.put("message", theMessage);
-			jsonPayload.put("stackBackTrace", theStackBackTrace);
+			
+			if(theStackTraceElements != null) {
+				// TODO modify rSkybox to take a JSON array of stackTraceElements
+				StringBuffer sb = new StringBuffer("");
+				for(StackTraceElement ste : theStackTraceElements) {
+					sb.append(ste.toString());
+				}
+				jsonPayload.put("stackBackTrace", sb.toString());
+			}
 			
 			// TODO rSkybox should rename instanceUrl to something more generic - here we use the current user's login ID if there is a current user
-			String endUser = RSKYBOX_USER_NAME;
-			if(theRequest != null) {
-				User currentUser = Utility.getCurrentUser(theRequest);
-				if(currentUser != null) {
-					endUser = currentUser.getEmailAddress();
-				}
-			}
 			jsonPayload.put("userName", endUser);
 			jsonPayload.put("instanceUrl", RSKYBOX_SERVICE_PROVIDER);
 			//log.info("jsonPayload = " + jsonPayload.toString());
@@ -86,7 +114,16 @@ public class RskyboxClient {
 					JSONObject jsonReturn = new JSONObject(response);
 					if(jsonReturn.has("apiStatus")) {
 						String apiStatus = jsonReturn.getString("apiStatus");
-						//log.info("apiStatus of rSkybox API call = " + apiStatus);
+						log.info("apiStatus of rSkybox API call = " + apiStatus);
+					}
+					
+					// see if rSkybox is turning off this log
+					if(jsonReturn.has("logStatus")) {
+						String logStatus = jsonReturn.getString("logStatus");
+						log.info("logStatus of rSkybox API call = " + logStatus);
+						if(logStatus.equalsIgnoreCase(RskyboxLog.INACTIVE_STATUS)) {
+							RskyboxLog.setLog(theName, RskyboxLog.INACTIVE_STATUS);
+						}
 					}
 				}
 			} catch (MalformedURLException e) {
@@ -162,7 +199,7 @@ public class RskyboxClient {
 				while (true) {
 					String inputLine = in.readLine();
 					if(inputLine == null) {break;}
-					//log.info("response inputLine = " + inputLine);
+					log.info("response inputLine = " + inputLine);
 					responseBuffer.append(inputLine);
 				}
 				in.close();
@@ -194,13 +231,25 @@ public class RskyboxClient {
 		return response;
 	}
 	
-	private static Boolean isLogLevelValid(String theLogLevel) {
-		if(theLogLevel.equalsIgnoreCase(DEBUG) ||
-		   theLogLevel.equalsIgnoreCase(INFO) ||
-		   theLogLevel.equalsIgnoreCase(ERROR) ||
-		   theLogLevel.equalsIgnoreCase(EXCEPTION)) {
-			return true;
+	private static Boolean isLogEnabled(String theName, String theLevel, String theEndUser) {
+		if(theLevel.equalsIgnoreCase(RskyboxLog.DEBUG_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.INFO_LEVEL)) {
+			// TODO add support for:  DEBUG and INFO logs can be enabled/disabled as a LEVEL for individual users
+			// for now, always disabled
+			return false;
 		}
-		return false;
+		
+		if(theLevel.equalsIgnoreCase(RskyboxLog.ERROR_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.EXCEPTION_LEVEL)) {
+			//////////////////////////////////////////////
+			// TODO potentially add memcache optimizations
+			//////////////////////////////////////////////
+			
+			// if associated log not found, default status is ENABLED
+			RskyboxLog rskyboxLog = RskyboxLog.getLog(theName);
+			if(rskyboxLog != null && !rskyboxLog.isEnabled()) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 }

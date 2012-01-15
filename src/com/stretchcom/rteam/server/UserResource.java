@@ -141,7 +141,7 @@ public class UserResource extends ServerResource {
 				} catch (NoResultException e) {
 					apiStatus = ApiStatusCode.USER_NOT_FOUND;
 				} catch (NonUniqueResultException e) {
-					log.severe("should never happen - two or more users have same email address");
+	    			RskyboxClient.log("UserResource::getUserInfo::User::NonUniqueResultException", RskyboxLog.EXCEPTION_LEVEL, "should never happen - two or more users have same email address", e.getStackTrace(), this.getRequest(), true);
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				} 
 			} else if(this.plainTextPassword != null) {
@@ -149,7 +149,7 @@ public class UserResource extends ServerResource {
 				// This is the 'Get User Token' API call
     			// -------------------------------------
     			// this API is not authorized via token
-    			RskyboxClient.log("user_token_requested", RskyboxClient.INFO, "user token has been requested", null, this.getRequest(), true);
+    			RskyboxClient.log("user_token_requested", RskyboxLog.INFO_LEVEL, "user token has been requested", null, this.getRequest(), true);
     			
     			User user = null;
     			try {
@@ -162,8 +162,7 @@ public class UserResource extends ServerResource {
 				} catch (NoResultException e) {
 					// email didn't match any user - apiStatus and setStatus handled below
 				} catch (NonUniqueResultException e) {
-					log.severe("should never happen - two or more network authenticated users have same email address and password");
-					e.printStackTrace();
+	    			RskyboxClient.log("UserResource::getUserInfo::User::NonUniqueResultException2", RskyboxLog.EXCEPTION_LEVEL, "should never happen - two or more network authenticated users have same email address and password", e.getStackTrace(), this.getRequest(), true);
 				} 
 				
 				if(user != null) {
@@ -212,7 +211,9 @@ public class UserResource extends ServerResource {
     			// -------------------------------------
     			// This is the 'Get User Info' API call
     			// -------------------------------------
-    			log.info("This is the 'Get User Info' API call");
+    			RskyboxClient.log("get_user_info", RskyboxLog.INFO_LEVEL, "This is the 'Get User Info' API call", null, this.getRequest(), true);
+    			// TODO following line is test code, remove it
+    			//RskyboxClient.log("get_user_info_error", RskyboxLog.ERROR_LEVEL, "error version of 'Get User Info' API call", null, this.getRequest(), true);
     			
         		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
         		if(currentUser == null) {

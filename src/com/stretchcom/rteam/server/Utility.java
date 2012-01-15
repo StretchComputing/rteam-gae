@@ -236,7 +236,7 @@ public class Utility {
 	}
     
 	public static User getCurrentUser(Request theRequest) {
-    	HttpServletRequest servletRequest = ServletUtils.getRequest(theRequest);
-    	return (User)servletRequest.getAttribute(RteamApplication.CURRENT_USER);
+		if(theRequest == null) {return null;}
+		return (User)theRequest.getAttributes().get(RteamApplication.CURRENT_USER);
 	}
 }
