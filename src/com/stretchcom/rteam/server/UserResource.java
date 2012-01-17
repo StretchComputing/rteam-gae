@@ -43,7 +43,8 @@ import org.apache.commons.codec.binary.Base64;
  * @author joepwro
  */
 public class UserResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(UserResource.class.getName());
+	//private static final Logger log = Logger.getLogger(UserResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 
     // The sequence of characters that identifies the resource.
     String emailAddress;
@@ -61,49 +62,49 @@ public class UserResource extends ServerResource {
             this.emailAddress = Reference.decode(this.emailAddress);
             // email address always stored in lower case
             this.emailAddress = this.emailAddress.toLowerCase();
-            log.info("UserResource:doInit() - decoded emailAddress = " + this.emailAddress);
+			log.debug("decoded emailAddress = " + this.emailAddress);
         }
         
         this.passwordResetQuestion = (String)getRequest().getAttributes().get("passwordResetQuestion");
         if(this.passwordResetQuestion != null) {
             this.passwordResetQuestion = Reference.decode(this.passwordResetQuestion);
-            log.info("UserResource:doInit() - decoded passwordResetQuestion = " + this.passwordResetQuestion);
+			log.debug("decoded passwordResetQuestion = " + this.passwordResetQuestion);
         }
 
         // same method is used to handle both 'Get User Info' and 'Get User Token'
         // for 'Get User Token', the email address and password come in as query parameters
         Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("emailAddress"))  {
 				this.emailAddress = (String)parameter.getValue();
 				this.emailAddress = Reference.decode(this.emailAddress);
-				log.info("UserResource:doInit() - decoded emailAddress = " + this.emailAddress);
+				log.debug("UserResource:doInit() - decoded emailAddress = " + this.emailAddress);
 			} 
 			else if(parameter.getName().equals("password"))  {
 				this.plainTextPassword = (String)parameter.getValue();
 				this.plainTextPassword = Reference.decode(this.plainTextPassword);
-				//log.info("UserResource:doInit() - decoded password = " + this.plainTextPassword);
+				//log.debug("UserResource:doInit() - decoded password = " + this.plainTextPassword); // blocked for security reasons
 			} 
 			else if(parameter.getName().equals("oneUseToken"))  {
 				this.oneUseToken = (String)parameter.getValue();
 				this.oneUseToken = Reference.decode(this.oneUseToken);
-				log.info("UserResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
+				log.debug("UserResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
 			} 
 			else if(parameter.getName().equals("includeMembers"))  {
 				this.includeMembers = (String)parameter.getValue();
 				this.includeMembers = Reference.decode(this.includeMembers);
-				log.info("UserResource:doInit() - decoded includeMembers = " + this.includeMembers);
+				log.debug("UserResource:doInit() - decoded includeMembers = " + this.includeMembers);
 			} 
 			else if(parameter.getName().equals("deleteNow"))  {
 				this.deleteNow = (String)parameter.getValue();
 				this.deleteNow = Reference.decode(this.deleteNow);
-				log.info("UserResource:doInit() - decoded deleteNow = " + this.deleteNow);
+				log.debug("UserResource:doInit() - decoded deleteNow = " + this.deleteNow);
 			}
 			else if(parameter.getName().equals("includePhoto"))  {
 				this.includePhoto = (String)parameter.getValue();
 				this.includePhoto = Reference.decode(this.includePhoto);
-				log.info("UserResource:doInit() - decoded includePhoto = " + this.includePhoto);
+				log.debug("UserResource:doInit() - decoded includePhoto = " + this.includePhoto);
 			}
 		}
     }  
@@ -116,7 +117,7 @@ public class UserResource extends ServerResource {
     @Get("json")
     @Options("json")
     public JsonRepresentation getUserInfo(Variant variant) {
-        log.info("UserResource:toJson() entered");
+        log.debug("UserResource:toJson() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -128,7 +129,7 @@ public class UserResource extends ServerResource {
 				// This is the 'Get User Password Reset Question' API call
     			// -------------------------------------------------------
     			// this API is not authorized via token
-    			log.info("This is the 'Get User Password Reset Question' API call");
+    			log.debug("This is the 'Get User Password Reset Question' API call");
     			
     			User user = null;
     			try {
@@ -141,7 +142,8 @@ public class UserResource extends ServerResource {
 				} catch (NoResultException e) {
 					apiStatus = ApiStatusCode.USER_NOT_FOUND;
 				} catch (NonUniqueResultException e) {
-	    			RskyboxClient.log("UserResource::getUserInfo::User::NonUniqueResultException", RskyboxLog.EXCEPTION_LEVEL, "should never happen - two or more users have same email address", e.getStackTrace(), this.getRequest(), true);
+	    			log.exception("UserResource:getUserInfo:NonUniqueResultException1",
+	    					                "two or more users have same email address", e);
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				} 
 			} else if(this.plainTextPassword != null) {
@@ -149,7 +151,7 @@ public class UserResource extends ServerResource {
 				// This is the 'Get User Token' API call
     			// -------------------------------------
     			// this API is not authorized via token
-    			RskyboxClient.log("user_token_requested", RskyboxLog.INFO_LEVEL, "user token has been requested", null, this.getRequest(), true);
+    			log.debug("user token has been requested");
     			
     			User user = null;
     			try {
@@ -162,7 +164,8 @@ public class UserResource extends ServerResource {
 				} catch (NoResultException e) {
 					// email didn't match any user - apiStatus and setStatus handled below
 				} catch (NonUniqueResultException e) {
-	    			RskyboxClient.log("UserResource::getUserInfo::User::NonUniqueResultException2", RskyboxLog.EXCEPTION_LEVEL, "should never happen - two or more network authenticated users have same email address and password", e.getStackTrace(), this.getRequest(), true);
+	    			log.exception("UserResource:getUserInfo:NonUniqueResultException2",
+			                "two or more network authenticated users have same email address and password", e);
 				} 
 				
 				if(user != null) {
@@ -185,7 +188,7 @@ public class UserResource extends ServerResource {
     			// TODO handle member NA elsewhere
     			//
     			
-    			log.info("This is the 'Get User Confirmation Info' API call");
+    			log.debug("This is the 'Get User Confirmation Info' API call");
     			
     			//::SIDE_EFFECT:: API is get confirm info, but here we are updating the user/member entities
     			//::EVENT::
@@ -211,13 +214,11 @@ public class UserResource extends ServerResource {
     			// -------------------------------------
     			// This is the 'Get User Info' API call
     			// -------------------------------------
-    			RskyboxClient.log("get_user_info", RskyboxLog.INFO_LEVEL, "This is the 'Get User Info' API call", null, this.getRequest(), true);
-    			// TODO following line is test code, remove it
-    			//RskyboxClient.log("get_user_info_error", RskyboxLog.ERROR_LEVEL, "error version of 'Get User Info' API call", null, this.getRequest(), true);
+    			log.debug("This is the 'Get User Info' API call");
     			
         		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
         		if(currentUser == null) {
-        			log.severe("user could not be retrieved from Request attributes!!");
+	    			log.error("UserResource:getUserInfo:currentUser", "current user could not be retrieved from Request attributes");
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
     				return new JsonRepresentation(jsonReturn);
         		}
@@ -248,14 +249,12 @@ public class UserResource extends ServerResource {
 				jsonReturn.put("longitude", currentUser.getLongitude());
     		}
 		} catch (JSONException e) {
-			log.severe("error building JSON object");
-			e.printStackTrace();
+			log.exception("UserResource:getUserInfo:JSONException", "error building JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
 			apiStatus = ApiStatusCode.USER_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same email address");
-			e.printStackTrace();
+			log.exception("UserResource:getUserInfo:NonUniqueResultException3", "error building JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 			em.close();
@@ -264,8 +263,7 @@ public class UserResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("UserResource:getUserInfo:JSONException2", "error creating JSON return object", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -274,7 +272,7 @@ public class UserResource extends ServerResource {
     // This deactivates the user and if requested, associated memberships.
     @Delete
     public JsonRepresentation remove() {
-    	log.info("UserResource:remove() entered");
+    	log.debug("UserResource:remove() entered");
     	EntityManager em = EMF.get().createEntityManager();
     	JSONObject jsonReturn = new JSONObject();
     	
@@ -284,7 +282,7 @@ public class UserResource extends ServerResource {
         try {
     		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("UserResource:remove:currentUser", "user could not be retrieved from Request attributes!!");
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				return new JsonRepresentation(jsonReturn);
     		}
@@ -327,8 +325,7 @@ public class UserResource extends ServerResource {
          			}
          			em2.getTransaction().commit();
      			} catch(Exception e) {
-     				log.severe("query(s) to get members from user email failed");
-     				e.printStackTrace();
+     				log.exception("UserResource:remove:Exception", "query(s) to get members from user email failed", e);
      				this.setStatus(Status.SERVER_ERROR_INTERNAL);
      			} finally {
      			    if (em2.getTransaction().isActive()) {
@@ -341,8 +338,7 @@ public class UserResource extends ServerResource {
         	// server error because user was already found earlier within this request (i.e. currentUser)
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same the same key");
-			e.printStackTrace();
+			log.exception("UserResource:remove:NonUniqueResultException", "two or more users have same the same key", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -354,7 +350,7 @@ public class UserResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
+			log.exception("UserResource:remove:JSONException", "error creating JSON return object", e);
 			e.printStackTrace();
 		}
         return new JsonRepresentation(jsonReturn);
@@ -365,7 +361,7 @@ public class UserResource extends ServerResource {
     @Put 
     public JsonRepresentation updateUser(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateUser(@Put) entered ..... ");
+    	log.debug("updateUser(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -377,7 +373,7 @@ public class UserResource extends ServerResource {
         try {
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
-			log.info("received json object = " + json.toString());
+			log.debug("received json object = " + json.toString());
 			
 			if(json.has("isPasswordReset")) {
 				////////////////////////////
@@ -403,7 +399,7 @@ public class UserResource extends ServerResource {
 						user.setPassword(encryptedRandomPassword);
 						em.getTransaction().commit();
 						Emailer.sendPasswordResetEmail(user, randomPassword);
-						log.info("this is a password reset request for user with email address = " + this.emailAddress);
+						log.debug("this is a password reset request for user with email address = " + this.emailAddress);
 	    			} else {
 						apiStatus = ApiStatusCode.PASSWORD_RESET_FAILED;
 	    			}
@@ -411,8 +407,7 @@ public class UserResource extends ServerResource {
 					// email address not found - this is a bad request
 					apiStatus = ApiStatusCode.USER_NOT_FOUND;
 				} catch (NonUniqueResultException e) {
-					log.severe("should never happen - two or more users have the same email address");
-					e.printStackTrace();
+					log.exception("UserResource:updateUser:NonUniqueResultException", "two or more users have the same email address", e);
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				}
 			} else {
@@ -423,7 +418,7 @@ public class UserResource extends ServerResource {
 	    		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
 	    		if(currentUser == null) {
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
-	    			log.severe("user could not be retrieved from Request attributes!!");
+     				log.error("UserResource:updateUser:currentUser", "user could not be retrieved from Request attributes!!");
 	    			return new JsonRepresentation(jsonReturn);
 	    		}
 	    		
@@ -514,7 +509,7 @@ public class UserResource extends ServerResource {
 				Boolean sendConfirmation = null;
 				if(json.has("sendConfirmation")) {
 					sendConfirmation = json.getBoolean("sendConfirmation");
-					log.info("json sendConfirmation = " + sendConfirmation);
+					log.debug("json sendConfirmation = " + sendConfirmation);
 				}
 				
 				// sendConfirmation request overrides any confirmation code that may have been passed in.
@@ -527,11 +522,11 @@ public class UserResource extends ServerResource {
 						String confirmationCode = json.getString("confirmationCode");
 						// let's keep this simple on the user -- confirmation code is NOT case sensitive
 						if(confirmationCode.equalsIgnoreCase(user.getPhoneNumberConfirmationCode())) {
-							log.info("user now SMS confirmed");
+							log.debug("user now SMS confirmed");
 							user.setIsSmsConfirmed(true);
 							justSmsConfirmed = true;
 						} else {
-							log.info("invalid confirmation code = " + confirmationCode);
+							log.debug("invalid confirmation code = " + confirmationCode);
 							jsonReturn.put("apiStatus", ApiStatusCode.INVALID_CONFIRMATION_CODE_PARAMETER);
 							return new JsonRepresentation(jsonReturn);
 						}
@@ -595,11 +590,11 @@ public class UserResource extends ServerResource {
 						if(!user.getAutoArchiveDayCount().equals(autoArchiveDayCount)) {
 							// the count has changed, existing messaging entities for this user must be updated to reflect new dates
 							autoArchiveDayCountAdjustment = autoArchiveDayCount - user.getAutoArchiveDayCount();
-							log.info("autoArchiveDayCountAdjustment = " + autoArchiveDayCountAdjustment);
+							log.debug("autoArchiveDayCountAdjustment = " + autoArchiveDayCountAdjustment);
 						}
 						user.setAutoArchiveDayCount(autoArchiveDayCount);
 					} catch (JSONException e) {
-						log.info("autoArchiveDayCount value is not an integer");
+						log.debug("autoArchiveDayCount value is not an integer");
 						jsonReturn.put("apiStatus", ApiStatusCode.INVALID_AUTO_ARCHIVE_DAY_COUNT_PARAMETER);
 						return new JsonRepresentation(jsonReturn);
 					}
@@ -608,7 +603,7 @@ public class UserResource extends ServerResource {
 				Boolean isPortrait = null;
 				if(json.has("isPortrait")) {
 					isPortrait = json.getBoolean("isPortrait");
-					log.info("json isPortrait = " + isPortrait);
+					log.debug("json isPortrait = " + isPortrait);
 				}
 
 				Boolean firstPhotoAdded = false;
@@ -639,7 +634,7 @@ public class UserResource extends ServerResource {
 						
 						user.setThumbNailBase64(thumbNailBase64);
 						user.setPhotoBase64(photoBase64);
-						log.info("user photo and thumb nail skeleton were successfully persisted");
+						log.debug("user photo and thumb nail skeleton were successfully persisted");
 					} catch(Exception e) {
 						jsonReturn.put("apiStatus", ApiStatusCode.INVALID_PHOTO_PARAMETER);
 						return new JsonRepresentation(jsonReturn);
@@ -684,12 +679,12 @@ public class UserResource extends ServerResource {
 				
 				if(randomPassword != null) {
 					Emailer.sendPasswordResetEmail(user, randomPassword);
-					log.info("password reset email being sent");
+					log.debug("password reset email being sent");
 				}
 				
 				if(isEmailUpdated) {
 					PubHub.sendUserEmailUpdateMessage(user);
-					log.info("email confirmation being sent");
+					log.debug("email confirmation being sent");
 				}
 				
 				// If the archive day count changed, the following work must be done:
@@ -718,15 +713,13 @@ public class UserResource extends ServerResource {
 			}
 		} catch (IOException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("UserResource:udateUser:IOException", "error extracting JSON object from Post", e);
 		} catch (JSONException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("UserResource:udateUser:JSONException", "error converting json representation into a JSON object", e);
 		} catch (NoResultException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error converting json representation into a JSON object");
+			log.exception("UserResource:udateUser:NoResultException", "user not found", e);
 			e.printStackTrace();
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -738,8 +731,7 @@ public class UserResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("UserResource:udateUser:JSONException2", "error converting json representation into a JSON object", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }

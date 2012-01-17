@@ -47,7 +47,8 @@ import org.apache.commons.codec.binary.Base64;
  *  
  */  
 public class ActivitiesResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(ActivitiesResource.class.getName());
+	//private static final Logger log = Logger.getLogger(ActivitiesResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 	
 	private static final Integer DEFAULT_MAX_COUNT  = 45;
 	private static final Integer MAX_MAX_COUNT  = 200;
@@ -71,53 +72,53 @@ public class ActivitiesResource extends ServerResource {
     protected void doInit() throws ResourceException {  
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("ActivitiesResource:doInit() - teamId = " + this.teamId);
+        log.debug("ActivitiesResource:doInit() - teamId = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("ActivitysResource:doInit() - decoded teamId = " + this.teamId);
+            log.debug("ActivitysResource:doInit() - decoded teamId = " + this.teamId);
         }
         
         this.timeZoneStr = (String)getRequest().getAttributes().get("timeZone"); 
-        log.info("ActivitiesResource:doInit() - timeZone = " + this.timeZoneStr);
+        log.debug("ActivitiesResource:doInit() - timeZone = " + this.timeZoneStr);
         if(this.timeZoneStr != null) {
             this.timeZoneStr = Reference.decode(this.timeZoneStr);
-            log.info("ActivitiesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+            log.debug("ActivitiesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
         }
         
         this.userVote = (String)getRequest().getAttributes().get("userVote"); 
-        log.info("ActivitiesResource:doInit() - userVote = " + this.userVote);
+        log.debug("ActivitiesResource:doInit() - userVote = " + this.userVote);
         if(this.userVote != null) {
             this.userVote = Reference.decode(this.userVote);
-            log.info("ActivitiesResource:doInit() - decoded userVote = " + this.userVote);
+            log.debug("ActivitiesResource:doInit() - decoded userVote = " + this.userVote);
         }
         
 		Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("refreshFirst")) {
 				this.refreshFirstStr = (String)parameter.getValue();
 				this.refreshFirstStr = Reference.decode(this.refreshFirstStr);
-				log.info("ActivitiesResource:doInit() - decoded refreshFirstStr = " + this.refreshFirstStr);
+				log.debug("ActivitiesResource:doInit() - decoded refreshFirstStr = " + this.refreshFirstStr);
 			} else if(parameter.getName().equals("newOnly")) {
 				this.newOnlyStr = (String)parameter.getValue();
 				this.newOnlyStr = Reference.decode(this.newOnlyStr);
-				log.info("ActivitiesResource:doInit() - decoded newOnlyStr = " + this.newOnlyStr);
+				log.debug("ActivitiesResource:doInit() - decoded newOnlyStr = " + this.newOnlyStr);
 			} else if(parameter.getName().equals("maxCount")) {
 				this.maxCountStr = (String)parameter.getValue();
 				this.maxCountStr = Reference.decode(this.maxCountStr);
-				log.info("ActivitiesResource:doInit() - decoded maxCountStr = " + this.maxCountStr);
+				log.debug("ActivitiesResource:doInit() - decoded maxCountStr = " + this.maxCountStr);
 			} else if(parameter.getName().equals("maxCacheId")) {
 				this.maxCacheIdStr = (String)parameter.getValue();
 				this.maxCacheIdStr = Reference.decode(this.maxCacheIdStr);
-				log.info("ActivitiesResource:doInit() - decoded maxCacheIdStr = " + this.maxCacheIdStr);
+				log.debug("ActivitiesResource:doInit() - decoded maxCacheIdStr = " + this.maxCacheIdStr);
 			} else if(parameter.getName().equals("mostCurrentDate")) {
 				this.mostCurrentDateStr = (String)parameter.getValue();
 				this.mostCurrentDateStr = Reference.decode(this.mostCurrentDateStr);
-				log.info("ActivitiesResource:doInit() - decoded mostCurrentDateStr = " + this.mostCurrentDateStr);
+				log.debug("ActivitiesResource:doInit() - decoded mostCurrentDateStr = " + this.mostCurrentDateStr);
 			} else if(parameter.getName().equals("totalNumberOfDays")) {
 				this.totalNumberOfDaysStr = (String)parameter.getValue();
 				this.totalNumberOfDaysStr = Reference.decode(this.totalNumberOfDaysStr);
-				log.info("ActivitiesResource:doInit() - decoded totalNumberOfDaysStr = " + this.totalNumberOfDaysStr);
+				log.debug("ActivitiesResource:doInit() - decoded totalNumberOfDaysStr = " + this.totalNumberOfDaysStr);
 			}
 		}
     }  
@@ -128,7 +129,7 @@ public class ActivitiesResource extends ServerResource {
     @Post  
     public JsonRepresentation createActivity(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("createActivity(@Post) entered ..... ");
+    	log.debug("createActivity(@Post) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -138,7 +139,7 @@ public class ActivitiesResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("ActivitiesResource:createActivity:currentUser", "error converting json representation into a JSON object");
     		}
     		//::BUSINESSRULE:: user must be network authenticated to send a message
     		else if(!currentUser.getIsNetworkAuthenticated()) {
@@ -150,7 +151,7 @@ public class ActivitiesResource extends ServerResource {
     				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
         		} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
     				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-    				log.info(apiStatus);
+    				log.debug(apiStatus);
             	}
     		}
     		
@@ -174,7 +175,7 @@ public class ActivitiesResource extends ServerResource {
 			Team team = (Team)em.createNamedQuery("Team.getByKey")
 				.setParameter("key", KeyFactory.stringToKey(this.teamId))
 				.getSingleResult();
-			log.info("team retrieved = " + team.getTeamName());
+			log.debug("team retrieved = " + team.getTeamName());
 			
 			String statusUpdate = null;
 			if(json.has("statusUpdate")) {
@@ -189,7 +190,7 @@ public class ActivitiesResource extends ServerResource {
 			Boolean isPortrait = null;
 			if(json.has("isPortrait")) {
 				isPortrait = json.getBoolean("isPortrait");
-				log.info("json isPortrait = " + isPortrait);
+				log.debug("json isPortrait = " + isPortrait);
 			}
 
 			String videoBase64 = null;
@@ -200,7 +201,7 @@ public class ActivitiesResource extends ServerResource {
 			// Enforce Rules
 			if((statusUpdate == null || statusUpdate.length() == 0) && (photoBase64 == null || photoBase64.length() == 0)) {
 				apiStatus = ApiStatusCode.STATUS_UPDATE_OR_PHOTO_REQUIRED;
-				log.info("required statusUpdate or photo field required");
+				log.debug("required statusUpdate or photo field required");
 			} else if(statusUpdate != null && statusUpdate.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT){
 				apiStatus = ApiStatusCode.INVALID_STATUS_UPDATE_MAX_SIZE_EXCEEDED;
 			} else if(videoBase64 != null && photoBase64 == null) {
@@ -256,7 +257,7 @@ public class ActivitiesResource extends ServerResource {
 				
 				// if Twitter update failed, log error, but continue because activity post will be stored by rTeam
 				if(twitterStatus == null) {
-					log.severe("Twitter update failed, but continuing on ...");
+					log.error("ActivitiesResource:createActivity:twitterStatus", "Twitter update failed, but continuing on ...");
 					apiStatus = ApiStatusCode.TWITTER_ERROR;
 				} else {
 					newActivity.setTwitterId(twitterStatus.getId());
@@ -284,25 +285,23 @@ public class ActivitiesResource extends ServerResource {
 				}
 				
 				emActivity.persist(newActivity);
-				log.info("new Activity was successfully persisted");
+				log.debug("new Activity was successfully persisted");
 			} catch(Exception e) {
-				log.severe("createActivity() exception = " + e.getMessage());
+				log.exception("ActivitiesResource:createActivity:Exception", "", e);
 			} finally {
 				emActivity.close();
 			}
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("ActivitiesResource:createActivity:IOException", "error extracting JSON object from Post", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("ActivitiesResource:createActivity:JSONException", "error converting json representation into a JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
-			log.severe("team not found");
+			log.exception("ActivitiesResource:createActivity:NoResultException", "team not found", e);
 			apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more teams have same team id");
+			log.exception("ActivitiesResource:createActivity:NonUniqueResultException", "two or more teams have same team id", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			e.printStackTrace();
 		} finally {
@@ -312,8 +311,7 @@ public class ActivitiesResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("ActivitiesResource:createActivity:JSONException2", "error converting json representation into a JSON object", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -342,7 +340,7 @@ public class ActivitiesResource extends ServerResource {
     // Handles 'Get activities for all teams' API  
     @Get  
     public JsonRepresentation getActivities(Variant variant) {
-    	log.info("getActivities(@Get) entered ..... ");
+    	log.debug("getActivities(@Get) entered ..... ");
     	JSONObject jsonReturn = new JSONObject();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -355,7 +353,7 @@ public class ActivitiesResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("ActivitiesResource:getActivities:currentUser", "error converting json representation into a JSON object");
     		}
     		//::BUSINESSRULE:: user must be network authenticated to get activities
     		else if(!currentUser.getIsNetworkAuthenticated()) {
@@ -364,11 +362,11 @@ public class ActivitiesResource extends ServerResource {
     		//::BUSINESSRULE:: user must be a member of the team, if teamId was specified
     		else if(this.teamId != null && !currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
     		// timeZone check 
     		else if(this.timeZoneStr == null || this.timeZoneStr.length() == 0) {
-    			log.info("getActivities(): timeZone null or zero length");
+    			log.debug("getActivities(): timeZone null or zero length");
  	        	apiStatus = ApiStatusCode.TIME_ZONE_REQUIRED;
     		} else {
     			tz = GMT.getTimeZone(this.timeZoneStr);
@@ -507,26 +505,26 @@ public class ActivitiesResource extends ServerResource {
 								.setParameter("key", tk)
 								.getSingleResult();
 						} catch(Exception e) {
-							log.severe("should never happen. Could not find team with the team key");
+							log.exception("ActivitiesResource:getActivities:Exception", "Could not find team with the team key", e);
 						}
 						if(aTeam != null) {teams.add(aTeam);}
 					}
-					log.info("number of teams retrieved for current user = " + teams.size());
+					log.debug("number of teams retrieved for current user = " + teams.size());
 				} else {
-					log.info("user has no teams");
+					log.debug("user has no teams");
 				}
 			} else {
 				try {
  					Team team = (Team)em.createNamedQuery("Team.getByKey")
  						.setParameter("key", KeyFactory.stringToKey(this.teamId))
  						.getSingleResult();
- 					log.info("team retrieved = " + team.getTeamName());
+ 					log.debug("team retrieved = " + team.getTeamName());
  					teams.add(team);
  				} catch (NoResultException e) {
  					apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
- 					log.info("invalid team id");
+ 					log.debug("invalid team id");
  				} catch (NonUniqueResultException e) {
- 					log.severe("should never happen - two teams have the same key");
+					log.exception("ActivitiesResource:getActivities:NonUniqueResultException", "two teams have the same key", e);
  				}
 			}
     		
@@ -543,7 +541,7 @@ public class ActivitiesResource extends ServerResource {
 				// If a refresh has been requested and team uses Twitter, get the latest activities from Twitter and store in cache
 				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				if(teamUsesTwitter && refreshFirst) {
-					log.info("refreshFirst is true - updating the cache");
+					log.debug("refreshFirst is true - updating the cache");
 					
 					if(newOnly) {teamRequestedActivities = new ArrayList<Activity>();}
 
@@ -553,13 +551,13 @@ public class ActivitiesResource extends ServerResource {
 					Date now = new Date();
 					if(lastRefreshDate != null) {
 						howLongSinceLastRefresh = now.getTime() - lastRefreshDate.getTime();
-						log.info("howLongSinceLastRefresh = " + howLongSinceLastRefresh);
+						log.debug("howLongSinceLastRefresh = " + howLongSinceLastRefresh);
 					} else {
-						log.info("lastTwitterRefresh in User null, so refresh will proceed"); 
+						log.debug("lastTwitterRefresh in User null, so refresh will proceed"); 
 					}
 					
 					if(lastRefreshDate == null || (howLongSinceLastRefresh > ONE_MINUTE_IN_MILLI_SECONDS)) {
-						log.info("has been over a minute so do a Twitter refresh");
+						log.debug("has been over a minute so do a Twitter refresh");
 						Long newestTwitterId = userTeam.getNewestTwitterId();
 						List<Activity> twitterActivities = TwitterClient.getTeamActivities(userTeam, newestTwitterId);
 						if(twitterActivities == null) {
@@ -580,7 +578,7 @@ public class ActivitiesResource extends ServerResource {
 						int requestedActivityCount = maxCount;
 
 						Long largestTwitterId = newestTwitterId;
-						log.info("before processing activities, newestTwitterId = " + newestTwitterId);
+						log.debug("before processing activities, newestTwitterId = " + newestTwitterId);
 						EntityManager em0 = EMF.get().createEntityManager();
 						try {
 							for(Activity a: twitterActivities) {
@@ -592,7 +590,7 @@ public class ActivitiesResource extends ServerResource {
 									// if already cached, there is no work to do ...
 								} catch (NoResultException e) {
 					            	// not an error - we have found a Twitter update that was a direct post to Twitter
-									log.info("uncached activity retrieved with twitter ID = " + a.getTwitterId());
+									log.debug("uncached activity retrieved with twitter ID = " + a.getTwitterId());
 									if(newOnly && requestedActivityCount != 0) {
 										teamRequestedActivities.add(a);
 										requestedActivityCount--;
@@ -604,11 +602,11 @@ public class ActivitiesResource extends ServerResource {
 									em0.persist(a);
 									if(a.getTwitterId() > largestTwitterId) {largestTwitterId = a.getTwitterId();}
 					    		} catch (NonUniqueResultException e) {
-					    			log.severe("should never happen - two or more activities have the same twitter ID");
+									log.exception("ActivitiesResource:getActivities:NonUniqueResultException2", "two or more activities have the same twitter ID", e);
 					    		}
 								em0.getTransaction().commit();
 							}
-							log.info("after processing activities, largestTwitterId = " + largestTwitterId);
+							log.debug("after processing activities, largestTwitterId = " + largestTwitterId);
 							newestTwitterId = largestTwitterId;
 						} finally {
 							em0.close();
@@ -623,7 +621,7 @@ public class ActivitiesResource extends ServerResource {
 							Team teamInTransaction = (Team)em2.createNamedQuery("Team.getByKey")
 								.setParameter("key", userTeam.getKey())
 								.getSingleResult();
-							log.info("team2 retrieved = " + teamInTransaction.getTeamName());
+							log.debug("team2 retrieved = " + teamInTransaction.getTeamName());
 							
 							// update the activity IDs
 							teamInTransaction.setNewestCacheId(cacheId);
@@ -631,7 +629,7 @@ public class ActivitiesResource extends ServerResource {
 							teamInTransaction.setLastTwitterRefresh(new Date());
 							em2.getTransaction().commit();
 						} catch(Exception e) {
-							log.severe("Should never happen. Could not find team using teamKey from User entity.");
+							log.exception("ActivitiesResource:getActivities:Exception2", "Could not find team using teamKey from User entity", e);
 							// no matter what, the teamsWithPossibleUpdates team list MUST be complete if this is a refresh!
 						} finally {
 						    if (em2.getTransaction().isActive()) {
@@ -657,7 +655,7 @@ public class ActivitiesResource extends ServerResource {
 						//////////////////////////////////////////////////////////////
 						EntityManager em3 = EMF.get().createEntityManager();
 						try {
-							log.info("getting activities from the cache ...");
+							log.debug("getting activities from the cache ...");
 							//////////////////////////////////////////////////////////////////////
 							// return activities from cache (which may include some new stuff too)
 							//////////////////////////////////////////////////////////////////////
@@ -701,9 +699,9 @@ public class ActivitiesResource extends ServerResource {
 									.setParameter("lowerCacheId", lowerCacheId)
 									.getResultList();
 							}
-							log.info("number of teamRequestedActivities found = " + teamRequestedActivities.size());
+							log.debug("number of teamRequestedActivities found = " + teamRequestedActivities.size());
 						} catch(Exception e) {
-							log.severe("Failed in getting Activity from cache. Exception = " + e.getMessage());
+							log.exception("ActivitiesResource:getActivities:Exception3", "Failed in getting Activity from cache", e);
 							this.setStatus(Status.SERVER_ERROR_INTERNAL);
 						} finally {
 							em3.close();
@@ -713,7 +711,7 @@ public class ActivitiesResource extends ServerResource {
 				
 				allTeamsRequestedActivities.addAll(teamRequestedActivities);
 			} // end of for(Team userTeam : teams)
-			log.info("number of allTeamsRequestedActivities found = " + allTeamsRequestedActivities.size());
+			log.debug("number of allTeamsRequestedActivities found = " + allTeamsRequestedActivities.size());
 			
 			/////////////////////////////////////////////////////////////////////////////////////////////
 			// Update newestCacheIds in User Entity. newestCacheIds are used to determine if a user
@@ -731,7 +729,7 @@ public class ActivitiesResource extends ServerResource {
 					User withinTransactionUser = (User)em4.createNamedQuery("User.getByKey")
 						.setParameter("key", currentUser.getKey())
 						.getSingleResult();
-					log.info("updating newCachIds for User = " + withinTransactionUser.getFullName() + ". Number of updated teams = " + teams.size());
+					log.debug("updating newCachIds for User = " + withinTransactionUser.getFullName() + ". Number of updated teams = " + teams.size());
 					
 					List<Long> newestCacheIds = withinTransactionUser.getTeamNewestCacheIds();
 					// If a teamId was specified in the API call, then only ONE TEAM will be in the teamsWithPossibleUpdates list
@@ -742,7 +740,7 @@ public class ActivitiesResource extends ServerResource {
 						for(Key teamKey : withinTransactionUser.getTeams()) {
 							if(teamKey.equals(specifiedTeam.getKey())) {
 								newestCacheIds.set(index, specifiedTeam.getNewestCacheId());
-								log.info("updating cacheID for specified team = " + specifiedTeam.getTeamName());
+								log.debug("updating cacheID for specified team = " + specifiedTeam.getTeamName());
 								break;
 							}
 							index++;
@@ -754,7 +752,7 @@ public class ActivitiesResource extends ServerResource {
 						newestCacheIds = new ArrayList<Long>();
 						for(Team t : teams) {
 							// even if Activity not active for this team, getNewestCacheId() guaranteed to return 0L
-							log.info("updating cacheID for team = " + t.getTeamName());
+							log.debug("updating cacheID for team = " + t.getTeamName());
 							newestCacheIds.add(t.getNewestCacheId());
 						}
 					}
@@ -762,11 +760,10 @@ public class ActivitiesResource extends ServerResource {
 					withinTransactionUser.setTeamNewestCacheIds(newestCacheIds);
 					em4.getTransaction().commit();
 	        	} catch (NoResultException e) {
-	            	log.severe("user not found");
+					log.exception("ActivitiesResource:getActivities:NoResultException", "Failed in getting Activity from cache", e);
 	            	e.printStackTrace();
 	    		} catch (NonUniqueResultException e) {
-	    			log.severe("should never happen - two or more users have same key");
-	    			e.printStackTrace();
+					log.exception("ActivitiesResource:getActivities:NonUniqueResultException3", "two or more users have same key", e);
 	    		} finally {
 	    		    if (em4.getTransaction().isActive()) {
 	    		    	em4.getTransaction().rollback();
@@ -784,7 +781,7 @@ public class ActivitiesResource extends ServerResource {
 					// activity list needs to be truncated, but truncation only happens on full day boundaries
 					Date dateBoundary = allTeamsRequestedActivities.get(maxCount-1).getCreatedGmtDate();
 					dateBoundary = GMT.setTimeToTheBeginningOfTheDay(dateBoundary);
-					log.info("Activity list exceeded max size of " + maxCount + ". List size = " + allTeamsRequestedActivities.size() + " Date boundary = " + dateBoundary.toString());
+					log.debug("Activity list exceeded max size of " + maxCount + ". List size = " + allTeamsRequestedActivities.size() + " Date boundary = " + dateBoundary.toString());
 					
 					// find the index of the first activity with a date greater than the boundary date
 					Integer truncateIndex = null;
@@ -793,7 +790,7 @@ public class ActivitiesResource extends ServerResource {
 						activityDate = GMT.setTimeToTheBeginningOfTheDay(activityDate);
 						if(activityDate.before(dateBoundary)) {
 							truncateIndex = searchIndex;
-							log.info("truncate index found and = " + truncateIndex);
+							log.debug("truncate index found and = " + truncateIndex);
 							break;
 						}
 					}
@@ -802,7 +799,7 @@ public class ActivitiesResource extends ServerResource {
 					if(truncateIndex != null) {
 						// for subList call, first index is inclusive and second is exclusive
 						allTeamsRequestedActivities = allTeamsRequestedActivities.subList(0, truncateIndex);
-						log.info("Activity list truncated. New list size = " + allTeamsRequestedActivities.size());
+						log.debug("Activity list truncated. New list size = " + allTeamsRequestedActivities.size());
 					}
 				}
 			}
@@ -836,18 +833,17 @@ public class ActivitiesResource extends ServerResource {
 				
 				jsonActivitiesArray.put(jsonActivityObj);
 			}
-			log.info("JSON object built successfully");
+			log.debug("JSON object built successfully");
 			jsonReturn.put("activities", jsonActivitiesArray);
 
         } catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("ActivitiesResource:getActivities:JSONException", "error converting json representation into a JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
-			log.severe("team not found");
+			log.exception("ActivitiesResource:getActivities:NoResultException2", "team not found", e);
 			apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more teams have same team id");
+			log.exception("ActivitiesResource:getActivities:NonUniqueResultException2", "two or more teams have same team id", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			e.printStackTrace();
 		} finally {
@@ -856,8 +852,7 @@ public class ActivitiesResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("ActivitiesResource:getActivities:JSONException2", "error converting json representation into a JSON object", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -873,7 +868,7 @@ public class ActivitiesResource extends ServerResource {
 			if(theJsonInput.has("activities")) {
 				JSONArray activityIdsJsonArray = theJsonInput.getJSONArray("activities");
 				int activityIdsJsonArraySize = activityIdsJsonArray.length();
-				log.info("activityIds json array length = " + activityIdsJsonArraySize);
+				log.debug("activityIds json array length = " + activityIdsJsonArraySize);
 				for(int i=0; i<activityIdsJsonArraySize; i++) {
 					JSONObject activityIdJsonObj = activityIdsJsonArray.getJSONObject(i);
 					activityIds.add(activityIdJsonObj.getString("activityId"));
@@ -896,22 +891,22 @@ public class ActivitiesResource extends ServerResource {
 							.setParameter("activityId", activityId)
 							.setParameter("userId", currentUserId)
 							.getSingleResult();
-						log.info("activityVote retrieved successfully. Current status = " + activityVote.getStatus());
+						log.debug("activityVote retrieved successfully. Current status = " + activityVote.getStatus());
 						activityStatus = activityVote.getStatus();
 					} catch (NoResultException e) {
 						// Not an error - actually, it's one of the expected results
 					} catch (NonUniqueResultException e) {
-						log.severe("should never happen - two or more activityVotes have same activity id and user id");
+						log.exception("ActivitiesResource:getStatusOfActivitiesForUser:JNonUniqueResultException", "error converting json representation into a JSON object", e);
 						this.setStatus(Status.SERVER_ERROR_INTERNAL);
 					}
 					jsonActivityObj.put("vote", activityStatus);
 					jsonActivitiesArray.put(jsonActivityObj);
 				}
-				log.info("JSON object built successfully");
+				log.debug("JSON object built successfully");
 				theJsonReturn.put("activities", jsonActivitiesArray);
 	    	}
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
+			log.exception("ActivitiesResource:getStatusOfActivitiesForUser:JSONException", "error converting json representation into a JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    em.close();
@@ -920,8 +915,7 @@ public class ActivitiesResource extends ServerResource {
 		try {
 			theJsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("ActivitiesResource:getStatusOfActivitiesForUser:JSONException2", "error converting json representation into a JSON object", e);
 		}
     	return;
     }

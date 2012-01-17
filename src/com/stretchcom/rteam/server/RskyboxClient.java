@@ -14,10 +14,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Request;
+import org.restlet.resource.ServerResource;
 import org.apache.commons.codec.binary.Base64;
 
 public class RskyboxClient {
 	private static final Logger log = Logger.getLogger(RskyboxClient.class.getName());
+	private ServerResource serverResource;
 	
 	// HTTP Methods
 	private static final String HTTP_PUT = "PUT";
@@ -31,12 +33,45 @@ public class RskyboxClient {
 	private static final String RSKYBOX_SERVICE_PROVIDER = "GAE Server";
 	private static final String RSKYBOX_USER_NAME = "rTeam Common Code";
 	
+	public RskyboxClient(ServerResource serverResource) {
+		this.serverResource = serverResource;
+	}
+	
 	// rSkybox URL https://rskybox-stretchcom.appspot.com/rest/v1/applications/<applicationId>/clientLogs
 	private static final String RSKYBOX_BASE_URL_WITH_SLASH = "https://rskybox-stretchcom.appspot.com/rest/v1/applications/";
 	
-	public static void log(String theName, String theMessage, StackTraceElement[] theStackTraceElements, Request theRequest, Boolean theIncludeLocalLog) {
-		// default log level is ERROR
-		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, theStackTraceElements, theRequest, theIncludeLocalLog);
+	public static void exception(String theName, String theMessage, Exception theException, Request theRequest, Boolean theIncludeLocalLog) {
+		log(theName, RskyboxLog.EXCEPTION_LEVEL, theMessage, theException, theRequest, theIncludeLocalLog);
+	}
+	public void exception(String theName, String theMessage, Exception theException) {
+		log(theName, RskyboxLog.EXCEPTION_LEVEL, theMessage, theException, serverResource.getRequest(), true);
+	}
+	
+	public static void error(String theName, String theMessage, Request theRequest, Boolean theIncludeLocalLog) {
+		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, null, theRequest, theIncludeLocalLog);
+	}
+	public void error(String theName, String theMessage) {
+		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, null, serverResource.getRequest(), true);
+	}
+	
+	public static void info(String theName, String theMessage, Request theRequest, Boolean theIncludeLocalLog) {
+		log(theName, RskyboxLog.INFO_LEVEL, theMessage, null, theRequest, theIncludeLocalLog);
+	}
+	public static void info(String theName, String theMessage, Request theRequest) {
+		log(theName, RskyboxLog.INFO_LEVEL, theMessage, null, theRequest, true);
+	}
+	public void info(String theMessage) {
+		log(null, RskyboxLog.INFO_LEVEL, theMessage, null, serverResource.getRequest(), true);
+	}
+	
+	public static void debug(String theName, String theMessage, Request theRequest, Boolean theIncludeLocalLog) {
+		log(theName, RskyboxLog.DEBUG_LEVEL, theMessage, null, theRequest, theIncludeLocalLog);
+	}
+	public static void debug(String theName, String theMessage, Request theRequest) {
+		log(theName, RskyboxLog.DEBUG_LEVEL, theMessage, null, theRequest, true);
+	}
+	public void debug(String theMessage) {
+		log(null, RskyboxLog.DEBUG_LEVEL, theMessage, null, serverResource.getRequest(), true);
 	}
 	
 	// --------------
@@ -52,17 +87,34 @@ public class RskyboxClient {
 	//      (rational: dangerous to turn off all error reporting. May be needed for rSkybox to throttle application if quotas have been exceeded)
 	// * ERROR and EXCEPTION logs can be enabled/disabled as individual LOGs/insertion points
 	//      (rational: no sense to keep getting the same error if it keeps happening. Also, allows member to control logging volume)
-	public static void log(String theName, String theLevel, String theMessage, StackTraceElement[] theStackTraceElements, Request theRequest, Boolean theIncludeLocalLog) {
+	public static void log(String theName, String theLevel, String theMessage, Exception theException, Request theRequest, Boolean theIncludeLocalLog) {
 		// theLevel must be valid, or pack up our books and go home!
 		if(!RskyboxLog.isLogLevelValid(theLevel)) {
 			log.severe("bad log level = " + theLevel);
 			return;
 		}
 
+		String stackTrace = "";
+		if(theException != null) {
+			StackTraceElement[] stackTraceElements = theException.getStackTrace();
+			StringBuffer sb = new StringBuffer("");
+			for(StackTraceElement ste : stackTraceElements) {
+				sb.append(ste.toString());
+			}
+			stackTrace = sb.toString();
+		}
+
 		// No matter what, do the local logging if it is turned on
 		if(theIncludeLocalLog != null && theIncludeLocalLog) {
-			if(theLevel.equalsIgnoreCase(RskyboxLog.DEBUG_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.INFO_LEVEL)) {log.info(theMessage);}
-			if(theLevel.equalsIgnoreCase(RskyboxLog.ERROR_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.EXCEPTION_LEVEL)) {log.severe(theMessage);}
+			if(theLevel.equalsIgnoreCase(RskyboxLog.DEBUG_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.INFO_LEVEL)) {
+				log.info(theMessage);
+			} else if(theLevel.equalsIgnoreCase(RskyboxLog.ERROR_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.EXCEPTION_LEVEL)) {
+				if(theException != null) {
+					log.severe(theMessage + " exception: " + theException.getMessage() + " stackTrace: " + stackTrace);
+				} else {
+					log.severe(theMessage);
+				}
+			}
 		}
 		
 		// Identify end user if possible
@@ -90,13 +142,9 @@ public class RskyboxClient {
 			jsonPayload.put("logName", theName);
 			jsonPayload.put("message", theMessage);
 			
-			if(theStackTraceElements != null) {
+			if(stackTrace.length() > 0) {
 				// TODO modify rSkybox to take a JSON array of stackTraceElements
-				StringBuffer sb = new StringBuffer("");
-				for(StackTraceElement ste : theStackTraceElements) {
-					sb.append(ste.toString());
-				}
-				jsonPayload.put("stackBackTrace", sb.toString());
+				jsonPayload.put("stackBackTrace", stackTrace);
 			}
 			
 			// TODO rSkybox should rename instanceUrl to something more generic - here we use the current user's login ID if there is a current user
