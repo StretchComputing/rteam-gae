@@ -41,7 +41,8 @@ import com.google.appengine.api.datastore.KeyFactory;
  *  
  */  
 public class AttendeesResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(AttendeesResource.class.getName());
+	//private static final Logger log = Logger.getLogger(AttendeesResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
   
     // The sequence of characters that identifies the resource.
     String teamId;
@@ -57,35 +58,35 @@ public class AttendeesResource extends ServerResource {
 		
 		Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("teamId"))  {
 				this.teamId = (String)parameter.getValue();
 				this.teamId = Reference.decode(this.teamId);
-				log.info("AttendeesResource:doInit() - decoded teamId = " + this.teamId);
+				log.debug("AttendeesResource:doInit() - decoded teamId = " + this.teamId);
 			} else if(parameter.getName().equals("eventId")) {
 				this.eventId = (String)parameter.getValue();
 				this.eventId = Reference.decode(this.eventId);
-				log.info("AttendeesResource:doInit() - decoded eventId = " + this.eventId);
+				log.debug("AttendeesResource:doInit() - decoded eventId = " + this.eventId);
 			} else if(parameter.getName().equals("eventType")) {
 				this.eventType = (String)parameter.getValue();
 				this.eventType = Reference.decode(this.eventType);
-				log.info("AttendeesResource:doInit() - decoded eventType = " + this.eventType);
+				log.debug("AttendeesResource:doInit() - decoded eventType = " + this.eventType);
 			} else if(parameter.getName().equals("memberId")) {
 				this.memberId = (String)parameter.getValue();
 				this.memberId = Reference.decode(this.memberId);
-				log.info("AttendeesResource:doInit() - decoded memberId = " + this.memberId);
+				log.debug("AttendeesResource:doInit() - decoded memberId = " + this.memberId);
 			} else if(parameter.getName().equals("startDate")) {
 				this.startDateStr = (String)parameter.getValue();
 				this.startDateStr = Reference.decode(this.startDateStr);
-				log.info("AttendeesResource:doInit() - decoded startDate = " + this.startDateStr);
+				log.debug("AttendeesResource:doInit() - decoded startDate = " + this.startDateStr);
 			} else if(parameter.getName().equals("endDate")) {
 				this.endDateStr = (String)parameter.getValue();
 				this.endDateStr = Reference.decode(this.endDateStr);
-				log.info("AttendeesResource:doInit() - decoded endDate = " + this.endDateStr);
+				log.debug("AttendeesResource:doInit() - decoded endDate = " + this.endDateStr);
 			} else if(parameter.getName().equals("timeZone")) {
 				this.timeZoneStr = (String)parameter.getValue();
 				this.timeZoneStr = Reference.decode(this.timeZoneStr);
-				log.info("AttendeesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+				log.debug("AttendeesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
 			}
 		}
 }  
@@ -94,7 +95,7 @@ public class AttendeesResource extends ServerResource {
     @Put
     public JsonRepresentation updateAttendees(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateAttendees(@Put) entered ..... ");
+    	log.debug("updateAttendees(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -105,7 +106,7 @@ public class AttendeesResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("AttendeesResource:updateAttendees:currentUser", "user could not be retrieved from Request attributes");
     			return Utility.apiError(null);
     		} 
     		
@@ -136,17 +137,17 @@ public class AttendeesResource extends ServerResource {
 			if(json.has("attendees")) {
 				attendeesJsonArray = json.getJSONArray("attendees");
 				attendeeArraySize = attendeesJsonArray.length();
-				log.info("attendee json array length = " + attendeeArraySize);
+				log.debug("attendee json array length = " + attendeeArraySize);
 				for(int i=0; i<attendeeArraySize; i++) {
 					JSONObject attendeeJsonObj = attendeesJsonArray.getJSONObject(i);
 					memberIds.add(attendeeJsonObj.getString("memberId"));
 					if(attendeeJsonObj.has("present")) {
 						statuses.add(attendeeJsonObj.getString("present"));
-						log.info("attendee status sent = " + attendeeJsonObj.getString("present"));
+						log.debug("attendee status sent = " + attendeeJsonObj.getString("present"));
 					}
 					if(attendeeJsonObj.has("preGameStatus")) {
 						preGameStatuses.add(attendeeJsonObj.getString("preGameStatus"));
-						log.info("attendee pre-game status sent = " + attendeeJsonObj.getString("preGameStatus"));
+						log.debug("attendee pre-game status sent = " + attendeeJsonObj.getString("preGameStatus"));
 					}
 				}
 			}
@@ -166,12 +167,12 @@ public class AttendeesResource extends ServerResource {
     		team = (Team)em.createNamedQuery("Team.getByKey")
 				.setParameter("key", KeyFactory.stringToKey(teamIdStr))
 				.getSingleResult();
-			log.info("team retrieved = " + team.getTeamName());
+			log.debug("team retrieved = " + team.getTeamName());
 			
    			Boolean isNetworkedAuthenticatedCoordinator = false;
    			List<Member> memberships = null;
 			if(currentUser.getIsNetworkAuthenticated()) {
-				log.info("user is network authenticated");
+				log.debug("user is network authenticated");
 				memberships = Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
 				for(Member m : memberships) {
     	    		if(m.isCoordinator()) {
@@ -184,11 +185,11 @@ public class AttendeesResource extends ServerResource {
 			// a non-coordinator can update their own attendance, but nobody else's
 			Boolean onlyMemberIdBelongsToCurrentUser = false;
 			if(memberships != null && memberIds.size() == 1) {
-				log.info("only one member ID specified -- Who's coming response");
+				log.debug("only one member ID specified -- Who's coming response");
 				for(Member m : memberships) {
 					if(memberIds.get(0).equals(KeyFactory.keyToString(m.getKey()))) {
 						onlyMemberIdBelongsToCurrentUser = true;
-						log.info("onlyMemberIdBelongsToCurrentUser is TRUE");
+						log.debug("onlyMemberIdBelongsToCurrentUser is TRUE");
 						break;
 					}
 				}
@@ -283,7 +284,7 @@ public class AttendeesResource extends ServerResource {
 				for(Attendee a : attendeesPresent) {
 					memberKeys.add(KeyFactory.stringToKey(a.getMemberId()));
 				}
-				log.info("Number of members found that are in attendance = " + memberKeys.size());
+				log.debug("Number of members found that are in attendance = " + memberKeys.size());
 				
 				List<Member> membersPresent = new ArrayList<Member>();
 	    		if(memberKeys.size() > 0) {
@@ -291,9 +292,9 @@ public class AttendeesResource extends ServerResource {
 		    			membersPresent = (List<Member>)emMembers.createQuery("select from " + Member.class.getName() + " where key = :keys")
 		    	    		.setParameter("keys", memberKeys)
 		    	    		.getResultList();
-		    			log.info("number of member entities found = " + membersPresent.size());
+		    			log.debug("number of member entities found = " + membersPresent.size());
 	    			} catch(Exception e) {
-	    				log.severe("Exception retrieving members via keys. Message = " + e.getMessage());
+	    				log.exception("AttendeesResource:updateAttendees:Exception", "retrieving members via keys", e);
 	    			}
 	    			finally {
 	    				emMembers.close();
@@ -322,10 +323,9 @@ public class AttendeesResource extends ServerResource {
 
 					emEvent.getTransaction().commit();
 				} catch(NoResultException e) {
-					log.severe("error accessing the game/practice");
+    				log.exception("AttendeesResource:updateAttendees:NoResultException", "error accessing the game/practice", e);
 				} catch (NonUniqueResultException e) {
-					log.severe("should never happen - two games/practices have the same key");
-					e.printStackTrace();
+    				log.exception("AttendeesResource:updateAttendees:NonUniqueResultException", "two games/practices have the same key", e);
 				} finally {
 					emEvent.close();
 				}
@@ -338,16 +338,13 @@ public class AttendeesResource extends ServerResource {
 			}
 			
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Put");
-			e.printStackTrace();
+			log.exception("AttendeesResource:updateAttendees:IOException", "error extracting JSON object from Put", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("AttendeesResource:updateAttendees:JSONException", "error converting json representation into a JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two entities matched query criteria");
-			e.printStackTrace();
+			log.exception("AttendeesResource:updateAttendees:JSONException", "two entities matched query criteria", e);
 		} finally {
 		    if (em.getTransaction().isActive()) {
 		        em.getTransaction().rollback();
@@ -358,8 +355,7 @@ public class AttendeesResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("AttendeesResource:updateAttendees:JSONException2", "error converting json representation into a JSON object", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -367,7 +363,7 @@ public class AttendeesResource extends ServerResource {
     // Handles 'Get attendees' API
     @Get("json")
     public JsonRepresentation getAttendees(Variant variant) {
-        log.info("AttendeesResource:getAttendees() entered");
+        log.debug("AttendeesResource:getAttendees() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 		
@@ -397,7 +393,7 @@ public class AttendeesResource extends ServerResource {
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
 				jsonReturn.put("apiStatus", apiStatus);
-				log.info(apiStatus);
+				log.debug(apiStatus);
 				return new JsonRepresentation(jsonReturn);
 			}
 
@@ -409,7 +405,7 @@ public class AttendeesResource extends ServerResource {
 					.setParameter("eventId", this.eventId)
 					.setParameter("eventType", this.eventType)
 					.getResultList();
-				log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for specified event");
+				log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for specified event");
 			} else {
 				isEventSearch = false;
 				// attendance for a specific member has been requested
@@ -429,7 +425,7 @@ public class AttendeesResource extends ServerResource {
 						.setParameter("startDate", startDate)
 						.setParameter("endDate", endDate)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member between start and end date");
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member between start and end date");
 					} else {
 						attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByMemberIdAndStartAndEndDatesAndEventType")
 						.setParameter("memberId", this.memberId)
@@ -437,20 +433,20 @@ public class AttendeesResource extends ServerResource {
 						.setParameter("endDate", endDate)
 						.setParameter("eventType", this.eventType)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member between start and end date. eventType = " + this.eventType);
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member between start and end date. eventType = " + this.eventType);
 					}
 				} else if(startDate == null && endDate == null) {
 					if(this.eventType == null) {
 						attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByMemberId")
 						.setParameter("memberId", this.memberId)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member");
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member");
 					} else {
 						attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByMemberIdAndEventType")
 						.setParameter("memberId", this.memberId)
 						.setParameter("eventType", this.eventType)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member. eventType = " + this.eventType);
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member. eventType = " + this.eventType);
 					}
 				} else if(startDate != null) {
 					if(this.eventType == null) {
@@ -458,30 +454,30 @@ public class AttendeesResource extends ServerResource {
 						.setParameter("memberId", this.memberId)
 						.setParameter("startDate", startDate)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member");
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member");
 					} else {
 						attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByMemberIdAndStartDateAndEventType")
 						.setParameter("memberId", this.memberId)
 						.setParameter("startDate", startDate)
 						.setParameter("eventType", this.eventType)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member. eventType = " + this.eventType);
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member. eventType = " + this.eventType);
 					}
-				log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member after start date");
+				log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member after start date");
 				} else if(endDate != null) {
 					if(this.eventType == null) {
 						attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByMemberIdAndEndDate")
 						.setParameter("memberId", this.memberId)
 						.setParameter("endDate", endDate)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member before end date");
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member before end date");
 					} else {
 						attendees = (List<Attendee>)em.createNamedQuery("Attendee.getByMemberIdAndEndDateAndEventType")
 						.setParameter("memberId", this.memberId)
 						.setParameter("endDate", endDate)
 						.setParameter("eventType", this.eventType)
 						.getResultList();
-						log.info("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member before end date. eventType = " + this.eventType);
+						log.debug("AttendeesResource.getAttendees(): getting " + attendees.size() + " Attendees for member before end date. eventType = " + this.eventType);
 					}
 				}
 			}
@@ -511,16 +507,14 @@ public class AttendeesResource extends ServerResource {
     		}
     		jsonReturn.put("attendees", jsonAttendeesArray);
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "exception thrown: message = " + e.getMessage());
+			log.exception("AttendeesResource:getAttendees:Exception", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		}
 		
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("AttendeesResource:getAttendees:JSONException", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }

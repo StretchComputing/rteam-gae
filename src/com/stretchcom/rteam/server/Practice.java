@@ -50,7 +50,8 @@ import com.google.appengine.api.datastore.KeyFactory;
     ),
 })
 public class Practice implements Cloneable {
-	private static final Logger log = Logger.getLogger(Practice.class.getName());
+	//private static final Logger log = Logger.getLogger(Practice.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	//constants
 	public static final String PRACTICE = "practice";
@@ -310,7 +311,7 @@ public class Practice implements Cloneable {
     	} catch (NoResultException e) {
         	// not a error - eventID passed in via API is bad. Null will be returned below.
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more games/practices have same key");
+			log.exception("Practice:getEventDate:NonUniqueResultException", "two or more games/practices have same key", e);
 		} finally {
 		    em.close();
 		}
@@ -347,7 +348,7 @@ public class Practice implements Cloneable {
     	} catch (NoResultException e) {
         	// not a error - eventID passed in via API is bad. Null will be returned below.
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more games/practices have same key");
+			log.exception("Practice:getEventInfo:NonUniqueResultException", "two or more games/practices have same key", e);
 		} finally {
 		    em.close();
 		}
@@ -373,9 +374,9 @@ public class Practice implements Cloneable {
     			em.getTransaction().commit();
 			}
 			int numOfPracticesUpdated = practices.size() - 1;
-			log.info("number of practices with location fields update = " + numOfPracticesUpdated);
+			log.debug("number of practices with location fields update = " + numOfPracticesUpdated);
 		} catch (Exception e) {
-			log.severe("updateAllLocations(): practice could not be retrieved using team key");
+			log.exception("Practice:updateAllLocations:Exception", "practice could not be retrieved using team key", e);
 		} finally {
 			em.close();
 		}

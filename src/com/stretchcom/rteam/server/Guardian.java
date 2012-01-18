@@ -3,7 +3,8 @@ package com.stretchcom.rteam.server;
 import java.util.logging.Logger;
 
 public class Guardian {
-	private static final Logger log = Logger.getLogger(Guardian.class.getName());
+	//private static final Logger log = Logger.getLogger(Guardian.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private String key;
 	private String emailAddress;

@@ -1,9 +1,6 @@
 package com.stretchcom.rteam.server;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
@@ -17,22 +14,23 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
 
-import com.google.appengine.api.blobstore.ByteRange;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 
 @SuppressWarnings("serial")
 public class PhotoServlet extends HttpServlet {
-    private static final Logger log = Logger.getLogger(PhotoServlet.class.getName());
+    //private static final Logger log = Logger.getLogger(PhotoServlet.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
+    
     private static final String PHOTO_EXT = ".jpg";
 
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        log.info("PhotoServlet.doPost() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
+        log.debug("PhotoServlet.doPost() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
     }
 
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        log.info("PhotoServlet.doGet() entered");
+        log.debug("PhotoServlet.doGet() entered");
         ServletOutputStream out = null;
         resp.setContentType("image/jpeg");
 
@@ -52,7 +50,7 @@ public class PhotoServlet extends HttpServlet {
             out.write(photo);
         } catch (Exception e) {
             e.printStackTrace();
-            log.info("PhotoServlet exception = " + e.getMessage());
+            log.debug("PhotoServlet exception = " + e.getMessage());
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             if (out != null) {
@@ -66,14 +64,14 @@ public class PhotoServlet extends HttpServlet {
 	private String getPathId(HttpServletRequest theReq) {
 		// extract the crash detect ID from the URL (for http://hostname.com/mywebapp/servlet/MyServlet/a/b;c=123?d=789, returns /a/b;c=123
 		String pathInfo = theReq.getPathInfo();
-		log.info("Image Servlet URL pathInfo = " + pathInfo);
+		log.debug("Image Servlet URL pathInfo = " + pathInfo);
 		if(pathInfo == null || pathInfo.length() == 0) {return null;}
 		
 		// if all is going well, pathInfo should have the following format:  /<activityId>
 		String activityId = null;
 		if(pathInfo.startsWith("/")) {
 			activityId = pathInfo.substring(1);
-			log.info("activity ID = " + activityId);
+			log.debug("activity ID = " + activityId);
 		}
 		return activityId;
 	}
@@ -90,8 +88,7 @@ public class PhotoServlet extends HttpServlet {
 			try {
 				activityKey = KeyFactory.stringToKey(theActivityId);
 			} catch (Exception e) {
-				log.severe("exception = " + e.getMessage());
-				e.printStackTrace();
+	            log.exception("PhotoServlet:getPhoto:Exception", "two or more Activity have same key", e);
 				return null;
 			}
 			
@@ -103,13 +100,13 @@ public class PhotoServlet extends HttpServlet {
             if(photoBase64 != null) {
                 rawPhoto = Base64.decodeBase64(photoBase64);
             } else {
-            	log.severe("no photo for specified activity");
+            	log.error("PhotoServlet:getPhoto:photo", "no photo for specified activity");
             }
         } catch (NoResultException e) {
             // activity ID passed in is not valid
-            log.info("Activity not found");
+            log.debug("Activity not found");
         } catch (NonUniqueResultException e) {
-            log.severe("should never happen - two or more Activity have same key");
+            log.exception("PhotoServlet:getPhoto:NonUniqueResultException", "two or more Activity have same key", e);
         }
 
         return rawPhoto;

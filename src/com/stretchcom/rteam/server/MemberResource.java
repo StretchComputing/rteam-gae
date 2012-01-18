@@ -40,7 +40,9 @@ import com.google.appengine.api.images.Transform;
  * @author joepwro
  */
 public class MemberResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(MemberResource.class.getName());
+	//private static final Logger log = Logger.getLogger(MemberResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
+	
 	private static final String ACCEPT_DELETE = "accept";
 	private static final String REJECT_DELETE = "reject";
 
@@ -56,42 +58,42 @@ public class MemberResource extends ServerResource {
     protected void doInit() throws ResourceException {  
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("MemberResource:doInit() - teamId = " + this.teamId);
+        log.debug("MemberResource:doInit() - teamId = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("MemberResource:doInit() - decoded teamId = " + this.teamId);
+            log.debug("MemberResource:doInit() - decoded teamId = " + this.teamId);
         }
    
         // Get the "memberId" attribute value taken from the URI template /team/{teamId} 
         this.memberId = (String)getRequest().getAttributes().get("memberId"); 
-        log.info("MemberResource:doInit() - memberId = " + this.memberId);
+        log.debug("MemberResource:doInit() - memberId = " + this.memberId);
         if(this.memberId != null) {
             this.memberId = Reference.decode(this.memberId);
-            log.info("MemberResource:doInit() - decoded memberId = " + this.memberId);
+            log.debug("MemberResource:doInit() - decoded memberId = " + this.memberId);
         }
     
 		// same method is used to handle both 'Get Member Info' and 'Get Membership Status'
         // for 'Get Membership Status', the email address comes in as query parameters
         Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("emailAddress"))  {
 				this.emailAddress = (String)parameter.getValue();
 				this.emailAddress = Reference.decode(this.emailAddress);
 				this.emailAddress = this.emailAddress.toLowerCase();
-				log.info("UserResource:doInit() - decoded emailAddress = " + this.emailAddress);
+				log.debug("UserResource:doInit() - decoded emailAddress = " + this.emailAddress);
 			} else if(parameter.getName().equals("oneUseToken")) {
 				this.oneUseToken = (String)parameter.getValue();
 				this.oneUseToken = Reference.decode(this.oneUseToken);
-				log.info("MemberResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
+				log.debug("MemberResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
 			} else if(parameter.getName().equals("decision")) {
 				this.decision = (String)parameter.getValue();
 				this.decision = Reference.decode(this.decision);
-				log.info("MemberResource:doInit() - decoded decision = " + this.decision);
+				log.debug("MemberResource:doInit() - decoded decision = " + this.decision);
 			} else if(parameter.getName().equals("includePhoto"))  {
 				this.includePhoto = (String)parameter.getValue();
 				this.includePhoto = Reference.decode(this.includePhoto);
-				log.info("UserResource:doInit() - decoded includePhoto = " + this.includePhoto);
+				log.debug("UserResource:doInit() - decoded includePhoto = " + this.includePhoto);
 			}
 
 		}
@@ -101,7 +103,7 @@ public class MemberResource extends ServerResource {
 	// Handles 'Get membership status' API
     @Get("json")
     public JsonRepresentation getMemberInfo(Variant variant) {
-        log.info("MemberResource:toJson() entered");
+        log.debug("MemberResource:toJson() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -144,12 +146,12 @@ public class MemberResource extends ServerResource {
     	    	User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     			if(currentUser == null) {
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    				log.severe("user could not be retrieved from Request attributes!!");
+    				log.error("MemberResource:getMemberInfo:currentUser", "user could not be retrieved from Request attributes!!");
     			}
     			// teamId is required
     			else if(this.teamId == null || this.teamId.length() == 0) {
      				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-    				log.info("invalid team ID");
+    				log.debug("invalid team ID");
     			} else {
     				try {
         	    		team = (Team)em.createNamedQuery("Team.getByKey")
@@ -158,11 +160,11 @@ public class MemberResource extends ServerResource {
             			
         	    		if(!currentUser.isUserMemberOfTeam(this.teamId)) {
             				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-            				log.info(apiStatus);
+            				log.debug(apiStatus);
                     	}
     				} catch (NoResultException e) {
     		        	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
-    		        	log.info("no result exception, team not found");
+    		        	log.debug("no result exception, team not found");
     				} 
     				
     			}
@@ -187,7 +189,7 @@ public class MemberResource extends ServerResource {
         		Member member = (Member)em.createNamedQuery("Member.getByKey")
         			.setParameter("key", memberKey)
         			.getSingleResult();
-        		log.info("member retrieved = " + member.getFullName());
+        		log.debug("member retrieved = " + member.getFullName());
             	
             	jsonReturn.put("firstName", member.getFirstName());
             	jsonReturn.put("lastName", member.getLastName());
@@ -221,10 +223,10 @@ public class MemberResource extends ServerResource {
             	
             	JSONArray roleJsonArray = new JSONArray();
             	List<String> roles = member.getRoles();
-            	log.info("number of roles = " + roles.size());
+            	log.debug("number of roles = " + roles.size());
             	for(String r : roles) {
             		roleJsonArray.put(r);
-            		log.info("role sent by client = " + r);
+            		log.debug("role sent by client = " + r);
             	}
             	jsonReturn.put("roles", roleJsonArray);
             	if(member.getGender() != null) jsonReturn.put("gender", member.getGender());
@@ -250,15 +252,13 @@ public class MemberResource extends ServerResource {
         	}
         } catch (NoResultException e) {
         	apiStatus = ApiStatusCode.MEMBER_NOT_FOUND;
-        	log.info("no result exception, member not found");
+        	log.debug("no result exception, member not found");
 		} catch (JSONException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error building JSON object");
-			e.printStackTrace();
+			log.exception("MemberResource:getMemberInfo:JSONException", "", e);
 		} catch (NonUniqueResultException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("should never happen - two or more members have same ID");
-			e.printStackTrace();
+			log.exception("MemberResource:getMemberInfo:NonUniqueResultException", "two or more members have same ID", e);
 		} finally {
 			em.close();
 		}
@@ -266,8 +266,7 @@ public class MemberResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MemberResource:getMemberInfo:JSONException", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -277,7 +276,7 @@ public class MemberResource extends ServerResource {
     // Handles 'Delete member confirmation' API 
     @Delete
     public JsonRepresentation remove() {
-    	log.info("MemberResource:remove() entered");
+    	log.debug("MemberResource:remove() entered");
     	EntityManager em = EMF.get().createEntityManager();
     	EntityTransaction txn = em.getTransaction();
     	JSONObject jsonReturn = new JSONObject();
@@ -298,7 +297,7 @@ public class MemberResource extends ServerResource {
         				.setParameter("oneUseToken", this.oneUseToken)
         				.setParameter("oneUseTokenStatus", Recipient.NEW_TOKEN_STATUS)
         				.getSingleResult();
-        			log.info("remove(): recipient found");
+        			log.debug("remove(): recipient found");
         			
         			// this is a "first" response wins scenario.  So we need to mark all recipients that are part of this
         			// message thread as no longer active.
@@ -319,7 +318,7 @@ public class MemberResource extends ServerResource {
         			// on the link in the email multiple times.  In either case, it is inactive after first response.
         			apiStatus = ApiStatusCode.DELETE_MEMBER_CONFIRMATION_LINK_NO_LONGER_ACTIVE;
         		} catch (NonUniqueResultException e) {
-        			log.severe("remove(): should never happen - two or more recipients have same oneUseToken");
+        			log.exception("MemberResource:remove:NonUniqueResultException1", "two or more recipients have same oneUseToken", e);
         			this.setStatus(Status.SERVER_ERROR_INTERNAL);
         		}
         		
@@ -332,7 +331,7 @@ public class MemberResource extends ServerResource {
         				Member memberToRemove = (Member)em2.createNamedQuery("Member.getByKey")
         	    			.setParameter("key", memberKey)
         	    			.getSingleResult();
-        	    		log.info("member being removed = " + memberToRemove.getFullName());
+        	    		log.debug("member being removed = " + memberToRemove.getFullName());
         	    		
                     	jsonReturn.put("firstName", memberToRemove.getFirstName());
             			jsonReturn.put("lastName", memberToRemove.getLastName());
@@ -342,11 +341,10 @@ public class MemberResource extends ServerResource {
         	    		em2.getTransaction().commit();
         	    	} catch (NoResultException e) {
         				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-        				log.severe("should never happen - member could not be found using memberId stored in recipient entity");
+            			log.exception("MemberResource:remove:NoResultException1", "member could not be found using memberId stored in recipient entity", e);
         			} catch (NonUniqueResultException e) {
         				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-        				log.severe("should never happen - two or more members have same member ID");
-        				e.printStackTrace();
+            			log.exception("MemberResource:remove:NonUniqueResultException2", "two or more members have same member ID", e);
         			} finally {
             		    if (em2.getTransaction().isActive()) {
             		    	em2.getTransaction().rollback();
@@ -361,12 +359,12 @@ public class MemberResource extends ServerResource {
     	    	User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     			if(currentUser == null) {
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    				log.severe("user could not be retrieved from Request attributes!!");
+    				log.error("MemberResource:remove:currentUser", "user could not be retrieved from Request attributes!!");
     			}
     			// teamId is required
     			else if(this.teamId == null || this.teamId.length() == 0) {
     				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-    				log.info("invalid team ID");
+    				log.debug("invalid team ID");
     			} else {
     				try {
         	    		team = (Team)em.createNamedQuery("Team.getByKey")
@@ -375,15 +373,14 @@ public class MemberResource extends ServerResource {
             			
         	    		if(!currentUser.isUserMemberOfTeam(this.teamId)) {
             				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-            				log.info(apiStatus);
+            				log.debug(apiStatus);
                     	}
     				} catch (NoResultException e) {
     		        	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
-    		        	log.info("no result exception, team not found");
+    		        	log.debug("no result exception, team not found");
     				} catch (NonUniqueResultException e) {
     					this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    					log.severe("should never happen - two or more teams have same ID");
-    					e.printStackTrace();
+            			log.exception("MemberResource:remove:NonUniqueResultException3", "two or more teams have same ID", e);
     				}
     			}
     			
@@ -408,7 +405,7 @@ public class MemberResource extends ServerResource {
     				}
     			} else {
         			apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
-        			log.info("user must be network authenticated");
+        			log.debug("user must be network authenticated");
     			}
             	
     			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -423,14 +420,13 @@ public class MemberResource extends ServerResource {
     				memberToRemove = (Member)em.createNamedQuery("Member.getByKey")
     	    			.setParameter("key", memberKey)
     	    			.getSingleResult();
-    	    		log.info("member to be removed = " + memberToRemove.getFullName());
+    	    		log.debug("member to be removed = " + memberToRemove.getFullName());
     	    	} catch (NoResultException e) {
     	        	apiStatus = ApiStatusCode.MEMBER_NOT_FOUND;
-    	        	log.info("no result exception, member user not found");
+    	        	log.debug("no result exception, member user not found");
     			} catch (NonUniqueResultException e) {
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    				log.severe("should never happen - two or more members have same member ID");
-    				e.printStackTrace();
+        			log.exception("MemberResource:remove:NonUniqueResultException4", "two or more members have same member ID", e);
     			}
         		
         		//::BUSINESS_RULE:: Deleting a team creator is a request. Creator sent an email and given option to not allow.
@@ -438,7 +434,7 @@ public class MemberResource extends ServerResource {
         		if(memberToRemove != null) {
         			if(currentUserCoordinatorMembership.getKey().equals(memberToRemove.getKey())) {
         				apiStatus = ApiStatusCode.USER_CANNOT_DELETE_SELF;
-        				log.info("user cannot delete himself/herself");
+        				log.debug("user cannot delete himself/herself");
         			} else if(memberToRemove.isCreator() && memberToRemove.getIsNetworkAuthenticated()) {
         				creatorDeleteRequested = true;
         			} 
@@ -459,14 +455,14 @@ public class MemberResource extends ServerResource {
     				// Call getTeam() before transaction finishes below. Team needed after transaction and getting
     				// error unless team is first accessed now.
     				memberToRemove.getTeam();
-    	        	log.info("coordinator delete requested. Confirmation message will be sent to coordinator.");
+    	        	log.debug("coordinator delete requested. Confirmation message will be sent to coordinator.");
     			} else {
     				em.remove(memberToRemove);
-    	        	log.info("member deleted successfully");
+    	        	log.debug("member deleted successfully");
     	        	if(memberToRemove == null) {
-    	        		log.info("after remove(), memberToRemove is now NULL");
+    	        		log.debug("after remove(), memberToRemove is now NULL");
     	        	} else {
-    	        		log.info("after remove(), memberToRemove is NOT NULL");
+    	        		log.debug("after remove(), memberToRemove is NOT NULL");
     	        	}
     	        	wasMemberRemoved = true;
     			}
@@ -505,8 +501,7 @@ public class MemberResource extends ServerResource {
     						}
     		        	}
     		        } catch (NonUniqueResultException e) {
-    					log.severe("should never happen - two or more users have same key");
-    					e.printStackTrace();
+            			log.exception("MemberResource:remove:NonUniqueResultException5", "two or more users have same key", e);
     				} finally {
     				    if (em2.getTransaction().isActive()) {
     				        em2.getTransaction().rollback();
@@ -517,8 +512,7 @@ public class MemberResource extends ServerResource {
         	}
         } catch (JSONException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error building JSON object");
-			e.printStackTrace();
+			log.exception("MemberResource:remove:JSONException1", "", e);
 		} finally {
 		    if (txn.isActive()) {
 		    	txn.rollback();
@@ -529,8 +523,7 @@ public class MemberResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MemberResource:remove:JSONException2", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -539,7 +532,7 @@ public class MemberResource extends ServerResource {
     @Put 
     public JsonRepresentation updateMember(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateMember(@Put) entered ..... ");
+    	log.debug("updateMember(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -552,17 +545,17 @@ public class MemberResource extends ServerResource {
 	    	User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
 			if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				log.severe("user could not be retrieved from Request attributes!!");
+				log.error("MemberResource:updateMember:currentUser", "user could not be retrieved from Request attributes!!");
 			}
 			// teamId is required
 			else if(this.teamId == null || this.teamId.length() == 0) {
 				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-				log.info("invalid team ID");
+				log.debug("invalid team ID");
 			}
 			//::BUSINESS_RULE: current user must be a member of the team 
 			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
 			else {
 				try {
@@ -572,11 +565,10 @@ public class MemberResource extends ServerResource {
         			
 				} catch (NoResultException e) {
 		        	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
-		        	log.info("no result exception, team not found");
+		        	log.debug("no result exception, team not found");
 				} catch (NonUniqueResultException e) {
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
-					log.severe("should never happen - two or more teams have same ID");
-					e.printStackTrace();
+					log.exception("MemberResource:updateMember:NonUniqueResultException", "", e);
 				}
 			}
 			
@@ -589,7 +581,7 @@ public class MemberResource extends ServerResource {
 			Boolean isCreator = team.isCreator(currentUser.getEmailAddress());
 			if(!isCreator && !currentUser.getIsNetworkAuthenticated()) {
 				apiStatus = ApiStatusCode.USER_NOT_CREATOR_NOR_NETWORK_AUTHENTICATED;
-				log.info("user is not the team creator nor network authenticated");
+				log.debug("user is not the team creator nor network authenticated");
 			} 
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -618,14 +610,13 @@ public class MemberResource extends ServerResource {
 				memberBeingModified = (Member)em.createNamedQuery("Member.getByKey")
 	    			.setParameter("key", memberKey)
 	    			.getSingleResult();
-	    		log.info("member retrieved = " + memberBeingModified.getFullName());
+	    		log.debug("member retrieved = " + memberBeingModified.getFullName());
 	    	} catch (NoResultException e) {
 	        	apiStatus = ApiStatusCode.MEMBER_NOT_FOUND;
-	        	log.info("no result exception, member to modify not found");
+	        	log.debug("no result exception, member to modify not found");
 			} catch (NonUniqueResultException e) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				log.severe("should never happen - two or more members on same team have same member ID");
-				e.printStackTrace();
+				log.exception("MemberResource:updateMember:NonUniqueResultException2", "", e);
 			}
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -645,7 +636,7 @@ public class MemberResource extends ServerResource {
     		//::BUSINESS_RULE  current user must either be a coordinator on the team or one of the "owners" of the member object
     		if(isCoordinator == false && isMemberOwner == false) {
 	        	apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR_NOR_OWNING_MEMBER;
-	        	log.info("user must either be a coordinator on the team or one of the 'owners' of the member object");
+	        	log.debug("user must either be a coordinator on the team or one of the 'owners' of the member object");
     		}
         	
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -655,7 +646,7 @@ public class MemberResource extends ServerResource {
 
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
-			log.info("received json object = " + json.toString());
+			log.debug("received json object = " + json.toString());
 			
 			// record the changes as we go along so notification message can show details of the updated
 			List<String> modificationMessages = new ArrayList<String>();
@@ -754,14 +745,14 @@ public class MemberResource extends ServerResource {
 				} else if(oldThumbNail.length() > 0 && thumbNail.length() == 0) {
 					modMessage = "Member Photo was removed";
 				}
-				log.info("modMessage = " + modMessage);
+				log.debug("modMessage = " + modMessage);
 				modificationMessages.add(modMessage);
 			}
 			
 			Boolean isPortrait = null;
 			if(json.has("isPortrait")) {
 				isPortrait = json.getBoolean("isPortrait");
-				log.info("json isPortrait = " + isPortrait);
+				log.debug("json isPortrait = " + isPortrait);
 			}
 
 			if(json.has("photo")) {
@@ -794,7 +785,7 @@ public class MemberResource extends ServerResource {
 					} else if(oldPhoto.length() > 0 && photoBase64.length() == 0) {
 						modMessage = "Member Photo was removed";
 					}
-					log.info("modMessage = " + modMessage);
+					log.debug("modMessage = " + modMessage);
 					modificationMessages.add(modMessage);
 				} catch(Exception e) {
 					apiStatus = ApiStatusCode.INVALID_PHOTO_PARAMETER;
@@ -866,7 +857,7 @@ public class MemberResource extends ServerResource {
 
 					// if no key is provided, then this guardian is being added
 					if(updatedGuardian.getKey() == null || updatedGuardian.getKey().length() == 0) {
-						log.info("Guardian being added");
+						log.debug("Guardian being added");
 						///////////////////////
 						// Guardian Being Added
 						///////////////////////
@@ -886,7 +877,7 @@ public class MemberResource extends ServerResource {
 							   (updatedGuardian.getFirstName() == null || updatedGuardian.getFirstName().length() == 0) &&
 							   (updatedGuardian.getLastName() == null || updatedGuardian.getLastName().length() == 0) &&
 							   (updatedGuardian.getPhoneNumber() == null || updatedGuardian.getPhoneNumber().length() == 0)       ) {
-						log.info("Guardian being deleted, key = " + updatedGuardian.getKey());
+						log.debug("Guardian being deleted, key = " + updatedGuardian.getKey());
 						/////////////////////////////////
 						// Guardian Being Cleared/Deleted
 						/////////////////////////////////
@@ -1087,7 +1078,7 @@ public class MemberResource extends ServerResource {
 				}
 				
 				if(!oldRoleNames.toString().equalsIgnoreCase(roleNames.toString())) {
-					log.info("modMessage = " + "Roles changed from: " + oldRoleNames.toString() + " to: " + roleNames.toString());
+					log.debug("modMessage = " + "Roles changed from: " + oldRoleNames.toString() + " to: " + roleNames.toString());
 					// TODO Modification message turned off for now - role feature is not used in client yet
 					//modificationMessages.add("Roles changed from: " + oldRoleNames.toString() + " to: " + roleNames.toString());
 					memberBeingModified.setRoles(roles);
@@ -1122,7 +1113,7 @@ public class MemberResource extends ServerResource {
 			List<UserMemberInfo> notAssociatedIndividuals = new ArrayList<UserMemberInfo>();
 			// care has been taken so potentialAssociatedIndividuals all have unique contact info.
 			for(UserMemberInfo umi : potentialAssociatedIndividuals) {
-				log.info("checking for user association of ea = " + umi.getEmailAddress() + " pn = " + umi.getPhoneNumber());
+				log.debug("checking for user association of ea = " + umi.getEmailAddress() + " pn = " + umi.getPhoneNumber());
 
 				////////////////////////////////////////////////////////////////////
 				// USER 'FIND' ALGORITHM
@@ -1144,14 +1135,14 @@ public class MemberResource extends ServerResource {
 							.getSingleResult();
 						associatedUsers.add(aUser);
 						wasUserFound = true;
-						log.info("user association found for ea = " + iea);
+						log.debug("user association found for ea = " + iea);
 			    	} catch (NoResultException e) {
 			    		///////////////////////////////////////////////////////////////////////////////////////////////////
 						// THIS IS NOT AN ERROR -- there may be no user entity associated with the specified email address.
 			    		///////////////////////////////////////////////////////////////////////////////////////////////////
-			    		log.info("user association NOT found for ea = " + iea);
+			    		log.debug("user association NOT found for ea = " + iea);
 					} catch (NonUniqueResultException e) {
-						log.severe("createMember(): should never happen - two or more users with same email address");
+						log.exception("MemberResource:updateMember:NonUniqueResultException3", "", e);
 					}
 				}
 				
@@ -1163,14 +1154,14 @@ public class MemberResource extends ServerResource {
 							.getSingleResult();
 						associatedUsers.add(aUser);
 						wasUserFound = true;
-						log.info("user association found for pn = " + ipn);
+						log.debug("user association found for pn = " + ipn);
 			    	} catch (NoResultException nre) {
 			    		///////////////////////////////////////////////////////////////////////////////////////////////////
 						// THIS IS NOT AN ERROR -- there may be no user entity associated with the specified phone number.
 			    		///////////////////////////////////////////////////////////////////////////////////////////////////
-			    		log.info("user association NOT found for pn = " + ipn);
+			    		log.debug("user association NOT found for pn = " + ipn);
 					} catch (NonUniqueResultException e) {
-						log.severe("createMember(): should never happen - two or more users with same phone number");
+						log.exception("MemberResource:updateMember:NonUniqueResultException4", "two or more users with same phone number", e);
 					}
 	    		}
 	    		
@@ -1241,12 +1232,10 @@ public class MemberResource extends ServerResource {
 			//::TODO  Need to deactivate any previous outstanding email confirmation messages for all modified email address
 			// If this is not done, a member confirming an old email address may network authenticate the new one.
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("MemberResource:updateMember:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MemberResource:updateMember:JSONException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -1258,8 +1247,7 @@ public class MemberResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MemberResource:updateMember:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }

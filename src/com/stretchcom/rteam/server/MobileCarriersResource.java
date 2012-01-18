@@ -17,12 +17,13 @@ import org.restlet.resource.ServerResource;
  *  
  */  
 public class MobileCarriersResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(MobileCarriersResource.class.getName());
+	//private static final Logger log = Logger.getLogger(MobileCarriersResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 
     // Handles 'Get Mobile Carriers List' API  
     @Get("json")
     public JsonRepresentation getList(Variant variant) {
-        log.info("MobileCarriersResource:getList() entered");
+        log.debug("MobileCarriersResource:getList() entered");
         JSONObject jsonReturn = new JSONObject();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -37,17 +38,16 @@ public class MobileCarriersResource extends ServerResource {
 				jsonArray.put(jsonMobileCarrierObj);
 			}
 			jsonReturn.put("mobileCarriers", jsonArray);
-			log.info("number of mobile carriers returned = " + mobileCarriers.size());
+			log.debug("number of mobile carriers returned = " + mobileCarriers.size());
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MobileCarrierResource:getList:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		}
 		
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
+			log.exception("MobileCarrierResource:getList:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }

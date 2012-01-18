@@ -16,11 +16,12 @@ import org.json.JSONObject;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.resource.ClientResource;
 import org.restlet.resource.ResourceException;
+import org.apache.commons.codec.binary.Base64;
 
-import com.google.appengine.repackaged.com.google.common.util.Base64;
 
 public class EmailToSmsClient {
-	private static final Logger log = Logger.getLogger(EmailToSmsClient.class.getName());
+	//private static final Logger log = Logger.getLogger(EmailToSmsClient.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	// HTTP Methods
 	private static final String HTTP_PUT = "PUT";
@@ -41,7 +42,7 @@ public class EmailToSmsClient {
 	
 	// can return NULL
 	static public String sendMail(String theSubject, String theBody, String theToEmailAddress, String theFromEmailAddress) {
-		log.info("EmailToSmsClient::sendMail entered");
+		log.debug("EmailToSmsClient::sendMail entered");
 		
 		//////////////////////////
 		// Create the JSON Payload
@@ -54,7 +55,7 @@ public class EmailToSmsClient {
 			jsonPayload.put("toEmailAddress", theToEmailAddress);
 			jsonPayload.put("fromEmailAddress", theFromEmailAddress);
 		} catch (JSONException e1) {
-			log.severe("JSONException exception: " + e1.getMessage());
+			log.exception("EmailToSmsClient:sendMail:JSONException", "error building JSON object", e1);
 			return null;
 		}
 		
@@ -65,7 +66,7 @@ public class EmailToSmsClient {
 			url = new URL(urlStr);
 			response = send(url, HTTP_POST, jsonPayload.toString(), BASIC_AUTH_USER_NAME, BASIC_AUTH_PASSWORD);
 		} catch (MalformedURLException e) {
-			log.severe("MalformedURLException exception: " + e.getMessage());
+			log.exception("EmailToSmsClient:sendMail:MalformedURLException", "", e);
 		}
 		
 		return response;
@@ -74,7 +75,7 @@ public class EmailToSmsClient {
 	
 	// can return NULL
 	static public String isAlive() {
-		log.info("EmailToSmsClient::isAlive entered");
+		log.debug("EmailToSmsClient::isAlive entered");
 		
 		//////////////////////////
 		// Create the JSON Payload
@@ -86,7 +87,7 @@ public class EmailToSmsClient {
 			url = new URL(urlStr);
 			response = send(url, HTTP_GET, null, BASIC_AUTH_USER_NAME, BASIC_AUTH_PASSWORD);
 		} catch (MalformedURLException e) {
-			log.severe("MalformedURLException exception: " + e.getMessage());
+			log.exception("EmailToSmsClient:sendMail:MalformedURLException", "", e);
 		}
 		
 		return response;
@@ -98,9 +99,9 @@ public class EmailToSmsClient {
 	// theHttpMethod: one of GET POST HEAD OPTIONS PUT DELETE TRACE
 	static private String send(URL theUrl, String theHttpMethod, String theJsonPayload, 
 			                   String theBasicAuthUserName, String theBasicAuthPassword) {
-		log.info("EmailToSmsClient::send theUrl = " + theUrl.toString());
-		log.info("EmailToSmsClient::send theJsonPayload = " + theJsonPayload);
-		log.info("EmailToSmsClient::send theHttpMethod = " + theHttpMethod);
+		log.debug("EmailToSmsClient::send theUrl = " + theUrl.toString());
+		log.debug("EmailToSmsClient::send theJsonPayload = " + theJsonPayload);
+		log.debug("EmailToSmsClient::send theHttpMethod = " + theHttpMethod);
 
 		String response = "";
 		HttpURLConnection connection = null;
@@ -132,10 +133,10 @@ public class EmailToSmsClient {
 			try {
 				bytes = buf.toString().getBytes("ISO-8859-1");
 			} catch (java.io.UnsupportedEncodingException uee) {
-				log.severe("base64 encoding failed: " + uee.getMessage());
+				log.exception("EmailToSmsClient:send:UnsupportedEncodingException", "", uee);
 			}
 
-			String header = "Basic " + Base64.encode(bytes);
+			String header = "Basic " + Base64.encodeBase64String(bytes);
 			connection.setRequestProperty("Authorization", header);
 
 			////////////////////
@@ -156,7 +157,7 @@ public class EmailToSmsClient {
 			// Get HTTP response
 			////////////////////
 			int responseCode = connection.getResponseCode();
-			log.info("responseCode = " + responseCode);
+			log.debug("responseCode = " + responseCode);
 			
 			if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
 				// read-back the response
@@ -172,25 +173,25 @@ public class EmailToSmsClient {
 				response = responseBuffer.toString();
 			} else // Server returned HTTP error code.
 			{
-				log.severe("EmailToSmsClient::send() server returned error code: " + responseCode);
+				log.error("EmailToSmsClient:send:errorCode", "server returned error code: " + responseCode);
 			}
 
 		} catch (UnsupportedEncodingException ex) {
-			log.severe("EmailToSmsClient::send() UnsupportedEncodingException: " + ex);
+			log.exception("EmailToSmsClient:send:UnsupportedEncodingException2", "", ex);
 		} catch (MalformedURLException ex) {
-			log.severe("EmailToSmsClient::send() MalformedURLException: " + ex);
+			log.exception("EmailToSmsClient:send:MalformedURLException", "", ex);
 		} catch (IOException ex) {
-			log.severe("EmailToSmsClient::send() IOException: " + ex);
+			log.exception("EmailToSmsClient:send:IOException", "", ex);
 		} finally {
 			try {
 				if (writer != null) {writer.close();}
 			} catch (Exception ex) {
-				log.severe("EmailToSmsClient::send() Exception closing writer: " + ex);
+				log.exception("EmailToSmsClient:send:Exception1", "", ex);
 			}
 			try {
 				if (reader != null) {reader.close();}
 			} catch (Exception ex) {
-				log.severe("EmailToSmsClient::send() Exception closing reader: " + ex);
+				log.exception("EmailToSmsClient:send:Exception2", "", ex);
 			}
 			if (connection != null) {connection.disconnect();}
 		}

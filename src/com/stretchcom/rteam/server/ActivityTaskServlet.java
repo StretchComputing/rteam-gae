@@ -32,22 +32,24 @@ import org.restlet.data.Status;
 // to delete activity when Twitter is deassociated.
 
 public class ActivityTaskServlet extends HttpServlet {
-	private static final Logger log = Logger.getLogger(ActivityTaskServlet.class.getName());
+	//private static final Logger log = Logger.getLogger(ActivityTaskServlet.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
+
 	private static int MAX_TASK_RETRY_COUNT = 3;
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		log.info("ActivityTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
+		log.debug("ActivityTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
 	}
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		log.info("EmailTaskServlet.doPost() entered");
+		log.debug("EmailTaskServlet.doPost() entered");
 		String response = "team activities deleted successfully";
 		resp.setContentType("text/plain");
 
 		try {
 			String teamId = req.getParameter("teamId");
-			log.info("teamId parameter: "	+ teamId);
+			log.debug("teamId parameter: "	+ teamId);
 			
 			// need to get the retry count
 			String taskRetryCountStr = req.getHeader("X-AppEngine-TaskRetryCount");
@@ -56,16 +58,16 @@ public class ActivityTaskServlet extends HttpServlet {
 			try {
 				taskRetryCount = new Integer(taskRetryCountStr);
 			} catch (Exception e1) {
-				log.info("should never happen, but no harm, no foul -- default above kicks in");
+				log.debug("should never happen, but no harm, no foul -- default above kicks in");
 			}
-			log.info("taskRetryCount = " + taskRetryCount);
+			log.debug("taskRetryCount = " + taskRetryCount);
 
 		    Properties props = new Properties();
 		    Session session = Session.getDefaultInstance(props, null);
 		    
 		    // ensure valid parameters
 		    if(teamId == null || teamId.length() == 0) {
-		    	log.severe("ActivityTaskServlet: null or empty parameter");
+				log.error("ActivityTaskServlet:doPost:teamId", "teamId null or empty");
 		    	return;
 		    }
 
@@ -75,7 +77,7 @@ public class ActivityTaskServlet extends HttpServlet {
         		List<Activity> activities = (List<Activity>)em.createNamedQuery("Activity.getByTeamId")
     				.setParameter("teamId", teamId)
     				.getResultList();
-        		log.info("ActivityTaskServlet: # of team activities to be deleted = " + activities.size());
+        		log.debug("ActivityTaskServlet: # of team activities to be deleted = " + activities.size());
     		
 	    		//::TODO do batch delete instead
 	    		for(Activity a : activities) {
@@ -84,7 +86,7 @@ public class ActivityTaskServlet extends HttpServlet {
 	    		
 	    		resp.setStatus(HttpServletResponse.SC_OK);
 	        } catch (Exception e) {
-				log.severe("ActivityTaskServlet: EntityManager exception = " + e.getMessage());
+				log.exception("ActivityTaskServlet:doPost:teamId", "teamId null or empty", e);
 				resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			} finally {
 			    em.close();
@@ -100,7 +102,7 @@ public class ActivityTaskServlet extends HttpServlet {
 		}
 		catch (Exception ex) {
 			response = "Should not happen. Remove Team Activity Task Servlet: failure : " + ex.getMessage();
-			log.info(response);
+			log.debug(response);
 			resp.setStatus(HttpServletResponse.SC_OK);
 			resp.getWriter().println(response);
 		}

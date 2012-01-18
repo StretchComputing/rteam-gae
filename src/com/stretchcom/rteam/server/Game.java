@@ -41,7 +41,8 @@ import com.google.appengine.api.datastore.Key;
     ),
 })
 public class Game implements Cloneable {
-	private static final Logger log = Logger.getLogger(Game.class.getName());
+	//private static final Logger log = Logger.getLogger(Game.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	//constants
 	public static final String GAME = "game";
@@ -353,9 +354,9 @@ public class Game implements Cloneable {
     			em.getTransaction().commit();
 			}
 			int numOfGamesUpdated = games.size() - 1;
-			log.info("number of games with location fields update = " + numOfGamesUpdated);
+			log.debug("number of games with location fields update = " + numOfGamesUpdated);
 		} catch (Exception e) {
-			log.severe("updateAllLocations(): game could not be retrieved using team key");
+			log.exception("Game:updateAllLocations:Exceptoin",  "game could not be retrieved using team key", e);
 		} finally {
 			em.close();
 		}

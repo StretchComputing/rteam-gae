@@ -60,7 +60,8 @@ import com.google.appengine.api.datastore.Text;
     ),
 })
 public class GameVote {
-	private static final Logger log = Logger.getLogger(GameVote.class.getName());
+	//private static final Logger log = Logger.getLogger(GameVote.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	//constants
 	public static final String MVP_VOTE_TYPE = "mvp";
@@ -177,7 +178,7 @@ public class GameVote {
 				.setParameter("gameId", gameId)
 				.setParameter("voteType", theVoteType)
 				.getSingleResult();
-    		log.info("user has already cast a " + theVoteType + " vote for this game");
+    		log.debug("user has already cast a " + theVoteType + " vote for this game");
     		
     		// a previous vote was cast -- verify the user is really changing their vote
     		String originalMemberId = gameVote.getMemberId();
@@ -186,11 +187,11 @@ public class GameVote {
     			
 				// decrement the tally from the original member who was voted for the first time
     			decrementTally(originalMemberId, gameId, theVoteType);
-    			log.info("decremented vote count for memberId = " + originalMemberId);
+    			log.debug("decremented vote count for memberId = " + originalMemberId);
     			
     			// increment the tally for the member just voted for
     			incrementTally(theMemberId, gameId, theVoteType, teamId);
-    			log.info("incremented vote count for memberId = " + theMemberId);
+    			log.debug("incremented vote count for memberId = " + theMemberId);
     		}
 		} catch (NoResultException e) {
 			//////////////////////////////////////////////////////////////////
@@ -207,14 +208,14 @@ public class GameVote {
 			gameVote.setIsTally(NO_TALLY);
 			gameVote.setTeamId(teamId);
 			em.persist(gameVote);
-			log.info("first time user voted for this game so created the user's vote record");
+			log.debug("first time user voted for this game so created the user's vote record");
 			
 			// increment the tally for the member just voted for
 			incrementTally(theMemberId, gameId, theVoteType, teamId);
-			log.info("incremented vote count for memberId = " + theMemberId);
+			log.debug("incremented vote count for memberId = " + theMemberId);
 			
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more gameVotes for same userId/gameId/memberId/voteType");
+			log.exception("GameVote:castUserVote:NonUniqueResultException", "two or more gameVotes for same userId/gameId/memberId/voteType", e);
 		} finally {
 			em.close();
 		}
@@ -233,11 +234,11 @@ public class GameVote {
 			int count = memberTally.getVoteCount();
 			count = count - 1;
 			memberTally.setVoteCount(count);
-			log.info("decremented count for memberId = " + theMemberId + " new count = " + count);
+			log.debug("decremented count for memberId = " + theMemberId + " new count = " + count);
 		} catch (NoResultException e) {
-			log.severe("member tally should have already existed");
+			log.exception("GameVote:decrementTally:NoResultException", "member tally should have already existed", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more games have same key");
+			log.exception("GameVote:decrementTally:NonUniqueResultException", "two or more games have same key", e);
 		} finally {
 			em.close();
 		}
@@ -256,7 +257,7 @@ public class GameVote {
 			int count = memberTally.getVoteCount();
 			count = count + 1;
 			memberTally.setVoteCount(count);
-			log.info("incremented count for memberId = " + theMemberId + " new count = " + count);
+			log.debug("incremented count for memberId = " + theMemberId + " new count = " + count);
 		} catch (NoResultException e) {
 			// this is not an error - member tally does not exist yet so create it
 			GameVote gameVote = new GameVote();
@@ -268,9 +269,9 @@ public class GameVote {
 			gameVote.setVoteCount(1);
 			gameVote.setTeamId(theTeamId);
 			em.persist(gameVote);
-			log.info("created a new Tally for memberId = " + theMemberId);
+			log.debug("created a new Tally for memberId = " + theMemberId);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more games have same key");
+			log.exception("GameVote:incrementTally:NonUniqueResultException", "two or more games have same key", e);
 		} finally {
 			em.close();
 		}
@@ -295,7 +296,7 @@ public class GameVote {
 				.setParameter("voteType", MVP_VOTE_TYPE)
 				.setParameter("isTally", YES_TALLY)
 				.getResultList();
-			log.info("getMvp(): number of memberTallies = " + memberTallies.size());
+			log.debug("getMvp(): number of memberTallies = " + memberTallies.size());
 			
 			// find member with the most votes
 			// TODO how do we handle ties?
@@ -307,7 +308,7 @@ public class GameVote {
 				}
 			}
 		} catch (Exception e) {
-			log.severe("getMvp() exception = " + e.getMessage());
+			log.exception("GameVote:getMvp:Exception", "", e);
 		} finally {
 			em.close();
 		}

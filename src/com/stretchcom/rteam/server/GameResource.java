@@ -37,7 +37,8 @@ import com.google.appengine.api.datastore.Text;
  * @author joepwro
  */
 public class GameResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(GameResource.class.getName());
+	//private static final Logger log = Logger.getLogger(GameResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 
     // The sequence of characters that identifies the resource.
     String teamId;
@@ -50,31 +51,31 @@ public class GameResource extends ServerResource {
         // attribute values taken from the URI template /team/{teamId}/game/{gameId}/{timeZone}
     	
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("GameResource:doInit() - teamId = " + this.teamId);
+        log.debug("GameResource:doInit() - teamId = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("GameResource:doInit() - decoded teamId = " + this.teamId);
+            log.debug("GameResource:doInit() - decoded teamId = " + this.teamId);
         }
    
         this.gameId = (String)getRequest().getAttributes().get("gameId"); 
-        log.info("GameResource:doInit() - gameId = " + this.gameId);
+        log.debug("GameResource:doInit() - gameId = " + this.gameId);
         if(this.gameId != null) {
             this.gameId = Reference.decode(this.gameId);
-            log.info("GameResource:doInit() - decoded gameId = " + this.gameId);
+            log.debug("GameResource:doInit() - decoded gameId = " + this.gameId);
         }
         
         this.timeZoneStr = (String)getRequest().getAttributes().get("timeZone"); 
-        log.info("GamesResource:doInit() - timeZone = " + this.timeZoneStr);
+        log.debug("GamesResource:doInit() - timeZone = " + this.timeZoneStr);
         if(this.timeZoneStr != null) {
             this.timeZoneStr = Reference.decode(this.timeZoneStr);
-            log.info("GameResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+            log.debug("GameResource:doInit() - decoded timeZone = " + this.timeZoneStr);
         }
         
         this.voteType = (String)getRequest().getAttributes().get("voteType"); 
-        log.info("GamesResource:doInit() - voteType = " + this.voteType);
+        log.debug("GamesResource:doInit() - voteType = " + this.voteType);
         if(this.voteType != null) {
             this.voteType = Reference.decode(this.voteType);
-            log.info("GameResource:doInit() - decoded voteType = " + this.voteType);
+            log.debug("GameResource:doInit() - decoded voteType = " + this.voteType);
         }
     }  
 
@@ -82,7 +83,7 @@ public class GameResource extends ServerResource {
     // Handles 'Get game vote tallies' API
     @Get("json")
     public JsonRepresentation getGameInfo(Variant variant) {
-        log.info("GameResource:toJson() entered");
+        log.debug("GameResource:toJson() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -93,7 +94,7 @@ public class GameResource extends ServerResource {
      		TimeZone tz = GMT.getTimeZone(this.timeZoneStr);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("GameResource:getGameInfo:currentUser", "user could not be retrieved from Request attributes!!");
     		}
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -120,10 +121,10 @@ public class GameResource extends ServerResource {
 	    			apiStatus = ApiStatusCode.TEAM_ID_AND_GAME_ID_REQUIRED;
 				} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 					apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-					log.info(apiStatus);
+					log.debug(apiStatus);
 	        	} else 	if(!GameVote.isVoteTypeValid(this.voteType)) {
 					apiStatus = ApiStatusCode.INVALID_VOTE_TYPE_PARAMETER;
-					log.info(apiStatus);
+					log.debug(apiStatus);
 				}
 			}
 			
@@ -138,12 +139,12 @@ public class GameResource extends ServerResource {
         		game = (Game)em.createNamedQuery("Game.getByKey")
     				.setParameter("key", gameKey)
     				.getSingleResult();
-        		log.info("game retrieved = " + game.getDescription());
+        		log.debug("game retrieved = " + game.getDescription());
     		} catch (NoResultException e) {
-            	log.info("no result exception, game not found");
+            	log.debug("no result exception, game not found");
             	apiStatus = ApiStatusCode.GAME_NOT_FOUND;
     		} catch (NonUniqueResultException e) {
-    			log.severe("should never happen - two or more games have same key");
+    			log.exception("GameResource:getGameInfo:NonUniqueResultException1", "two or more games have same key", e);
             	this.setStatus(Status.SERVER_ERROR_INTERNAL);
     		}
 			
@@ -206,7 +207,7 @@ public class GameResource extends ServerResource {
         			team = (Team)em.createNamedQuery("Team.getByKey")
     					.setParameter("key", KeyFactory.stringToKey(this.teamId))
     					.getSingleResult();
-            		log.info("team retrieved = " + team.getTeamName());
+            		log.debug("team retrieved = " + team.getTeamName());
             		
     				// filter out the fans
     				for(Member m : team.getMembers()) {
@@ -214,12 +215,12 @@ public class GameResource extends ServerResource {
     						members.add(m);
     					}
     				}
-    				log.info("number of non-fan members = " + members.size());
+    				log.debug("number of non-fan members = " + members.size());
         		} catch (NoResultException e) {
-                	log.info("no result exception, team not found");
+                	log.debug("no result exception, team not found");
                 	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
         		} catch (NonUniqueResultException e) {
-        			log.severe("should never happen - two or more teams have same key");
+        			log.exception("GameResource:getGameInfo:NonUniqueResultException2", "two or more teams have same key", e);
                 	this.setStatus(Status.SERVER_ERROR_INTERNAL);
         		}
     			
@@ -238,9 +239,9 @@ public class GameResource extends ServerResource {
         				.setParameter("voteType", this.voteType)
         				.setParameter("isTally", GameVote.YES_TALLY)
         				.getResultList();
-        			log.info("number of gameTallies = " + gameTallies.size());
+        			log.debug("number of gameTallies = " + gameTallies.size());
         		} catch (Exception e) {
-        			log.severe("exception retrieving gameTallies: message = " + e.getMessage());
+        			log.exception("GameResource:getGameInfo:Exception2", "retrieving gameTallies", e);
         			this.setStatus(Status.SERVER_ERROR_INTERNAL);
         		}    		
     			
@@ -281,11 +282,11 @@ public class GameResource extends ServerResource {
     			// this is not an error - user has not voted yet for this game
     			// nothing returned in JSON object if user hasn't voted yet.
     		} catch (NonUniqueResultException e) {
-    			log.severe("should never happen - two or more games have same key");
+    			log.exception("GameResource:getGameInfo:NonUniqueResultException3", "two or more games have same key", e);
     			this.setStatus(Status.SERVER_ERROR_INTERNAL);
     		}    		
 		} catch (JSONException e) {
-			log.severe("error building JSON object");
+			log.exception("GameResource:getGameInfo:JSONException1", "", e);
 			e.printStackTrace();
 		} finally {
 			em.close();
@@ -294,7 +295,7 @@ public class GameResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
+			log.exception("GameResource:getGameInfo:JSONException2", "", e);
 			e.printStackTrace();
 		}
         return new JsonRepresentation(jsonReturn);
@@ -312,7 +313,7 @@ public class GameResource extends ServerResource {
     // Handles 'Delete Game' API
     @Delete
     public JsonRepresentation remove() {
-    	log.info("GameResource:remove() entered");
+    	log.debug("GameResource:remove() entered");
     	EntityManager em = EMF.get().createEntityManager();
     	JSONObject jsonReturn = new JSONObject();
     	
@@ -322,7 +323,7 @@ public class GameResource extends ServerResource {
     		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("GameResource:remove:currentUser", "");
     		}
     		// teamId and gameId are required
     		else if(this.teamId == null || this.teamId.length() == 0 ||
@@ -332,7 +333,7 @@ public class GameResource extends ServerResource {
 			// must be a member of the team
 			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -343,7 +344,7 @@ public class GameResource extends ServerResource {
     		Team team = (Team)em.createNamedQuery("Team.getByKey")
 				.setParameter("key", KeyFactory.stringToKey(this.teamId))
 				.getSingleResult();
-			log.info("team retrieved = " + team.getTeamName());
+			log.debug("team retrieved = " + team.getTeamName());
 			// need to access members before closing transaction since it's lazy init and used after tran closed
 			team.getMembers();
 			
@@ -362,7 +363,7 @@ public class GameResource extends ServerResource {
 			if(!isCoordinator) {
 				apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR;
 				jsonReturn.put("apiStatus", apiStatus);
-				log.info(apiStatus);
+				log.debug(apiStatus);
 				return new JsonRepresentation(jsonReturn);
 			}
         	
@@ -371,7 +372,7 @@ public class GameResource extends ServerResource {
     		Game game = (Game)em.createNamedQuery("Game.getByKey")
     			.setParameter("key", gameKey)
     			.getSingleResult();
-    		log.info("game retrieved = " + game.getDescription());
+    		log.debug("game retrieved = " + game.getDescription());
     		
     		// TODO make sure game is associated with the specified team
         	
@@ -387,15 +388,13 @@ public class GameResource extends ServerResource {
         	}
         	
         } catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("GameResource:remove:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
-        	log.info("no result exception, team or game not found");
+        	log.debug("no result exception, team or game not found");
         	apiStatus = ApiStatusCode.GAME_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more teams or games have same key");
-			e.printStackTrace();
+			log.exception("GameResource:remove:NonUniqueResultException", "", e);
         	this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -407,8 +406,7 @@ public class GameResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("GameResource:remove:JSONException2", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -418,7 +416,7 @@ public class GameResource extends ServerResource {
     @Put 
     public JsonRepresentation updateGame(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateGame(@Put) entered ..... ");
+    	log.debug("updateGame(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -428,7 +426,7 @@ public class GameResource extends ServerResource {
     		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("GameResource:updateGame:currentUser", "");
     		}
     		// teamId and gameId are required
     		else if(this.teamId == null || this.teamId.length() == 0 ||
@@ -438,7 +436,7 @@ public class GameResource extends ServerResource {
 			// must be a member of the team
 			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
 				
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -452,15 +450,15 @@ public class GameResource extends ServerResource {
 	    		team = (Team)em.createNamedQuery("Team.getByKey")
 					.setParameter("key", KeyFactory.stringToKey(this.teamId))
 					.getSingleResult();
-	    		log.info("team retrieved = " + team.getTeamName());
+	    		log.debug("team retrieved = " + team.getTeamName());
 	    		
 	    		// need to access members before closing transaction since it's lazy init and used after tran closed
 	    		members = team.getMembers();
 			} catch (NoResultException e) {
-				log.info("team not found");
+				log.debug("team not found");
 				apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 			} catch (NonUniqueResultException e) {
-				log.severe("should never happen - two or more teams have same key");
+				log.exception("GameResource:updateGame:NonUniqueResultException", "", e);
 			}
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -497,7 +495,7 @@ public class GameResource extends ServerResource {
 				if(!isCoordinator) {
 					apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR;
 					jsonReturn.put("apiStatus", apiStatus);
-					log.info(apiStatus);
+					log.debug(apiStatus);
 					return new JsonRepresentation(jsonReturn);
 				}
 			} else {
@@ -507,7 +505,7 @@ public class GameResource extends ServerResource {
 				if(!GameVote.isVoteTypeValid(this.voteType)) {
 					apiStatus = ApiStatusCode.INVALID_VOTE_TYPE_PARAMETER;
 					jsonReturn.put("apiStatus", apiStatus);
-					log.info(apiStatus);
+					log.debug(apiStatus);
 					return new JsonRepresentation(jsonReturn);
 				}
 			}
@@ -522,11 +520,11 @@ public class GameResource extends ServerResource {
 	    		game = (Game)em.createNamedQuery("Game.getByKey")
 	    			.setParameter("key", gameKey)
 	    			.getSingleResult();
-	    		log.info("game retrieved = " + game.getDescription());
+	    		log.debug("game retrieved = " + game.getDescription());
 
 				JsonRepresentation jsonRep = new JsonRepresentation(entity);
 				JSONObject json = jsonRep.toJsonObject();
-				log.info("received json object = " + json.toString());
+				log.debug("received json object = " + json.toString());
 				
 				List<String> notificationInfo = new ArrayList<String>();
 				if(this.voteType == null) {
@@ -584,12 +582,12 @@ public class GameResource extends ServerResource {
 					GameVote.castUserVote(currentUser, memberId, game, voteType, team);
 				}
 
-			    log.info("game " + game.getDescription() + " updated successfully");
+			    log.debug("game " + game.getDescription() + " updated successfully");
 			} catch (NoResultException e) {
-				log.info("game not found");
+				log.debug("game not found");
 				apiStatus = ApiStatusCode.GAME_NOT_FOUND;
 			} catch (NonUniqueResultException e) {
-				log.severe("should never happen - two or more games have same key");
+				log.exception("GameResource:updateGame:NonUniqueResultException2", "", e);
 			}
 
 		    
@@ -608,9 +606,9 @@ public class GameResource extends ServerResource {
 	        	}
 	        	
 				// if end of game, post score to activity
-	        	//log.info("game interval = " + game.getInterval());
+	        	//log.debug("game interval = " + game.getInterval());
 	        	if(gameJustCompletedStr.equalsIgnoreCase("true")) {
-	        		//log.info("Game over, post the score to Twitter");
+	        		//log.debug("Game over, post the score to Twitter");
 	        		//PubHub.postScoreActivity(team, game, game.getScoreUs(), game.getScoreThem());
 	        		PubHub.sendGameSummaryMessage(members, team, game);
 				}
@@ -624,10 +622,10 @@ public class GameResource extends ServerResource {
 	        	}
 			}
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
+			log.exception("GameResource:updateGame:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
+			log.exception("GameResource:updateGame:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -639,8 +637,7 @@ public class GameResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("GameResource:updateGame:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -828,7 +825,7 @@ public class GameResource extends ServerResource {
 				if(oldStartDate != null) {oldStartDateStr = GMT.convertToSimpleLocalDate(oldStartDate, tz);}
 				String simpleStartDateStr = GMT.convertToSimpleLocalDate(gmtStartDate, tz);
 				String startDateUpdateMessage = Utility.getModMessage("Start Date", oldStartDateStr, simpleStartDateStr);
-				log.info(startDateUpdateMessage);
+				log.debug(startDateUpdateMessage);
 				notificationMessage = notificationMessage + " " + startDateUpdateMessage;
 			}
 			theGame.setEventGmtStartDate(gmtStartDate);
@@ -842,7 +839,7 @@ public class GameResource extends ServerResource {
 				if(oldEndDate != null) {oldEndDateStr = GMT.convertToSimpleLocalDate(oldEndDate, tz);}
 				String simpleEndDateStr = GMT.convertToSimpleLocalDate(gmtEndDate, tz);
 				String endDateUpdateMessage = Utility.getModMessage("End Date", oldEndDateStr, simpleEndDateStr);
-				log.info(endDateUpdateMessage);
+				log.debug(endDateUpdateMessage);
 				notificationMessage = notificationMessage + " " + endDateUpdateMessage;
 			}
 			theGame.setEventGmtEndDate(gmtEndDate);
@@ -853,7 +850,7 @@ public class GameResource extends ServerResource {
 			String oldTimeZoneStr = theGame.getTimeZone() != null ? theGame.getTimeZone() : "";
 			if(!timeZoneStr.equalsIgnoreCase(oldTimeZoneStr)) {
 				String timeZoneUpdateMessage = Utility.getModMessage("Time Zone", oldTimeZoneStr, timeZoneStr);
-				log.info(timeZoneUpdateMessage);
+				log.debug(timeZoneUpdateMessage);
 				// TODO not even sure if it makes sense to change a timezone. Certainly can't include in notify since it varies.
 				//notificationMessage = notificationMessage + " " + timeZoneUpdateMessage;
 			}
@@ -866,7 +863,7 @@ public class GameResource extends ServerResource {
 			String oldDescription = theGame.getDescription() != null ? theGame.getDescription() : "";
 			if(!description.equalsIgnoreCase(oldDescription)) {
 				String descriptionMessage = Utility.getModMessage("Description", oldDescription, description); 
-				log.info(descriptionMessage);
+				log.debug(descriptionMessage);
 				notificationMessage = notificationMessage + " " + descriptionMessage;
 			}
 			theGame.setDescription(description);
@@ -901,7 +898,7 @@ public class GameResource extends ServerResource {
 		
 		if(wasLatitudeUpdated || wasLongitudeUpdated) {
 			String locationUpdatemessage = "Location was updated";
-			log.info(locationUpdatemessage);
+			log.debug(locationUpdatemessage);
 			notificationMessage = notificationMessage + " " + locationUpdatemessage;
 		}
 		
@@ -930,7 +927,7 @@ public class GameResource extends ServerResource {
 			String oldOpponent = theGame.getOpponent() != null ? theGame.getOpponent() : "";
 			if(!opponent.equalsIgnoreCase(oldOpponent)) {
 				String opponentMessage = Utility.getModMessage("Opponent", oldOpponent, opponent);
-				log.info(opponentMessage);
+				log.debug(opponentMessage);
 				notificationMessage = notificationMessage + " " + opponentMessage;
 			}
 			theGame.setOpponent(opponent);
@@ -977,7 +974,7 @@ public class GameResource extends ServerResource {
     				gameMvp = member.getDisplayName();
     				theGame.setMvpDisplayName(gameMvp);
     				theGame.setMvpMemberId(KeyFactory.keyToString(member.getKey()));
-    				log.info("game updated with MVP -- displayName = " + gameMvp);
+    				log.debug("game updated with MVP -- displayName = " + gameMvp);
     			}
     		}
     	} else if(pollReopened) {

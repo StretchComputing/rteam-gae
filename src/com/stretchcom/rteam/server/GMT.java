@@ -14,7 +14,8 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManagerFactory;
 
 public final class GMT {
-	private static final Logger log = Logger.getLogger(GMT.class.getName());
+	//private static final Logger log = Logger.getLogger(GMT.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private GMT() {
 	}
@@ -40,7 +41,7 @@ public final class GMT {
 	public static String convertToLocalDate(Date theDate, TimeZone theTimeZone) {
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 		df.setTimeZone(theTimeZone);
-		log.info("convertToLocalDate(): timezone = " + theTimeZone.getDisplayName() + " local date = " + df.format(theDate));
+		log.debug("convertToLocalDate(): timezone = " + theTimeZone.getDisplayName() + " local date = " + df.format(theDate));
 		return df.format(theDate);
 	}
 
@@ -48,7 +49,7 @@ public final class GMT {
 		// example of format:  Wed, Jul 4, 12:08 PM
 		DateFormat df = new SimpleDateFormat("EEE, MMM d, hh:mm a");
 		df.setTimeZone(theTimeZone);
-		log.info("convertToLocalDate(): timezone = " + theTimeZone.getDisplayName() + " local date = " + df.format(theDate));
+		log.debug("convertToLocalDate(): timezone = " + theTimeZone.getDisplayName() + " local date = " + df.format(theDate));
 		return df.format(theDate);
 	}
 
@@ -63,7 +64,7 @@ public final class GMT {
 	// only supports the format: YYYY-MM-DD
 	// parses date using specified time zone -- don't want to use the default which depends on server configuration
 	public static Date stringWithoutTimeToDate(String theDateStr, TimeZone theTimeZone) throws ParseException {
-		log.info("stringWithoutTimeToDate(): date input = " + theDateStr);
+		log.debug("stringWithoutTimeToDate(): date input = " + theDateStr);
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		df.setTimeZone(theTimeZone);
 		return df.parse(theDateStr);
@@ -112,7 +113,7 @@ public final class GMT {
 		startOfToday.set(Calendar.SECOND, 0);
 		todayDates.add(startOfToday.getTime());
 		// TODO remove logging code
-		log.info("start of Today = " + convertToLocalDate(startOfToday.getTime(), theTimeZone));
+		log.debug("start of Today = " + convertToLocalDate(startOfToday.getTime(), theTimeZone));
 		
 		
 		// calendar return current time by default
@@ -124,7 +125,7 @@ public final class GMT {
 		endOfToday.set(Calendar.SECOND, 59);
 		todayDates.add(endOfToday.getTime());
 		// TODO remove logging code
-		log.info("end of Today = " + convertToLocalDate(endOfToday.getTime(), theTimeZone));
+		log.debug("end of Today = " + convertToLocalDate(endOfToday.getTime(), theTimeZone));
 		
 		return todayDates;
 	}
@@ -147,7 +148,7 @@ public final class GMT {
 		startOfTomorrow.set(Calendar.SECOND, 0);
 		tomorrowDates.add(startOfTomorrow.getTime());
 		// TODO remove logging code
-		log.info("start of Tomorrow = " + convertToLocalDate(startOfTomorrow.getTime(), theTimeZone));
+		log.debug("start of Tomorrow = " + convertToLocalDate(startOfTomorrow.getTime(), theTimeZone));
 		
 		// calendar return current time by default
 		Calendar endOfTomorrow = Calendar.getInstance(theTimeZone);
@@ -159,7 +160,7 @@ public final class GMT {
 		endOfTomorrow.set(Calendar.SECOND, 59);
 		tomorrowDates.add(endOfTomorrow.getTime());
 		// TODO remove logging code
-		log.info("end of Tomorrow = " + convertToLocalDate(endOfTomorrow.getTime(), theTimeZone));
+		log.debug("end of Tomorrow = " + convertToLocalDate(endOfTomorrow.getTime(), theTimeZone));
 		
 		return tomorrowDates;
 	}

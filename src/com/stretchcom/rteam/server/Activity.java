@@ -52,7 +52,8 @@ import com.google.appengine.api.datastore.Text;
     ),
 })
 public class Activity implements Comparable<Activity> {
-	private static final Logger log = Logger.getLogger(Activity.class.getName());
+	//private static final Logger log = Logger.getLogger(Activity.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private Long twitterId;
 	private Long cacheId;    // rTeam cache ID that is always SEQUENTIAL
@@ -296,11 +297,11 @@ public class Activity implements Comparable<Activity> {
 				// TODO for now, just pick the first one returned. Later make it random or use some other algorithm
 				activityIdWithPhoto = KeyFactory.keyToString(activitiesWithPhotos.get(0).getKey());
 			} else {
-				log.severe("REMOVE THE TEST CODE IN Activity.getActivityIdOfEventPhotof() THAT IS ALWAYS RETURNING AN ACTIVITY ID");
+				log.error("Activity:getActivityIdOfEventPhoto:removeMe", "REMOVE THE TEST CODE IN Activity.getActivityIdOfEventPhotof() THAT IS ALWAYS RETURNING AN ACTIVITY ID");
 				return "aglydGVhbXRlc3RyEQsSCEFjdGl2aXR5GJfuvgEM";
 			}
     	} catch (Exception e) {
-			log.severe("getActivityIdOfEventPhoto() exception = " + e.getMessage());
+			log.exception("Activity:getActivityIdOfEventPhoto:Exception", "", e);
 			e.printStackTrace();
 		} finally {
 		    em.close();

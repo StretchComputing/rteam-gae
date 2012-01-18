@@ -38,7 +38,8 @@ import com.google.appengine.api.datastore.KeyFactory;
  *  
  */  
 public class GamesResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(GamesResource.class.getName());
+	//private static final Logger log = Logger.getLogger(GamesResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
   
     // The sequence of characters that identifies the resource.
     String teamId;
@@ -49,24 +50,24 @@ public class GamesResource extends ServerResource {
     protected void doInit() throws ResourceException {  
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("GamesResource:doInit() - teamName = " + this.teamId);
+        log.debug("GamesResource:doInit() - teamName = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("GamesResource:doInit() - decoded teamName = " + this.teamId);
+            log.debug("GamesResource:doInit() - decoded teamName = " + this.teamId);
         }
    
         this.timeZoneStr = (String)getRequest().getAttributes().get("timeZone"); 
-        log.info("GamesResource:doInit() - timeZone = " + this.timeZoneStr);
+        log.debug("GamesResource:doInit() - timeZone = " + this.timeZoneStr);
         if(this.timeZoneStr != null) {
             this.timeZoneStr = Reference.decode(this.timeZoneStr);
-            log.info("GamesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+            log.debug("GamesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
         }
    
         this.multiple = (String)getRequest().getAttributes().get("multiple"); 
-        log.info("GamesResource:doInit() - multiple = " + this.multiple);
+        log.debug("GamesResource:doInit() - multiple = " + this.multiple);
         if(this.multiple != null) {
             this.multiple = Reference.decode(this.multiple);
-            log.info("GamesResource:doInit() - decoded multiple = " + this.multiple);
+            log.debug("GamesResource:doInit() - decoded multiple = " + this.multiple);
         }
     }  
     
@@ -75,7 +76,7 @@ public class GamesResource extends ServerResource {
     @Post  
     public JsonRepresentation createGame(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("createGame(@Post) entered ..... ");
+    	log.debug("createGame(@Post) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -89,15 +90,15 @@ public class GamesResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				log.severe("user could not be retrieved from Request attributes!!");
+				log.error("GamesResource:createGame:currentUser", "user could not be retrieved from Request attributes!!");
     		}
 			// teamId is required
 			else if(this.teamId == null || this.teamId.length() == 0) {
 				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-				log.info("invalid team ID");
+				log.debug("invalid team ID");
 			} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
     		
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
@@ -110,7 +111,7 @@ public class GamesResource extends ServerResource {
 			Team team = (Team)em.createNamedQuery("Team.getByKey")
 				.setParameter("key", KeyFactory.stringToKey(this.teamId))
 				.getSingleResult();
-			log.info("team retrieved = " + team.getTeamName());
+			log.debug("team retrieved = " + team.getTeamName());
 			// need to access members before closing transaction since it's lazy init and used after tran closed
 			team.getMembers();
 			
@@ -138,13 +139,13 @@ public class GamesResource extends ServerResource {
 			if(!isCoordinator) {
 				apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR;
 				jsonReturn.put("apiStatus", apiStatus);
-				log.info(apiStatus);
+				log.debug(apiStatus);
 				return new JsonRepresentation(jsonReturn);
 			}
 
     		JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
-			log.info("received json object = " + json.toString());
+			log.debug("received json object = " + json.toString());
 			
 			String timeZoneStr = null;
 			if(json.has("timeZone")) {
@@ -198,7 +199,7 @@ public class GamesResource extends ServerResource {
 				if(json.has("games")) {
 					JSONArray gamesJsonArray = json.getJSONArray("games");
 					int arraySize = gamesJsonArray.length();
-					log.info("games json array length = " + arraySize);
+					log.debug("games json array length = " + arraySize);
 					for(int i=0; i<arraySize; i++) {
 						Game game = new Game();
 						games.add(game);
@@ -233,7 +234,7 @@ public class GamesResource extends ServerResource {
 				//////////////////////////
 				Game game = games.get(0);
 			    String keyWebStr = KeyFactory.keyToString(game.getKey());
-			    log.info("game " + game.getDescription() + " with key " + keyWebStr + " created successfully");
+			    log.debug("game " + game.getDescription() + " with key " + keyWebStr + " created successfully");
 			    
 				this.getResponse().setLocationRef(baseUri + "/" + keyWebStr);
 				jsonReturn.put("gameId", keyWebStr);
@@ -244,7 +245,7 @@ public class GamesResource extends ServerResource {
 				JSONArray gameIdsJsonArray = new JSONArray();
 				for(Game g : games) {
 				    String keyWebStr = KeyFactory.keyToString(g.getKey());
-				    log.info("game " + g.getDescription() + " with key " + keyWebStr + " created successfully");
+				    log.debug("game " + g.getDescription() + " with key " + keyWebStr + " created successfully");
 				    gameIdsJsonArray.put(keyWebStr);
 				}
 				this.getResponse().setLocationRef(baseUri + "/");
@@ -256,19 +257,16 @@ public class GamesResource extends ServerResource {
 				PubHub.sendNewEventMessage(members, currentUser, team, games, null, notificationType);
 			}
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("GamesResource:createGame:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("GamesResource:createGame:JSONException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
-        	log.info("no result exception, team not found");
+        	log.debug("no result exception, team not found");
         	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more teams have same key");
-			e.printStackTrace();
+			log.exception("GamesResource:createGame:NonUniqueResultException", "", e);
         	this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -280,8 +278,7 @@ public class GamesResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("GamesResource:createGame:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -359,7 +356,7 @@ public class GamesResource extends ServerResource {
     // Handles 'Get game list for all user teams' API
     @Get("json")
     public JsonRepresentation getGameList(Variant variant) {
-        log.info("GamesResource:getGameList() entered");
+        log.debug("GamesResource:getGameList() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 		
@@ -370,7 +367,7 @@ public class GamesResource extends ServerResource {
      		TimeZone tz = GMT.getTimeZone(this.timeZoneStr);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("GamesResource:getGameList:currentUser", "user could not be retrieved from Request attributes!!");
     		} else if(tz == null) {
     			apiStatus = ApiStatusCode.INVALID_TIME_ZONE_PARAMETER;
     		}
@@ -386,16 +383,16 @@ public class GamesResource extends ServerResource {
     			// --------------------------------------------------------------
 				// This is the 'Get game list for a specified team' API call
     			// --------------------------------------------------------------
-    			log.info("This is the 'Get game list for a specified team' API call");
+    			log.debug("This is the 'Get game list for a specified team' API call");
 			
     			// teamId is required
     			if(this.teamId == null || this.teamId.length() == 0) {
     				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-    				log.info("Team ID not provided and it is required");
+    				log.debug("Team ID not provided and it is required");
     			} 
     			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
     				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-    				log.info(apiStatus);
+    				log.debug(apiStatus);
             	}
     			
     			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -406,18 +403,18 @@ public class GamesResource extends ServerResource {
     			games = (List<Game>)em.createNamedQuery("Game.getByTeam")
     						.setParameter("teamKey", KeyFactory.stringToKey(this.teamId))
     						.getResultList();
-    			log.info("getGameList(): number of games found = " + games.size());
+    			log.debug("getGameList(): number of games found = " + games.size());
 			} else {
     			// --------------------------------------------------------------
 				// This is the 'Get game list for all user teams' API call
     			// --------------------------------------------------------------
-    			log.info("This is the 'Get game list for all user teams' API call");
+    			log.debug("This is the 'Get game list for all user teams' API call");
     			
         		User user = (User)em.createNamedQuery("User.getByKey")
 					.setParameter("key", currentUser.getKey())
 					.getSingleResult();
 	    		List<Key> teamKeys = user.getTeams();
-	    		log.info("number of user teams = " + teamKeys.size());
+	    		log.debug("number of user teams = " + teamKeys.size());
     		
 	    		teams = new ArrayList<Team>();
 	    		if(teamKeys.size() > 0) {
@@ -433,7 +430,7 @@ public class GamesResource extends ServerResource {
 						.getResultList();
 	    			games.addAll(moreGames);
 	    		}
-	    		log.info("getGameList(): number of games found = " + games.size());
+	    		log.debug("getGameList(): number of games found = " + games.size());
 			}
     		
 			JSONArray jsonArray = new JSONArray();
@@ -463,10 +460,10 @@ public class GamesResource extends ServerResource {
         				if(participantRole != null) {
         					jsonGameObj.put("participantRole", participantRole);
         				} else {
-        					log.severe("User's participant role could not be found on team = " + t.getTeamName());
+        	    			log.error("GamesResource:getGameList:currentUser", "User's participant role could not be found on team = " + t.getTeamName());
         				}
     				} else {
-    					log.severe("could not find team associated with the game");
+    	    			log.error("GamesResource:getGameList:currentUser", "could not find team associated with the game");
     				}
     			}
 				jsonGameObj.put("gameId", KeyFactory.keyToString(g.getKey()));
@@ -491,14 +488,12 @@ public class GamesResource extends ServerResource {
 			}
 			jsonReturn.put("games", jsonArray);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("GamesResource:getGameList:JSONException", "could not find team associated with the game", e);
 		} catch (NoResultException e) {
-        	log.info("no result exception, user not found");
+        	log.debug("no result exception, user not found");
         	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same key");
-			e.printStackTrace();
+			log.exception("GamesResource:getGameList:JSONException", "two or more users have same key", e);
         	this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 			em.close();
@@ -507,8 +502,7 @@ public class GamesResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("GamesResource:getGameList:JSONException2", "could not find team associated with the game", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }

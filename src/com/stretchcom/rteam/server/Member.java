@@ -89,7 +89,8 @@ import com.google.appengine.api.datastore.Text;
  * Getters never return null, but rather, empty Strings, empty Lists, etc.
  */
 public class Member {
-	private static final Logger log = Logger.getLogger(Member.class.getName());
+	//private static final Logger log = Logger.getLogger(Member.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	//constants
 	public static final String FRIEND_ROLE = "friend";
@@ -215,7 +216,7 @@ public class Member {
 			if(guardianEmailAddresses.size() > i) {
 				ea = this.guardianEmailAddresses.get(i).equals("") ? null : this.guardianEmailAddresses.get(i);
 			} else {
-				log.severe("guardianEmailAddresses array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:emailAddress", "guardianEmailAddresses array size corrupt for member name = " + this.getFullName());
 			}
 			g.setEmailAddress(ea);
 			
@@ -223,7 +224,7 @@ public class Member {
 			if(guardianPhoneNumbers.size() > i) {
 				pn = this.guardianPhoneNumbers.get(i).equals("") ? null : this.guardianPhoneNumbers.get(i);
 			} else {
-				log.severe("guardianPhoneNumbers array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:phoneNumber", "guardianPhoneNumbers array size corrupt for member name = " + this.getFullName());
 			}
 			g.setPhoneNumber(pn);
 			
@@ -231,7 +232,7 @@ public class Member {
 			if(guardianUserIds.size() > i) {
 				ui = this.guardianUserIds.get(i).equals("") ? null : this.guardianUserIds.get(i);
 			} else {
-				log.severe("guardianUserIds array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:userId", "guardianUserIds array size corrupt for member name = " + this.getFullName());
 			}
 			g.setUserId(ui);
 			
@@ -239,7 +240,7 @@ public class Member {
 			if(guardianIsEmailAddressActives.size() > i) {
 				g.setIsEmailAddressActive(this.guardianIsEmailAddressActives.get(i));
 			} else {
-				log.severe("guardianIsEmailAddressActives array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:isEmailAddressActive", "guardianIsEmailAddressActives array size corrupt for member name = " + this.getFullName());
 				g.setIsEmailAddressActive(false);
 			}
 			
@@ -247,7 +248,7 @@ public class Member {
 			if(guardianFirstNames.size() > i) {
 				fn = this.guardianFirstNames.get(i).equals("") ? null : this.guardianFirstNames.get(i);
 			} else {
-				log.severe("guardianFirstNames array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:firstName", "guardianFirstNames array size corrupt for member name = " + this.getFullName());
 			}
 			g.setFirstName(fn);
 			
@@ -255,7 +256,7 @@ public class Member {
 			if(guardianLastNames.size() > i) {
 				ln = this.guardianLastNames.get(i).equals("") ? null : this.guardianLastNames.get(i);
 			} else {
-				log.severe("guardianLastNames array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:lastName", "guardianLastNames array size corrupt for member name = " + this.getFullName());
 			}
 			g.setLastName(ln);
 			
@@ -263,7 +264,7 @@ public class Member {
 			if(guardianAutoArchiveDayCounts.size() > i) {
 				aadc = this.guardianAutoArchiveDayCounts.get(i).equals(-1) ? null : this.guardianAutoArchiveDayCounts.get(i);
 			} else {
-				log.severe("guardianAutoArchiveDayCounts array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:autoArchiveDayCounts", "guardianAutoArchiveDayCounts array size corrupt for member name = " + this.getFullName());
 			}
 			g.setAutoArchiveDayCount(aadc);
 			
@@ -271,7 +272,7 @@ public class Member {
 			if(guardianSmsEmailAddresses.size() > i) {
 				sea = this.guardianSmsEmailAddresses.get(i).equals("") ? null : this.guardianSmsEmailAddresses.get(i);
 			} else {
-				log.severe("guardianSmsEmailAddresses array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:smsAddress", "guardianSmsEmailAddresses array size corrupt for member name = " + this.getFullName());
 			}
 			g.setSmsEmailAddress(sea);
 			
@@ -279,7 +280,7 @@ public class Member {
 			if(guardianHasRteamMessageAccessEnabled.size() > i) {
 				g.setHasRteamMessageAccessEnabled(this.guardianHasRteamMessageAccessEnabled.get(i));
 			} else {
-				log.severe("guardianHasRteamMessageAccessEnabled array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:rTeamMessageEnabled", "guardianHasRteamMessageAccessEnabled array size corrupt for member name = " + this.getFullName());
 				g.setHasRteamMessageAccessEnabled(false);
 			}
 			
@@ -287,7 +288,7 @@ public class Member {
 			if(guardianHasEmailMessageAccessEnabled.size() > i) {
 				g.setHasEmailMessageAccessEnabled(this.guardianHasEmailMessageAccessEnabled.get(i));
 			} else {
-				log.severe("guardianHasEmailMessageAccessEnabled array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:emailMessageEnabled", "guardianHasEmailMessageAccessEnabled array size corrupt for member name = " + this.getFullName());
 				g.setHasEmailMessageAccessEnabled(false);
 			}
 			
@@ -295,7 +296,7 @@ public class Member {
 			if(guardianHasSmsMessageAccessEnabled.size() > i) {
 				g.setHasSmsMessageAccessEnabled(this.guardianHasSmsMessageAccessEnabled.get(i));
 			} else {
-				log.severe("guardianHasSmsMessageAccessEnabled array size corrupt for member name = " + this.getFullName());
+				log.error("Member:getGuardians:smsMessageEnabled", "guardianHasSmsMessageAccessEnabled array size corrupt for member name = " + this.getFullName());
 				g.setHasSmsMessageAccessEnabled(false);
 			}
 			
@@ -453,9 +454,9 @@ public class Member {
 		if(theNewGuardian == null) {return false;}
 
 		Integer guardianIndex = getGuardianIndexByKey(theNewGuardian.getKey());
-		//log.info("guardianIndex = " + guardianIndex);
+		//log.debug("guardianIndex = " + guardianIndex);
 		if(guardianIndex == null) {
-			log.info("updateGuardian() failed because it could not find guardian with matching key");
+			log.debug("updateGuardian() failed because it could not find guardian with matching key");
 			return false;
 		}
 		
@@ -467,31 +468,31 @@ public class Member {
 		// Convert "normal Java" values to "default" values in Big Table
 		////////////////////////////////////////////////////////////////
 		String ea = theNewGuardian.getEmailAddress() == null ? "" : theNewGuardian.getEmailAddress();
-		//log.info("guardianEmailAddresses size = " + guardianEmailAddresses.size());
+		//log.debug("guardianEmailAddresses size = " + guardianEmailAddresses.size());
 		this.guardianEmailAddresses.set(guardianIndex, ea);
 		
 		String pn = theNewGuardian.getPhoneNumber() == null ? "" : theNewGuardian.getPhoneNumber();
-		//log.info("guardianPhoneNumbers size = " + guardianPhoneNumbers.size());
+		//log.debug("guardianPhoneNumbers size = " + guardianPhoneNumbers.size());
 		this.guardianPhoneNumbers.set(guardianIndex, pn);
 		
 		String ui = theNewGuardian.getUserId() == null ? "" : theNewGuardian.getUserId();
-		//log.info("guardianUserIds size = " + guardianUserIds.size());
+		//log.debug("guardianUserIds size = " + guardianUserIds.size());
 		this.guardianUserIds.set(guardianIndex, ui);
 		
 		Boolean eaa = theNewGuardian.getIsEmailAddressActive() == null ? true : theNewGuardian.getIsEmailAddressActive();
-		//log.info("guardianIsEmailAddressActives size = " + guardianIsEmailAddressActives.size());
+		//log.debug("guardianIsEmailAddressActives size = " + guardianIsEmailAddressActives.size());
 		this.guardianIsEmailAddressActives.set(guardianIndex, eaa);
 		
 		String fn = theNewGuardian.getFirstName() == null ? "" : theNewGuardian.getFirstName();
-		//log.info("guardianFirstNames size = " + guardianFirstNames.size());
+		//log.debug("guardianFirstNames size = " + guardianFirstNames.size());
 		this.guardianFirstNames.set(guardianIndex, fn);
 		
 		String ln = theNewGuardian.getLastName() == null ? "" : theNewGuardian.getLastName();
-		//log.info("guardianLastNames size = " + guardianLastNames.size());
+		//log.debug("guardianLastNames size = " + guardianLastNames.size());
 		this.guardianLastNames.set(guardianIndex, ln);
 		
 		Integer aadc = theNewGuardian.getAutoArchiveDayCount() == null ? -1 : theNewGuardian.getAutoArchiveDayCount();
-		//log.info("guardianAutoArchiveDayCounts size = " + guardianAutoArchiveDayCounts.size());
+		//log.debug("guardianAutoArchiveDayCounts size = " + guardianAutoArchiveDayCounts.size());
 		this.guardianAutoArchiveDayCounts.set(guardianIndex, aadc);
 		
 // never updated directly by client
@@ -499,15 +500,15 @@ public class Member {
 //		this.guardianSmsEmailAddresses.set(guardianIndex, sea);
 		
 		Boolean ghrmae = theNewGuardian.getHasRteamMessageAccessEnabled() == null ? true : theNewGuardian.getHasRteamMessageAccessEnabled();
-		//log.info("getHasRteamMessageAccessEnabled size = " + getHasRteamMessageAccessEnabled());
+		//log.debug("getHasRteamMessageAccessEnabled size = " + getHasRteamMessageAccessEnabled());
 		this.guardianHasRteamMessageAccessEnabled.set(guardianIndex, ghrmae);
 		
 		Boolean ghemae = theNewGuardian.getHasEmailMessageAccessEnabled() == null ? true : theNewGuardian.getHasEmailMessageAccessEnabled();
-		//log.info("guardianHasEmailMessageAccessEnabled size = " + guardianHasEmailMessageAccessEnabled());
+		//log.debug("guardianHasEmailMessageAccessEnabled size = " + guardianHasEmailMessageAccessEnabled());
 		this.guardianHasEmailMessageAccessEnabled.set(guardianIndex, ghemae);
 		
 		Boolean ghsmae = theNewGuardian.getHasSmsMessageAccessEnabled() == null ? true : theNewGuardian.getHasSmsMessageAccessEnabled();
-		//log.info("guardianHasSmsMessageAccessEnabled size = " + guardianHasSmsMessageAccessEnabled());
+		//log.debug("guardianHasSmsMessageAccessEnabled size = " + guardianHasSmsMessageAccessEnabled());
 		this.guardianHasSmsMessageAccessEnabled.set(guardianIndex, ghsmae);
 		
 		return true;
@@ -520,7 +521,7 @@ public class Member {
 
 		Integer guardianIndex = getGuardianIndexByKey(theKeyOfGuardianBeingDeleted);
 		if(guardianIndex == null) {
-			log.info("deleteGuardian() failed because it could not find guardian with matching key");
+			log.debug("deleteGuardian() failed because it could not find guardian with matching key");
 			return false;
 		}
 		
@@ -564,7 +565,7 @@ public class Member {
 //		this.guardianLastNames.remove(guardianIndex);
 //		this.guardianAutoArchiveDayCounts.remove(guardianIndex);
 		
-		log.info("deleteGuardian(): finished removing all fields from guardian");
+		log.debug("deleteGuardian(): finished removing all fields from guardian");
 		
 		return true;
 	}
@@ -933,7 +934,7 @@ public class Member {
 		// only add to participant list if NA or confirmed
 		if(umiPrimary.getEmailAddress() != null || umiPrimary.getPhoneNumber() != null) {
 			authorizedRecipients.add(umiPrimary);
-			log.info("primary membership added as NA/confirmed participant - name = " + this.getFullName());
+			log.debug("primary membership added as NA/confirmed participant - name = " + this.getFullName());
 		}
 		
 		///////////////////////////////////
@@ -965,7 +966,7 @@ public class Member {
 			// only add to participant list if NA or confirmed
 			if(umiGuardian.getEmailAddress() != null || umiGuardian.getPhoneNumber() != null) {
 				authorizedRecipients.add(umiGuardian);
-				log.info("guardian membership added as NA/confirmed participant - name = " + g.getFullName());
+				log.debug("guardian membership added as NA/confirmed participant - name = " + g.getFullName());
 			}
 		}
 		
@@ -1495,9 +1496,9 @@ public class Member {
 			return null;
 		}
 		
-		//log.info("getFullNameByEmailAddress(): input param theEmailAddress = " + theEmailAddress);
+		//log.debug("getFullNameByEmailAddress(): input param theEmailAddress = " + theEmailAddress);
 		if(this.emailAddress != null && this.emailAddress.equalsIgnoreCase(theEmailAddress)) {
-			//log.info("getFullNameByEmailAddress(): return primary email address");
+			//log.debug("getFullNameByEmailAddress(): return primary email address");
 			return getDisplayName(this.firstName, this.lastName, this.emailAddress, this.phoneNumber);
 		}
 		
@@ -1530,7 +1531,7 @@ public class Member {
 				sb.append(" ");
 				sb.append(gLastName);
 			}
-			//log.info("getFullNameByEmailAddress(): return email address = " + sb.toString());
+			//log.debug("getFullNameByEmailAddress(): return email address = " + sb.toString());
 			return sb.toString();
 		} else {
 			return "";
@@ -2051,11 +2052,10 @@ public class Member {
 			// Need to access the members before return or I get an "Object Detached" error
 			for(Member m : memberships) {
 				m.getAge();
-				log.info("Member::getMemberShipsWithEmailAddress() primary of membership found = " + m.getFullName());
+				log.debug("Member::getMemberShipsWithEmailAddress() primary of membership found = " + m.getFullName());
 			}
 		} catch (Exception e) {
-    		log.severe("Query Member.getByNetworkAuthenticatedEmailAddressAndTeam failed");
-    		e.printStackTrace();
+    		log.exception("Member:getMemberHsipsWithEmailAddress:Exception", "Query Member.getByNetworkAuthenticatedEmailAddressAndTeam failed", e);
     	} finally {
     		em.close();
     	}
@@ -2074,7 +2074,7 @@ public class Member {
 	//                                   then the user is matched using NA email address. If it is a phone number,
 	//                                   then the user is matched using an SMS confirmed phone number.
     public static boolean synchUpWithAuthorizedUser(Member theMember, String theMemberEmailAddressPhoneNumber) {
-    	log.info("synchUpWithAuthorizedUser entered: theMemberEmailAddressPhoneNumber = " + theMemberEmailAddressPhoneNumber);
+    	log.debug("synchUpWithAuthorizedUser entered: theMemberEmailAddressPhoneNumber = " + theMemberEmailAddressPhoneNumber);
     	EntityManager em = EMF.get().createEntityManager();
     	User associatedUser = null;
     	Team newTeamForUser = null;
@@ -2108,9 +2108,9 @@ public class Member {
 				newTeamForUser = member.getTeam();
 				
 				em.getTransaction().commit();
-				log.info("new member with email address/phone number " + theMemberEmailAddressPhoneNumber + " is now synched with user = " + associatedUser.getFullName());
+				log.debug("new member with email address/phone number " + theMemberEmailAddressPhoneNumber + " is now synched with user = " + associatedUser.getFullName());
 			} catch (NoResultException e) {
-				log.severe("synchUpWithAuthorizedUser(): could not get member using member key that should be good");
+	    		log.exception("Member:synchUpWithAuthorizedUser:NoResultException", "could not get member using member key that should be good", e);
 			}  finally {
 			    if (em.getTransaction().isActive()) {
 			    	em.getTransaction().rollback();
@@ -2120,7 +2120,7 @@ public class Member {
     	} catch (NoResultException e) {
 			// THIS IS NOT AN ERROR -- there may be no user entity associated with the member.
 		} catch (NonUniqueResultException e) {
-			log.severe("synchUpWithAuthorizedUser(): should never happen - two or more users with same email address/phone number");
+    		log.exception("Member:synchUpWithAuthorizedUser:NonUniqueResultException", "two or more users with same email address/phone number", e);
 		}
 		
     	if(newTeamForUser != null) {
@@ -2134,13 +2134,11 @@ public class Member {
 				withinTransactionUser.addTeam(newTeamForUser);
 				em3.getTransaction().commit();
         	} catch (NoResultException e) {
-            	log.severe("user not found");
+        		log.exception("Member:synchUpWithAuthorizedUser:NoResultException2", "", e);
             	userSynchSuccessful = false;
-            	e.printStackTrace();
     		} catch (NonUniqueResultException e) {
-    			log.severe("should never happen - two or more users have same key");
+        		log.exception("Member:synchUpWithAuthorizedUser:NonUniqueResultException2", "", e);
     			userSynchSuccessful = false;
-    			e.printStackTrace();
     		} finally {
     		    if (em3.getTransaction().isActive()) {
     		    	em3.getTransaction().rollback();
@@ -2178,9 +2176,8 @@ public class Member {
 				em2.getTransaction().commit();
 			}
     	} catch (Exception e) {
-    		log.severe("exception updating recipient entries: " + e.getMessage());
+    		log.exception("Member:synchUpWithAuthorizedUser:Exception", "", e);
     		userSynchSuccessful = false;
-    		e.printStackTrace();
     	} finally {
 		    if (em2.getTransaction().isActive()) {
 		    	em2.getTransaction().rollback();
@@ -2190,7 +2187,7 @@ public class Member {
     	
     	// send emails (and SMSs) now that the transaction is closed
     	for(Recipient r : recipientsPendingDelivery) {
-    		log.info("recipient pending delivery email address = " + r.getToEmailAddress());
+    		log.debug("recipient pending delivery email address = " + r.getToEmailAddress());
         	Emailer.send(r.getToEmailAddress(), r.getSubject(), r.getMessageThread().getMessage(), Emailer.NO_REPLY);
     	}
     	
@@ -2209,13 +2206,13 @@ public class Member {
 			
     		for(Member m : memberships) {
     			emMember.getTransaction().begin();
-    			//log.info("Setting new member autoArchiveDayCount = " + theUser.getAutoArchiveDayCount() + " for EA = " + theUser.getEmailAddress());
+    			//log.debug("Setting new member autoArchiveDayCount = " + theUser.getAutoArchiveDayCount() + " for EA = " + theUser.getEmailAddress());
     			m.setAutoArchiveDayCountByEmailAddress(theUser.getAutoArchiveDayCount(), theUser.getEmailAddress());
     			emMember.getTransaction().commit();
     		}
-    		log.info("autoArchiveDayCount adjusted: memberships count = " + memberships.size());
+    		log.debug("autoArchiveDayCount adjusted: memberships count = " + memberships.size());
 		} catch (Exception e) {
-    		log.severe("Query Member.getByNetworkAuthenticatedEmailAddress failed");
+    		log.exception("Member:updateMemberShipsWithNewAutoArchiveDayCount:Exception", "", e);
     	} finally {
     		emMember.close();
     	}
@@ -2241,9 +2238,9 @@ public class Member {
     			if(m.getThumbNailBase64() == null) m.setThumbNailBase64(theThumbNailBase64);
     			emMember.getTransaction().commit();
     		}
-    		log.info("number of " + theUser.getFullName() + " memberships photos updated = " + memberships.size());
+    		log.debug("number of " + theUser.getFullName() + " memberships photos updated = " + memberships.size());
 		} catch (Exception e) {
-    		log.severe("updateMemberShipsWithNewPhoto(): Query Member.getByNetworkAuthenticatedEmailAddress failed");
+    		log.exception("Member:updateMemberShipsWithNewPhoto:Exception", "", e);
     	} finally {
     		emMember.close();
     	}
@@ -2282,7 +2279,7 @@ public class Member {
 			if(theKeyOfGuardianBeingModified != null) {
 				indexOfGuardianBeingModified = getGuardianIndexByKey(theKeyOfGuardianBeingModified);
 				if(indexOfGuardianBeingModified == null) {
-					log.info("isNewGuardianEmailAddressAcceptable() failed because it could not find guardian with matching key");
+					log.debug("isNewGuardianEmailAddressAcceptable() failed because it could not find guardian with matching key");
 					return false;
 				}
 			}
@@ -2348,7 +2345,7 @@ public class Member {
 		try {
 			memberKey = KeyFactory.stringToKey(theMemberId);
 		} catch (Exception e1) {
-			log.severe("Member.getMember(): could not convert memberId to member key. Exception = " + e1.getMessage());
+    		log.exception("Member:getMember:Exception", "", e1);
 			return null;
 		}
 		
@@ -2357,9 +2354,9 @@ public class Member {
 				.setParameter("key", memberKey)
 				.getSingleResult();
 		} catch (NoResultException e) {
-			log.severe("member could not be retrieved using member key");
+    		log.exception("Member:getMember:Exception", "member could not be retrieved using member key", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more members have same key");
+    		log.exception("Member:getMember:NonUniqueResultException", "member could not be retrieved using member key", e);
 		} finally {
 			em.close();
 		}
@@ -2375,9 +2372,9 @@ public class Member {
 			smsConfirmedMemberships = (List<Member>)em.createNamedQuery("Member.getBySmsConfirmedPhoneNumber")
 				.setParameter("phoneNumber", thePhoneNumber)
 				.getResultList();
-		log.info("number of memberships with phone number " + thePhoneNumber + " already confirmed via SMS = " + smsConfirmedMemberships.size());
+		log.debug("number of memberships with phone number " + thePhoneNumber + " already confirmed via SMS = " + smsConfirmedMemberships.size());
 		} catch (Exception e) {
-			log.severe("Member.getBySmsConfirmedPhoneNumber exception = " + e.getMessage());
+    		log.exception("Member:isPhoneNumberSmsConfirmedInAnyMember:Exception", "", e);
 		} finally {
 			em.close();
 		}
@@ -2408,7 +2405,7 @@ public class Member {
 		
 		// It is possible -- though maybe not likely -- that this member has multiple outstanding invitations. This one
 		// response confirms all outstanding membership requests.
-		//log.info("phone number to match = " + thePhoneNumber);
+		//log.debug("phone number to match = " + thePhoneNumber);
 		int membershipsConvertedToNewSmsCount = 0;
 		try {
 			List<Member> memberships = (List<Member>)emMember.createNamedQuery("Member.getByPhoneNumber")
@@ -2418,8 +2415,8 @@ public class Member {
 				.setParameter("guardianPhoneNumber", smsPhoneNumber)
 				.getResultList();
 			
-			log.info("number of matching phoneNumbers found = " + memberships.size());
-			log.info("number of matching guardianPhoneNumbers found = " + guardianMemberships.size());
+			log.debug("number of matching phoneNumbers found = " + memberships.size());
+			log.debug("number of matching guardianPhoneNumbers found = " + guardianMemberships.size());
 			// create one big membership list for processing
 			allMemberships.addAll(memberships);
 			allMemberships.addAll(guardianMemberships);
@@ -2440,9 +2437,9 @@ public class Member {
     				membershipsConvertedToNewSmsCount++;
     			}
     		}
-    		log.info("number of memberships with phone number " + smsPhoneNumber + " confirmed via SMS = " + newlyConfirmedMemberships.size() + " converted to new SMS " + membershipsConvertedToNewSmsCount);
+    		log.debug("number of memberships with phone number " + smsPhoneNumber + " confirmed via SMS = " + newlyConfirmedMemberships.size() + " converted to new SMS " + membershipsConvertedToNewSmsCount);
 		} catch (Exception e) {
-    		log.severe("confirmNewMemberViaSms(): Query Member.getByPhoneNumber or Member.getByGuardianPhoneNumber failed. message = " + e.getMessage());
+    		log.exception("Member:confirmNewMemberViaSms:Exception", "", e);
     		return UserInterfaceMessage.SERVER_ERROR;
     	} finally {
     		emMember.close();
@@ -2459,7 +2456,7 @@ public class Member {
     			List<Member> smsConfirmedmemberships = (List<Member>)emSmsMember.createNamedQuery("Member.getBySmsConfirmedPhoneNumber")
     				.setParameter("phoneNumber", smsPhoneNumber)
     				.getResultList();
-    			log.info("number of memberships with phone number " + smsPhoneNumber + " already confirmed via SMS = " + smsConfirmedmemberships.size());
+    			log.debug("number of memberships with phone number " + smsPhoneNumber + " already confirmed via SMS = " + smsConfirmedmemberships.size());
     		
     			if(smsConfirmedmemberships.size() > 0) {
     	    		return UserInterfaceMessage.ALREADY_MEMBER;
@@ -2468,7 +2465,7 @@ public class Member {
     			}
     		} catch (Exception e) {
     			// ::ROBUSTNESS:: do NOT return error message. Code can survive this error.
-        		log.severe("confirmNewMemberViaSms(): Query Member.getByPhoneNumberAndHasBeenSmsConfirmed failed");
+        		log.exception("Member:confirmNewMemberViaSms:Exception2", "", e);
         	} finally {
         		emSmsMember.close();
         	}
@@ -2524,7 +2521,7 @@ public class Member {
 			if(this.guardianKeys.size() < listSize) {
 				for(int i=this.guardianKeys.size(); i<listSize; i++) {
 					this.guardianKeys.add(TF.getPassword());
-					log.info("adding guardianKey to member = " + this.getFullName());
+					log.debug("adding guardianKey to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
@@ -2535,7 +2532,7 @@ public class Member {
 			if(this.guardianPhoneNumbers.size() < listSize) {
 				for(int i=this.guardianPhoneNumbers.size(); i<listSize; i++) {
 					this.guardianPhoneNumbers.add("");
-					log.info("adding guardianPhoneNumber to member = " + this.getFullName());
+					log.debug("adding guardianPhoneNumber to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
@@ -2546,7 +2543,7 @@ public class Member {
 			if(this.guardianUserIds.size() < listSize) {
 				for(int i=this.guardianUserIds.size(); i<listSize; i++) {
 					this.guardianUserIds.add("");
-					log.info("adding guardianUserId to member = " + this.getFullName());
+					log.debug("adding guardianUserId to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
@@ -2557,7 +2554,7 @@ public class Member {
 			if(this.guardianIsEmailAddressActives.size() < listSize) {
 				for(int i=this.guardianIsEmailAddressActives.size(); i<listSize; i++) {
 					this.guardianIsEmailAddressActives.add(true);
-					log.info("adding guardianIsEmailAddressActive to member = " + this.getFullName());
+					log.debug("adding guardianIsEmailAddressActive to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
@@ -2568,7 +2565,7 @@ public class Member {
 			if(this.guardianFirstNames.size() < listSize) {
 				for(int i=this.guardianFirstNames.size(); i<listSize; i++) {
 					this.guardianFirstNames.add("");
-					log.info("adding guardianFirstName to member = " + this.getFullName());
+					log.debug("adding guardianFirstName to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
@@ -2579,7 +2576,7 @@ public class Member {
 			if(this.guardianLastNames.size() < listSize) {
 				for(int i=this.guardianLastNames.size(); i<listSize; i++) {
 					this.guardianLastNames.add("");
-					log.info("adding guardianLastName to member = " + this.getFullName());
+					log.debug("adding guardianLastName to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
@@ -2590,67 +2587,67 @@ public class Member {
 			if(this.guardianAutoArchiveDayCounts.size() < listSize) {
 				for(int i=this.guardianAutoArchiveDayCounts.size(); i<listSize; i++) {
 					this.guardianAutoArchiveDayCounts.add(-1);
-					log.info("adding guardianAutoArchiveDayCount to member = " + this.getFullName());
+					log.debug("adding guardianAutoArchiveDayCount to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
 			
 			if(this.guardianEmailAddresses == null) {
 				this.guardianEmailAddresses = new ArrayList<String>();
-				log.info("adding guardianEmailAddresses to member = " + this.getFullName());
+				log.debug("adding guardianEmailAddresses to member = " + this.getFullName());
 			}
 			if(this.guardianEmailAddresses.size() < listSize) {
 				for(int i=this.guardianEmailAddresses.size(); i<listSize; i++) {
 					this.guardianEmailAddresses.add("");
-					//log.info("adding guardianEmailAddresses to member = " + this.getFullName());
+					//log.debug("adding guardianEmailAddresses to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
 			
 			if(this.guardianSmsEmailAddresses == null) {
 				this.guardianSmsEmailAddresses = new ArrayList<String>();
-				log.info("adding guardianSmsEmailAddresses to member = " + this.getFullName());
+				log.debug("adding guardianSmsEmailAddresses to member = " + this.getFullName());
 			}
 			if(this.guardianSmsEmailAddresses.size() < listSize) {
 				for(int i=this.guardianSmsEmailAddresses.size(); i<listSize; i++) {
 					this.guardianEmailAddresses.add("");
-					//log.info("adding guardianSmsEmailAddresses to member = " + this.getFullName());
+					//log.debug("adding guardianSmsEmailAddresses to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
 			
 			if(this.guardianHasRteamMessageAccessEnabled == null) {
 				this.guardianHasRteamMessageAccessEnabled = new ArrayList<Boolean>();
-				//log.info("adding guardianHasRteamMessageAccessEnabled to member = " + this.getFullName());
+				//log.debug("adding guardianHasRteamMessageAccessEnabled to member = " + this.getFullName());
 			}
 			if(this.guardianHasRteamMessageAccessEnabled.size() < listSize) {
 				for(int i=this.guardianHasRteamMessageAccessEnabled.size(); i<listSize; i++) {
 					this.guardianHasRteamMessageAccessEnabled.add(true);
-					//log.info("adding guardianHasRteamMessageAccessEnabled to member = " + this.getFullName());
+					//log.debug("adding guardianHasRteamMessageAccessEnabled to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
 			
 			if(this.guardianHasEmailMessageAccessEnabled == null) {
 				this.guardianHasEmailMessageAccessEnabled = new ArrayList<Boolean>();
-				//log.info("adding guardianHasEmailMessageAccessEnabled to member = " + this.getFullName());
+				//log.debug("adding guardianHasEmailMessageAccessEnabled to member = " + this.getFullName());
 			}
 			if(this.guardianHasEmailMessageAccessEnabled.size() < listSize) {
 				for(int i=this.guardianHasEmailMessageAccessEnabled.size(); i<listSize; i++) {
 					this.guardianHasEmailMessageAccessEnabled.add(true);
-					//log.info("adding guardianHasEmailMessageAccessEnabled to member = " + this.getFullName());
+					//log.debug("adding guardianHasEmailMessageAccessEnabled to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
 			
 			if(this.guardianHasSmsMessageAccessEnabled == null) {
 				this.guardianHasSmsMessageAccessEnabled = new ArrayList<Boolean>();
-				//log.info("adding guardianHasSmsMessageAccessEnabled to member = " + this.getFullName());
+				//log.debug("adding guardianHasSmsMessageAccessEnabled to member = " + this.getFullName());
 			}
 			if(this.guardianHasSmsMessageAccessEnabled.size() < listSize) {
 				for(int i=this.guardianHasSmsMessageAccessEnabled.size(); i<listSize; i++) {
 					this.guardianHasSmsMessageAccessEnabled.add(true);
-					//log.info("adding guardianHasSmsMessageAccessEnabled to member = " + this.getFullName());
+					//log.debug("adding guardianHasSmsMessageAccessEnabled to member = " + this.getFullName());
 					wasListUpdated = true;
 				}
 			}
@@ -2780,7 +2777,7 @@ public class Member {
 				// just go ahead and copy user's photo and thumb nail - if they are null, no harm in the copy
 				if(thePotentialAssociatedUser.getPhotoBase64() != null) this.setPhotoBase64(thePotentialAssociatedUser.getPhotoBase64());
 				if(thePotentialAssociatedUser.getThumbNailBase64() != null) this.setThumbNailBase64(thePotentialAssociatedUser.getThumbNailBase64());
-				log.info("member " + this.getDisplayName() + " successfully associated user photos");
+				log.debug("member " + this.getDisplayName() + " successfully associated user photos");
 			}
 			
 			//  3. Set the individual's userId to point to the associatedUser
@@ -2829,7 +2826,7 @@ public class Member {
 				// just go ahead and copy user's photo and thumb nail - if they are null, no harm in the copy
 				if(thePotentialAssociatedUser.getPhotoBase64() != null) this.setPhotoBase64(thePotentialAssociatedUser.getPhotoBase64());
 				if(thePotentialAssociatedUser.getThumbNailBase64() != null) this.setThumbNailBase64(thePotentialAssociatedUser.getThumbNailBase64());
-				log.info("member " + this.getDisplayName() + " successfully associated user photos");
+				log.debug("member " + this.getDisplayName() + " successfully associated user photos");
 			}
 			
 			//  3. Set the individual's userId to point to the associatedUser

@@ -18,30 +18,32 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class EmailTaskServlet extends HttpServlet {
-	private static final Logger log = Logger.getLogger(EmailTaskServlet.class.getName());
+	//private static final Logger log = Logger.getLogger(EmailTaskServlet.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
+	
 	private static int MAX_TASK_RETRY_COUNT = 3;
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		log.info("EmailTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
+		log.debug("EmailTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
 	}
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		log.info("EmailTaskServlet.doPost() entered");
+		log.debug("EmailTaskServlet.doPost() entered");
 		String response = "email sent successfully";
 		resp.setContentType("text/plain");
 
 		try {
 			String emailAddress = req.getParameter("emailAddress");
-			log.info("emailAddress parameter: "	+ emailAddress);
+			log.debug("emailAddress parameter: "	+ emailAddress);
 			String fromEmailAddress = req.getParameter("fromEmailAddress");
-			log.info("fromEmailAddress parameter: "	+ fromEmailAddress);
+			log.debug("fromEmailAddress parameter: "	+ fromEmailAddress);
 			String fromEmailUser = req.getParameter("fromEmailUser");
-			log.info("fromEmailUser parameter: "	+ fromEmailUser);
+			log.debug("fromEmailUser parameter: "	+ fromEmailUser);
 			String subject = req.getParameter("subject");
-			log.info("subject parameter: "	+ subject);
+			log.debug("subject parameter: "	+ subject);
 			String message = req.getParameter("message");
-			log.info("message parameter: "	+ message);
+			log.debug("message parameter: "	+ message);
 			
 			// need to get the retry count
 			String taskRetryCountStr = req.getHeader("X-AppEngine-TaskRetryCount");
@@ -50,9 +52,9 @@ public class EmailTaskServlet extends HttpServlet {
 			try {
 				taskRetryCount = new Integer(taskRetryCountStr);
 			} catch (Exception e1) {
-				log.info("should never happen, but no harm, no foul");
+				log.debug("should never happen, but no harm, no foul");
 			}
-			log.info("taskRetryCount = " + taskRetryCount);
+			log.debug("taskRetryCount = " + taskRetryCount);
 
 		    Properties props = new Properties();
 		    Session session = Session.getDefaultInstance(props, null);
@@ -60,7 +62,7 @@ public class EmailTaskServlet extends HttpServlet {
 		    // ensure valid parameters
 		    if(emailAddress == null || emailAddress.length() == 0 ||
 		    		message == null || message.length() == 0) {
-		    	log.severe("Emailer.send(): null or empty parameter");
+		    	log.error("EmailTaskServlet:doPost:parameters", "null or empty parameter");
 		    	return;
 		    }
 			
@@ -73,7 +75,7 @@ public class EmailTaskServlet extends HttpServlet {
 		    	// must send the email from Rackspace. 
 		    	if(Utility.doesEmailAddressStartWithPhoneNumber(emailAddress) && !MobileCarrier.usesFromAddress(emailAddress)) {
 		    		String httpResponse = EmailToSmsClient.sendMail(subject, message, emailAddress, fromEmailAddress);
-		    		log.info("EmailToSmsClient response = " + httpResponse);
+		    		log.debug("EmailToSmsClient response = " + httpResponse);
 		    	} else {
 			        Message msg = new MimeMessage(session);
 			        msg.setFrom(new InternetAddress(fromEmailAddress, fromEmailUser));
@@ -89,28 +91,27 @@ public class EmailTaskServlet extends HttpServlet {
 			        //************************************************************************************
 			        if(subject == null || subject.trim().length() == 0) {
 			        	subject = "...";
-			        	log.info("setting subject to ...");
+			        	log.debug("setting subject to ...");
 			        }
 			        msg.setSubject(subject);
 			        msg.setContent(message, "text/html");
-			        log.info("sending email to: " + emailAddress + " with subject: " + subject);
+			        log.debug("sending email to: " + emailAddress + " with subject: " + subject);
 			        Transport.send(msg);
 		    	}
 		        
 		        resp.setStatus(HttpServletResponse.SC_OK);
 		    } catch (AddressException e) {
-		        log.severe("email Address exception " + e.getMessage());
+				log.exception("EmailTaskServlet:doPost:AddressException", "", e);
 		        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		    } catch (MessagingException e) {
-		    	log.severe("email had bad message: " + e.getMessage());
+				log.exception("EmailTaskServlet:doPost:MessagingException", "", e);
 		    	resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		    } catch (UnsupportedEncodingException e) {
-		    	log.severe("email address with unsupported format "  + e.getMessage());
+				log.exception("EmailTaskServlet:doPost:UnsupportedEncodingException", "", e);
 		    	resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		    } catch (Exception e) {
-		    	log.severe("email address exception "  + e.getMessage());
+				log.exception("EmailTaskServlet:doPost:Exception", "", e);
 		    	resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-		    	e.printStackTrace();
 		    }
 		    
 			// Return status depends on how many times this been attempted. If max retry count reached, return HTTP 200 so
@@ -123,7 +124,7 @@ public class EmailTaskServlet extends HttpServlet {
 		}
 		catch (Exception ex) {
 			response = "Should not happen. Email send: failure : " + ex.getMessage();
-			log.info(response);
+			log.debug(response);
 			resp.setStatus(HttpServletResponse.SC_OK);
 			resp.getWriter().println(response);
 		}

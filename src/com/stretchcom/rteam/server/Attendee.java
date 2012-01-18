@@ -96,7 +96,8 @@ import com.google.appengine.api.datastore.Text;
  * Getters never return null, but rather, empty Strings, empty Lists, etc.
  */
 public class Attendee {
-	private static final Logger log = Logger.getLogger(Attendee.class.getName());
+	//private static final Logger log = Logger.getLogger(Attendee.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	// isPresent constants
 	public static final String PRESENT = "yes";
@@ -221,7 +222,7 @@ public class Attendee {
 			em.persist(attendee);
 		    em.getTransaction().commit();
 		} catch (Exception e) {
-			log.severe("updatePreGameAttendance(): exception = " + e.getMessage());
+			log.exception("Attendee:updatePreGameAttendance:Exception", "", e);
 		} finally {
 			em.close();
 		}

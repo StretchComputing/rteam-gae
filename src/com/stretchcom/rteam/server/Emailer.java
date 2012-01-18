@@ -33,7 +33,9 @@ import com.google.appengine.api.labs.taskqueue.TaskOptions.Method;
 
 
 public class Emailer {
-	private static final Logger log = Logger.getLogger(Emailer.class.getName());
+	//private static final Logger log = Logger.getLogger(Emailer.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
+	
 	private static final String BASE_FROM_EMAIL_ADDRESS = "@rteam.com";
 	private static final String FROM_EMAIL_ADDRESS = "reply@rteam.com";
 	private static final String FROM_EMAIL_USER = "automated rTeam email";

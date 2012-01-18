@@ -36,18 +36,19 @@ import com.google.appengine.api.datastore.KeyFactory;
 
 
 public class CronResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(CronResource.class.getName());
+	//private static final Logger log = Logger.getLogger(CronResource.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	String job;
 
     @Override  
     protected void doInit() throws ResourceException {  
-    	log.info("CronResource::doInit() entered");
+    	log.debug("CronResource::doInit() entered");
     	
         this.job = (String)getRequest().getAttributes().get("job");
         if(this.job != null) {
             this.job = Reference.decode(this.job);
-            log.info("UserResource:doInit() - decoded job = " + this.job);
+            log.debug("UserResource:doInit() - decoded job = " + this.job);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,11 +73,11 @@ public class CronResource extends ServerResource {
     
     private void emailSmsIsAlive() {
     	String response = EmailToSmsClient.isAlive();
-    	log.info("emailSmsIsAlive() response = " + response);
+    	log.debug("emailSmsIsAlive() response = " + response);
     }
     
     private void runMessageArchiver() {
-    	log.info("runMessageArchiver() entered");
+    	log.debug("runMessageArchiver() entered");
     	
     	CronLog messageArchiverCronLog = null;
     	int numberOfArchivedMessageThreads = 0;
@@ -89,7 +90,7 @@ public class CronResource extends ServerResource {
 				.setParameter("currentDate", new Date())
 				.setParameter("status", MessageThread.ACTIVE_STATUS)
 				.getResultList();
-        	log.info("number of old messageThreads found = " + oldMessageThreads.size());
+        	log.debug("number of old messageThreads found = " + oldMessageThreads.size());
         	
     		for(MessageThread mt : oldMessageThreads) {
     	    	emMessageThread.getTransaction().begin();
@@ -100,7 +101,7 @@ public class CronResource extends ServerResource {
     			aMessageThread.setStatus(MessageThread.ARCHIVED_STATUS);
     			emMessageThread.getTransaction().commit();
     		}
-    		log.info("all messageThreads archived successfully");
+    		log.debug("all messageThreads archived successfully");
     		numberOfArchivedMessageThreads = oldMessageThreads.size();
     	} finally {
     		emMessageThread.close();
@@ -116,21 +117,21 @@ public class CronResource extends ServerResource {
 				.setParameter("currentDate", new Date())
 				.setParameter("status", Recipient.SENT_STATUS)
 				.getResultList();
-        	log.info("number of old SENT_STATUS recipients found = " + oldSentRecipients.size());
+        	log.debug("number of old SENT_STATUS recipients found = " + oldSentRecipients.size());
         	oldRecipients.addAll(oldSentRecipients);
         	
         	List<Recipient> oldRepliedRecipients = (List<Recipient>)emRecipient.createNamedQuery("Recipient.getOldActiveThru")
 				.setParameter("currentDate", new Date())
 				.setParameter("status", Recipient.REPLIED_STATUS)
 				.getResultList();
-	    	log.info("number of old REPLIED_STATUS recipients found = " + oldRepliedRecipients.size());
+	    	log.debug("number of old REPLIED_STATUS recipients found = " + oldRepliedRecipients.size());
 	    	oldRecipients.addAll(oldRepliedRecipients);
         	
         	List<Recipient> oldFinalizedRecipients = (List<Recipient>)emRecipient.createNamedQuery("Recipient.getOldActiveThru")
 				.setParameter("currentDate", new Date())
 				.setParameter("status", Recipient.FINALIZED_STATUS)
 				.getResultList();
-	    	log.info("number of old FINALIZED_STATUS recipients found = " + oldFinalizedRecipients.size());
+	    	log.debug("number of old FINALIZED_STATUS recipients found = " + oldFinalizedRecipients.size());
 	    	oldRecipients.addAll(oldFinalizedRecipients);
        	
     		for(Recipient r : oldRecipients) {
@@ -142,7 +143,7 @@ public class CronResource extends ServerResource {
     			aRecipient.setStatus(Recipient.ARCHIVED_STATUS);
     			emRecipient.getTransaction().commit();
     		}
-    		log.info("total old recipients archived = " + oldRecipients.size());
+    		log.debug("total old recipients archived = " + oldRecipients.size());
     		numberOfArchivedRecipients = oldRecipients.size();
     	} finally {
     		emRecipient.close();
@@ -159,7 +160,7 @@ public class CronResource extends ServerResource {
     	try {
     		emCronLog.persist(messageArchiverCronLog);
     	} catch(Exception e) {
-    		log.severe("exception persisting cron Logs. Message = " + e.getMessage());
+			log.exception("CronResource:runMessageArchiver:Exception", "persisting cron Logs", e);
     	} finally {
     		emCronLog.close();
     	}

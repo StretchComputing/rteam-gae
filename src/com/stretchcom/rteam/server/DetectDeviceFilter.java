@@ -18,7 +18,8 @@ public class DetectDeviceFilter implements Filter {
 
     private static final String MOBILE_DIR = "/mobile";
     private static final String DESKTOP_DIR = "/desktop";
-    private static final Logger log = Logger.getLogger(DetectDeviceFilter.class.getName());
+    //private static final Logger log = Logger.getLogger(DetectDeviceFilter.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 
     @Override
     public void destroy() {
@@ -31,7 +32,7 @@ public class DetectDeviceFilter implements Filter {
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             String uri = httpRequest.getRequestURI();
-            log.info("Detect Device filter. Before URI: " + uri);
+            log.debug("Detect Device filter. Before URI: " + uri);
 
             if (!uri.startsWith(MOBILE_DIR) && !uri.startsWith(DESKTOP_DIR)) {
                 UAgentInfo agent_info = new UAgentInfo(httpRequest.getHeader("user-agent"), httpRequest.getHeader("accept"));
@@ -40,7 +41,7 @@ public class DetectDeviceFilter implements Filter {
                 } else {
                     uri = DESKTOP_DIR + uri;
                 }
-                log.info("After URI: " + uri);
+                log.debug("After URI: " + uri);
                 RequestDispatcher rd = httpRequest.getRequestDispatcher(uri);
                 rd.forward(request, response);
                 return;

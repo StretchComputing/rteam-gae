@@ -42,7 +42,9 @@ import com.google.appengine.api.datastore.Text;
  * @author joepwro
  */
 public class MessageThreadResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(MessageThreadResource.class.getName());
+	//private static final Logger log = Logger.getLogger(MessageThreadResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
+	private static RskyboxClient slog = new RskyboxClient();
 
     // The sequence of characters that identifies the resource.
     String teamId;
@@ -57,41 +59,41 @@ public class MessageThreadResource extends ServerResource {
         // attribute values taken from the URI template /team/{teamId}/messageThreads/{messageThreadId}/{timeZone}
     	
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("MessageThreadResource:doInit() - teamId = " + this.teamId);
+        log.debug("MessageThreadResource:doInit() - teamId = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("MessageThreadResource:doInit() - decoded teamId = " + this.teamId);
+            log.debug("MessageThreadResource:doInit() - decoded teamId = " + this.teamId);
         }
    
         this.messageThreadId = (String)getRequest().getAttributes().get("messageThreadId"); 
-        log.info("MessageThreadResource:doInit() - messageThreadId = " + this.messageThreadId);
+        log.debug("MessageThreadResource:doInit() - messageThreadId = " + this.messageThreadId);
         if(this.messageThreadId != null) {
             this.messageThreadId = Reference.decode(this.messageThreadId);
-            log.info("MessageThreadResource:doInit() - decoded messageThreadId = " + this.messageThreadId);
+            log.debug("MessageThreadResource:doInit() - decoded messageThreadId = " + this.messageThreadId);
         }
         
         this.timeZoneStr = (String)getRequest().getAttributes().get("timeZone"); 
-        log.info("MessageThreadResource:doInit() - timeZone = " + this.timeZoneStr);
+        log.debug("MessageThreadResource:doInit() - timeZone = " + this.timeZoneStr);
         if(this.timeZoneStr != null) {
             this.timeZoneStr = Reference.decode(this.timeZoneStr);
-            log.info("MessageThreadResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+            log.debug("MessageThreadResource:doInit() - decoded timeZone = " + this.timeZoneStr);
         }
         
 		Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("includeMemberInfo"))  {
 				this.includeMemberInfo = (String)parameter.getValue();
 				this.includeMemberInfo = Reference.decode(this.includeMemberInfo);
-				log.info("MessageThreadResource:doInit() - decoded includeMemberInfo = " + this.includeMemberInfo);
+				log.debug("MessageThreadResource:doInit() - decoded includeMemberInfo = " + this.includeMemberInfo);
 			} else if(parameter.getName().equals("oneUseToken")) {
 				this.oneUseToken = (String)parameter.getValue();
 				this.oneUseToken = Reference.decode(this.oneUseToken);
-				log.info("MessageThreadResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
+				log.debug("MessageThreadResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
 			} else if(parameter.getName().equals("pollResponse")) {
 				this.pollResponse = (String)parameter.getValue();
 				this.pollResponse = Reference.decode(this.pollResponse);
-				log.info("MessageThreadResource:doInit() - decoded pollResponse = " + this.pollResponse);
+				log.debug("MessageThreadResource:doInit() - decoded pollResponse = " + this.pollResponse);
 			}
 		}
     }  
@@ -99,7 +101,7 @@ public class MessageThreadResource extends ServerResource {
     // Handles 'Get message thread info' API  
     @Get("json")
     public JsonRepresentation getMessageThreadInfo(Variant variant) {
-        log.info("MessageThreadResource:toJson() entered");
+        log.debug("MessageThreadResource:toJson() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -111,7 +113,7 @@ public class MessageThreadResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
     			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("MessageThreadResource:getMessageThreadInfo:currentUser", "user could not be retrieved from Request attributes!!");
     		}
     		//::BUSINESSRULE:: user must be network authenticated to send a message
     		else if(!currentUser.getIsNetworkAuthenticated()) {
@@ -121,13 +123,13 @@ public class MessageThreadResource extends ServerResource {
     		else if(this.teamId == null || this.teamId.length() == 0 ||
     	        	   this.messageThreadId == null || this.messageThreadId.length() == 0 ||
     	        	   this.timeZoneStr == null || this.timeZoneStr.length() == 0) {
-    	        		log.info("MessageThreadResource:toJson() teamId, messageThreadId or timeZone null or zero length");
+    	        		log.debug("MessageThreadResource:toJson() teamId, messageThreadId or timeZone null or zero length");
     	        		apiStatus = ApiStatusCode.TEAM_ID_MESSAGE_THREAD_ID_AND_TIME_ZONE_REQUIRED;
     	    }
     		// must be a member of the team
     		else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	} else {
     			tz = GMT.getTimeZone(this.timeZoneStr);
     			if(tz == null) {
@@ -144,7 +146,7 @@ public class MessageThreadResource extends ServerResource {
     		MessageThread messageThread = (MessageThread)em.createNamedQuery("MessageThread.getByKey")
     			.setParameter("key", messageThreadKey)
     			.getSingleResult();
-    		log.info("messageThread retrieved = " + messageThread.getSubject());
+    		log.debug("messageThread retrieved = " + messageThread.getSubject());
         	
         	jsonReturn.put("subject", messageThread.getSubject());
         	jsonReturn.put("body", messageThread.getMessage());
@@ -164,7 +166,7 @@ public class MessageThreadResource extends ServerResource {
     		if(this.includeMemberInfo != null && this.includeMemberInfo.equalsIgnoreCase("true"))  {
 	    		JSONArray jsonMemberArray = new JSONArray();
 	    		List<Recipient> recipients = messageThread.getRecipients();
-	    		log.info("# of recipients = " + recipients.size());
+	    		log.debug("# of recipients = " + recipients.size());
 	    		// go through recipient list and find a single reply disposition for each member
 	    		HashMap<String, Recipient> uniqueMemberRecipients = new HashMap<String, Recipient>();
 	    		String currentUserId = KeyFactory.keyToString(currentUser.getKey());
@@ -218,16 +220,14 @@ public class MessageThreadResource extends ServerResource {
     		if(messageThread.getFollowupMessage() !=  null) jsonReturn.put("followUpMessage", messageThread.getFollowupMessage());
     		jsonReturn.put("isPublic", messageThread.getIsPublic() ? "true" : "false");
         } catch (NoResultException e) {
-        	log.info("no result exception, messageThread not found");
+        	log.debug("no result exception, messageThread not found");
         	apiStatus = ApiStatusCode.MESSAGE_THREAD_NOT_FOUND;
 		} catch (JSONException e) {
-			log.severe("error building JSON object");
+			log.exception("MessageThreadResource:getMessageThreadInfo:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more messageThreads have same ID");
+			log.exception("MessageThreadResource:getMessageThreadInfo:NonUniqueResultException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} finally {
 			em.close();
 		}
@@ -235,8 +235,7 @@ public class MessageThreadResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("MessageThreadResource:getMessageThreadInfo:JSONException2", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -246,7 +245,7 @@ public class MessageThreadResource extends ServerResource {
     @Put 
     public JsonRepresentation updateMessageThread(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateMessageThread(@Put) entered ..... ");
+    	log.debug("updateMessageThread(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -258,7 +257,7 @@ public class MessageThreadResource extends ServerResource {
     			// This is the 'Message thread response' API call
     			// --------------------------------------------------
         		//::EVENT::
-        		log.info("this is 'Message thread response' API handling");
+        		log.debug("this is 'Message thread response' API handling");
         		
         		Recipient recipient = null;
         		MessageThread messageThread = null;
@@ -268,7 +267,7 @@ public class MessageThreadResource extends ServerResource {
         				.setParameter("oneUseToken", this.oneUseToken)
         				.setParameter("oneUseTokenStatus", Recipient.NEW_TOKEN_STATUS)
         				.getSingleResult();
-        			log.info("updateMessageThread(): recipient found");
+        			log.debug("updateMessageThread(): recipient found");
         			
         			String userReply = Recipient.CONFIRMED_REPLY_MESSAGE;
         			if(this.pollResponse != null) {
@@ -297,7 +296,7 @@ public class MessageThreadResource extends ServerResource {
 					
 					// who's coming reply has to update the pre-game attendance
 					if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
-						log.info("who's coming reply = " + userReply);
+						log.debug("who's coming reply = " + userReply);
 						String eventType = Utility.getEventType(recipient.getIsGame());
 						// ::BACKWARD COMPATIBILITY:: recipient started storing eventName on 1/5/2012 so handle null eventName for awhile
 						String eventName = recipient.getEventName() == null ? "" : recipient.getEventName();
@@ -311,7 +310,7 @@ public class MessageThreadResource extends ServerResource {
         			// on the link in the message multiple times.  In either case, it is inactive after first response.
         			apiStatus = ApiStatusCode.MESSAGE_THREAD_CONFIRMATION_LINK_NO_LONGER_ACTIVE;
         		} catch (NonUniqueResultException e) {
-        			log.severe("updateMessageThread(): should never happen - two or more recipients have same oneUseToken");
+        			log.exception("MessageThreadResource:updateMessageThread:NonUniqueResultException1", "", e);
         			this.setStatus(Status.SERVER_ERROR_INTERNAL);
         		}
         		// try/catch at end of method does entity manager cleanup
@@ -330,7 +329,7 @@ public class MessageThreadResource extends ServerResource {
     				memberConfirming = (Member)em2.createNamedQuery("Member.getByKey")
     	    			.setParameter("key", memberKey)
     	    			.getSingleResult();
-    	    		log.info("member confirming = " + memberConfirming.getFullName());
+    	    		log.debug("member confirming = " + memberConfirming.getFullName());
     	    		memberId = KeyFactory.keyToString(memberConfirming.getKey());
     	    		
                 	// TODO eventually return -- for all members -- who has and hasn't confirmed so far
@@ -338,11 +337,10 @@ public class MessageThreadResource extends ServerResource {
         			jsonReturn.put("lastName", memberConfirming.getLastName());
     	    	} catch (NoResultException e) {
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    				log.severe("should never happen - member could not be found using memberId stored in recipient entity");
+        			log.exception("MessageThreadResource:updateMessageThread:NoResultException", "", e);
     			} catch (NonUniqueResultException e) {
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    				log.severe("should never happen - two or more members have same member ID");
-    				e.printStackTrace();
+        			log.exception("MessageThreadResource:updateMessageThread:NonUniqueResultException2", "two or more members have same member ID", e);
     			} finally {
         		    em2.close();
         		}
@@ -363,7 +361,7 @@ public class MessageThreadResource extends ServerResource {
         		
 	    		JSONArray jsonMemberArray = new JSONArray();
 	    		List<Recipient> recipients = messageThread.getRecipients();
-	    		log.info("# of recipients = " + recipients.size());
+	    		log.debug("# of recipients = " + recipients.size());
 	    		// go through recipient list and find a single reply disposition for each member
 	    		HashMap<String, Recipient> uniqueMemberRecipients = new HashMap<String, Recipient>();
 	    		for(Recipient r : recipients) {
@@ -391,17 +389,17 @@ public class MessageThreadResource extends ServerResource {
 	    			//if(r.getReplyGmtDate() != null) jsonMemberObj.put("replyDate", GMT.convertToLocalDate(r.getReplyGmtDate(), tz));
 	    			jsonMemberArray.put(jsonMemberObj);
 	    		}
-	    		log.info("uniqueMemberCollection size = " + uniqueMemberCollection.size());
+	    		log.debug("uniqueMemberCollection size = " + uniqueMemberCollection.size());
 	    		jsonReturn.put("members", jsonMemberArray);
         	} else {
     			// --------------------------------------------
     			// This is the 'Update message thread' API call
     			// --------------------------------------------
-        		log.info("this is 'Update message thread' API handling");
+        		log.debug("this is 'Update message thread' API handling");
         		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
         		if(currentUser == null) {
         			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-        			log.severe("user could not be retrieved from Request attributes!!");
+        			log.error("MessageThreadResource:updateMessageThread:currentUser", "user could not be retrieved from Request attributes!!");
         		}
         		//::BUSINESSRULE:: user must be network authenticated to update a message thread
         		else if(!currentUser.getIsNetworkAuthenticated()) {
@@ -410,13 +408,13 @@ public class MessageThreadResource extends ServerResource {
         		// teamId, messageThreadId and time zone are all required
         		else if(this.teamId == null || this.teamId.length() == 0 ||
         	        	   this.messageThreadId == null || this.messageThreadId.length() == 0) {
-        	        		log.info("MessageThreadResource:toJson() teamId or messageThreadId null or zero length");
+        	        		log.debug("MessageThreadResource:toJson() teamId or messageThreadId null or zero length");
         	        		apiStatus = ApiStatusCode.TEAM_ID_AND_MESSAGE_THREAD_ID_REQUIRED;
         	    }
         		// must be a member of the team
         		else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
     				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-    				log.info(apiStatus);
+    				log.debug(apiStatus);
             	} 
         		
     			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -426,7 +424,7 @@ public class MessageThreadResource extends ServerResource {
 
     			JsonRepresentation jsonRep = new JsonRepresentation(entity);
     			JSONObject json = jsonRep.toJsonObject();
-    			log.info("received json object = " + json.toString());
+    			log.debug("received json object = " + json.toString());
             	
     			// enforce the query parameter defaults and rules
     			// sendReminder, reply and followupMessage are all mutually exclusive
@@ -436,7 +434,7 @@ public class MessageThreadResource extends ServerResource {
     			if(json.has("followupMessage")) {mutualExclusiveCount++;}
     			if(json.has("status")) {mutualExclusiveCount++;}
     			if(mutualExclusiveCount > 1) {
-                    log.info("MessageThreadResource:toJson() can only specify one of: sendReminder, reply, followupMessage, status");
+                    log.debug("MessageThreadResource:toJson() can only specify one of: sendReminder, reply, followupMessage, status");
     				jsonReturn.put("apiStatus", ApiStatusCode.MUTUALLY_EXCLUSIVE_PARAMETERS_SPECIFIED);
     				return new JsonRepresentation(jsonReturn);
     			}
@@ -449,7 +447,7 @@ public class MessageThreadResource extends ServerResource {
     				} else if(wasViewedStr.equalsIgnoreCase("false")) {
     					wasViewed = false;
     				} else {
-    	                log.info("MessageThreadResource:toJson() wasViewed must be 'true' or 'false'");
+    	                log.debug("MessageThreadResource:toJson() wasViewed must be 'true' or 'false'");
     	 				jsonReturn.put("apiStatus", ApiStatusCode.INVALID_WAS_VIEWED_PARAMETER);
     					return new JsonRepresentation(jsonReturn);
     				}
@@ -458,7 +456,7 @@ public class MessageThreadResource extends ServerResource {
     			if(json.has("status")) {
     				String status = json.getString("status");
     				if(!status.equalsIgnoreCase(MessageThread.ARCHIVED_STATUS)) {
-    	                log.info("MessageThreadResource:toJson() status did not have a value of 'archived'");
+    	                log.debug("MessageThreadResource:toJson() status did not have a value of 'archived'");
     	 				jsonReturn.put("apiStatus", ApiStatusCode.INVALID_STATUS_PARAMETER);
     					return new JsonRepresentation(jsonReturn);
     				}
@@ -472,10 +470,10 @@ public class MessageThreadResource extends ServerResource {
     					.getSingleResult();
         			
 				} catch (NoResultException e) {
-					log.info("team not found");
+					log.debug("team not found");
 					apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 				} catch (NonUniqueResultException e) {
-					log.severe("should never happen - two teams have the same key");
+        			log.exception("MessageThreadResource:updateMessageThread:NonUniqueResultException3", "", e);
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				}
     			
@@ -489,10 +487,10 @@ public class MessageThreadResource extends ServerResource {
     			if(json.has("reply") || json.has("wasViewed") || json.has("status")) {
             		memberships = Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
             		for(Member m : memberships) {
-            			log.info("primary name of matching membership = " + m.getFullName());
+            			log.debug("primary name of matching membership = " + m.getFullName());
             		}
             		if(memberships.size() == 0) {
-    					log.info("requesting user is not of member of the team. Must be team member.");
+    					log.debug("requesting user is not of member of the team. Must be team member.");
     					apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
             		}
     			}
@@ -507,7 +505,7 @@ public class MessageThreadResource extends ServerResource {
         		MessageThread messageThread = (MessageThread)em.createNamedQuery("MessageThread.getByKey")
         			.setParameter("key", messageThreadKey)
         			.getSingleResult();
-        		log.info("messageThread retrieved = " + messageThread.getSubject());
+        		log.debug("messageThread retrieved = " + messageThread.getSubject());
         		
     			// for some updated message threads, user must be a recipient, so if appropriate, try to find
     			Recipient recipientOfThisUser = null;
@@ -535,7 +533,7 @@ public class MessageThreadResource extends ServerResource {
     					
     					JSONArray recipientsJsonArray = json.getJSONArray("sendReminder");
     					int numOfJsonRecipients = recipientsJsonArray.length();
-    					log.info("json recipients array length = " + numOfJsonRecipients);
+    					log.debug("json recipients array length = " + numOfJsonRecipients);
     					
     					boolean memberIdsProvided = numOfJsonRecipients == 0 ? false : true;
     					
@@ -578,7 +576,7 @@ public class MessageThreadResource extends ServerResource {
     					reminderMessage = messageThread.getMessage();
     				} else {
     					apiStatus = ApiStatusCode.USER_NOT_ORIGINATOR_OF_MESSAGE_THREAD;
-    					log.info("requester is not the originator of this message thread -- cannot send reminder unless you are the originator");
+    					log.debug("requester is not the originator of this message thread -- cannot send reminder unless you are the originator");
     				}
     			} else if(json.has("reply")) {
     				reply = json.getString("reply");
@@ -591,21 +589,21 @@ public class MessageThreadResource extends ServerResource {
     					
     					// who's coming reply has to update the pre-game attendance
     					if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
-    						log.info("who's coming reply = " + reply);
+    						log.debug("who's coming reply = " + reply);
     						wasWhoIsComingReply = true;
     					}
     				} else {
     					apiStatus = ApiStatusCode.USER_NOT_RECIPIENT_OF_MESSAGE_THREAD;
-    					log.info("requester is not a recipient of this message thread -- cannot reply unless you are a recipient");
+    					log.debug("requester is not a recipient of this message thread -- cannot reply unless you are a recipient");
     				}
     			} else if(json.has("followupMessage")) {
     				// cannot send a follow-up message if messageThread is already finalized
     				if(messageThread.getStatus().equalsIgnoreCase(MessageThread.FINALIZED_STATUS)) {
     					apiStatus = ApiStatusCode.FOLLOWUP_NOT_ALLOWED_ON_FINALIZED_MESSAGE_THREAD;
-    					log.info("messageThread already finalized. Followup message is not permitted.");
+    					log.debug("messageThread already finalized. Followup message is not permitted.");
     				} else if(!messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
     					apiStatus = ApiStatusCode.USER_NOT_ORIGINATOR_OF_MESSAGE_THREAD;
-    					log.info("requester is not the originator of this message thread");
+    					log.debug("requester is not the originator of this message thread");
     				} else {
     					followupMessage = json.getString("followupMessage");
     					messageThread.setFollowupMessage(followupMessage);
@@ -624,7 +622,7 @@ public class MessageThreadResource extends ServerResource {
     			} else if(json.has("status")) {
     				if(recipientOfThisUser == null && !messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
     					apiStatus = ApiStatusCode.USER_NOT_ORIGINATOR_OR_RECIPIENT_OF_MESSAGE_THREAD;
-    					log.info("user is neither the originator or recipient of this message thread");
+    					log.debug("user is neither the originator or recipient of this message thread");
     				} else {
     					if(recipientOfThisUser != null) {
     						// user is a recipient, so archive message out of inbox
@@ -648,7 +646,7 @@ public class MessageThreadResource extends ServerResource {
     					}
     				} else {
     					apiStatus = ApiStatusCode.USER_NOT_RECIPIENT_OF_MESSAGE_THREAD;
-    					log.info("requester is not a recipient of this message thread -- cannot change view status unless you are a recipient");
+    					log.debug("requester is not a recipient of this message thread -- cannot change view status unless you are a recipient");
     				}
     			}
     			
@@ -715,24 +713,21 @@ public class MessageThreadResource extends ServerResource {
 		    				}
     		    		}
     				} catch (Exception e) {
-    					log.severe("query for members failed");
+            			log.exception("MessageThreadResource:updateMessageThread:Exception", "", e);
     				}
     			}
         	}
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Put");
-			e.printStackTrace();
+			log.exception("MessageThreadResource:updateMessageThread:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MessageThreadResource:updateMessageThread:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
-			log.severe("messageThread not found");
+			log.exception("MessageThreadResource:updateMessageThread:NoResultException2", "messageThread not found", e);
 			apiStatus = ApiStatusCode.MESSAGE_THREAD_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more messageThreads have same team name");
-			e.printStackTrace();
+			log.exception("MessageThreadResource:updateMessageThread:NonUniqueResultException4", "two or more messageThreads have same team name", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -744,8 +739,7 @@ public class MessageThreadResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("MessageThreadResource:updateMessageThread:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -764,7 +758,7 @@ public class MessageThreadResource extends ServerResource {
 				.setParameter("oneUseToken", theOneUseToken)
 				.setParameter("oneUseTokenStatus", Recipient.NEW_TOKEN_STATUS)
 				.getSingleResult();
-			log.info("handleUserMemberConfirmEmailResponse(): recipient found");
+			slog.debug("handleUserMemberConfirmEmailResponse(): recipient found");
 			userId = recipient.getUserId();
 			memberId = recipient.getMemberId();
 			toEmailAddress = recipient.getToEmailAddress();
@@ -777,7 +771,7 @@ public class MessageThreadResource extends ServerResource {
 			// not an error - email could be received with a bad or old token -- just ignore
 			userMemberInfo.setApiStatus(ApiStatusCode.EMAIL_CONFIRMATION_LINK_NO_LONGER_ACTIVE);
 		} catch (NonUniqueResultException e) {
-			log.severe("handleUserMemberConfirmEmailResponse(): should never happen - two or more recipients have same oneUseToken");
+			slog.exception("MessageThreadResource:handleUserMemberConfirmEmailResponse:NonUniqueResultException", "two or more recipients have same oneUseToken", e);
 			userMemberInfo.setApiStatus(ApiStatusCode.SERVER_ERROR);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -798,7 +792,7 @@ public class MessageThreadResource extends ServerResource {
 			try {
 				
 				if(userId != null) {
-					log.info("userId set, so this is a USER authorizing their email address");
+					slog.debug("userId set, so this is a USER authorizing their email address");
 					
 					// Verify this email address is not in use.
 					// -----------------------------------------
@@ -815,7 +809,7 @@ public class MessageThreadResource extends ServerResource {
 						.getSingleResult();
 
 					if(matchingUser != null) {
-						log.info("email confirmation failed because email address " + toEmailAddress + " already in use and network authenticated");
+						slog.debug("email confirmation failed because email address " + toEmailAddress + " already in use and network authenticated");
 						userMemberInfo.setApiStatus(ApiStatusCode.EMAIL_ADDRESS_ALREADY_USED);
 						userMemberInfo.setEmailAddress(emailRecipientUser.getEmailAddress());
 						
@@ -832,13 +826,13 @@ public class MessageThreadResource extends ServerResource {
 					}
 					em2.getTransaction().commit();
 				} else if(memberId != null) {
-					log.info("memberId set, so this is a MEMBER authorizing their email address");
+					slog.debug("memberId set, so this is a MEMBER authorizing their email address");
 					
 					em2.getTransaction().begin();
 					emailRecipientMember = (Member)em2.createNamedQuery("Member.getByKey")
 						.setParameter("key", KeyFactory.stringToKey(memberId))
 						.getSingleResult();
-					log.info("NAing member, toEmailAddress = " + toEmailAddress);
+					slog.debug("NAing member, toEmailAddress = " + toEmailAddress);
 					emailRecipientMember.networkAuthenticateEmailAddress(toEmailAddress);
 					emailRecipientMember.setHasEmailMessageAccessEnabledByEmailAddress(toEmailAddress, true);
 					
@@ -852,12 +846,12 @@ public class MessageThreadResource extends ServerResource {
 					userMemberInfo.setHasEmailMessageAccessEnabled(true);
 					em2.getTransaction().commit();
 				}
-				log.info("handleUserMemberConfirmEmailResponse(): mail recipient user/member found");
+				slog.debug("handleUserMemberConfirmEmailResponse(): mail recipient user/member found");
 			} catch (NoResultException e) {
-				log.severe("handleUserMemberConfirmEmailResponse(): could not find email recipient user/member associated with messageThread");
+				slog.exception("MessageThreadResource:handleUserMemberConfirmEmailResponse:NoResultException", "could not find email recipient user/member associated with messageThread", e);
 				userMemberInfo.setApiStatus(ApiStatusCode.SERVER_ERROR);
 			} catch (NonUniqueResultException e) {
-				log.severe("handleUserMemberConfirmEmailResponse(): should never happen - two or more users/members have same key");
+				slog.exception("MessageThreadResource:handleUserMemberConfirmEmailResponse:NonUniqueResultException2", "two or more users/members have same key", e);
 				userMemberInfo.setApiStatus(ApiStatusCode.SERVER_ERROR);
 			} finally {
 			    if (em2.getTransaction().isActive()) {

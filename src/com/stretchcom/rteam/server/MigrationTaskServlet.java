@@ -21,23 +21,25 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class MigrationTaskServlet extends HttpServlet {
-	private static final Logger log = Logger.getLogger(MigrationTaskServlet.class.getName());
+	//private static final Logger log = Logger.getLogger(MigrationTaskServlet.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
+
 	private static int MAX_TASK_RETRY_COUNT = 3;
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		log.info("MigrationTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
+		log.debug("MigrationTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
 	}
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		log.info("MigrationTaskServlet.doPost() entered");
+		log.debug("MigrationTaskServlet.doPost() entered");
 		String response = "migration completed successfully";
 		resp.setContentType("text/plain");
 
 		try {
 			// no parameters as of yet
 			String migrationName = req.getParameter("migrationName");
-			log.info("migrationName parameter: " + migrationName);
+			log.debug("migrationName parameter: " + migrationName);
 			
 			// need to get the retry count
 			String taskRetryCountStr = req.getHeader("X-AppEngine-TaskRetryCount");
@@ -46,16 +48,16 @@ public class MigrationTaskServlet extends HttpServlet {
 			try {
 				taskRetryCount = new Integer(taskRetryCountStr);
 			} catch (Exception e1) {
-				log.info("should never happen, but no harm, no foul");
+				log.debug("should never happen, but no harm, no foul");
 			}
-			log.info("taskRetryCount = " + taskRetryCount);
+			log.debug("taskRetryCount = " + taskRetryCount);
 
 		    Properties props = new Properties();
 		    Session session = Session.getDefaultInstance(props, null);
 		    
 		    // ensure valid parameters
 		    if(migrationName == null || migrationName.length() == 0) {
-		    	log.severe("MigrationTaskServlet.doPost(): null or empty migrationName parameter");
+		    	log.error("MigrationTaskServlet:doPost:parameters", "MigrationTaskServlet.doPost(): null or empty migrationName parameter");
 		    	return;
 		    }
 
@@ -82,7 +84,7 @@ public class MigrationTaskServlet extends HttpServlet {
 		}
 		catch (Exception ex) {
 			response = "Should not happen. Email send: failure : " + ex.getMessage();
-			log.info(response);
+			log.debug(response);
 			resp.setStatus(HttpServletResponse.SC_OK);
 			resp.getWriter().println(response);
 		}
@@ -92,7 +94,7 @@ public class MigrationTaskServlet extends HttpServlet {
 		EntityManager emUsers = EMF.get().createEntityManager();
 		try {
 			List<User> allUsers = (List<User>)emUsers.createNamedQuery("User.getAll").getResultList();
-			log.info("total number of users to be processed = " + allUsers.size());
+			log.debug("total number of users to be processed = " + allUsers.size());
 			
 			int userEmailUpdateCount = 0;
 			for(User u : allUsers) {
@@ -105,9 +107,9 @@ public class MigrationTaskServlet extends HttpServlet {
 					}
 				}
 			}
-			log.info("# of users that were updated = " + userEmailUpdateCount);
+			log.debug("# of users that were updated = " + userEmailUpdateCount);
     	} catch (Exception e) {
-    		log.severe("exception normalizing user email addresses: " + e.getMessage());
+    		log.exception("MigrationTaskServlet:normalizeUserEmailAddresses:Exception", "", e);
     	} finally {
 		    emUsers.close();
 		}
@@ -117,7 +119,7 @@ public class MigrationTaskServlet extends HttpServlet {
 		EntityManager emMember = EMF.get().createEntityManager();
 		try {
 			List<Member> allMembers = (List<Member>)emMember.createNamedQuery("Member.getAll").getResultList();
-			log.info("total number of members to be processed = " + allMembers.size());
+			log.debug("total number of members to be processed = " + allMembers.size());
 			
 			int primaryEmailUpdateCount = 0;
 			int networkAuthenticatedEmailUpdateCount = 0;
@@ -174,11 +176,11 @@ public class MigrationTaskServlet extends HttpServlet {
 					}
 				}
 			}
-			log.info("# primary email addresses updated = " + primaryEmailUpdateCount + 
+			log.debug("# primary email addresses updated = " + primaryEmailUpdateCount + 
 					 "  # network authenticated email addresses updated = " + networkAuthenticatedEmailUpdateCount + 
 					 "  # guardian email addresses updated = " + guardianEmailUpdateCount);
     	} catch (Exception e) {
-    		log.severe("exception normalizing user email addresses: " + e.getMessage());
+    		log.exception("MigrationTaskServlet:normalizeMemberEmailAddresses:Exception", "", e);
     	} finally {
 		    emMember.close();
 		}
@@ -189,7 +191,7 @@ public class MigrationTaskServlet extends HttpServlet {
 		EntityManager emMember = EMF.get().createEntityManager();
 		try {
 			List<Member> allMembers = (List<Member>)emMember.createNamedQuery("Member.getAll").getResultList();
-			log.info("total number of members to be processed = " + allMembers.size());
+			log.debug("total number of members to be processed = " + allMembers.size());
 			
 			int membersWithGuardians = 0;
 			int membersWithGuardianSmsAddresses = 0;
@@ -209,11 +211,11 @@ public class MigrationTaskServlet extends HttpServlet {
 					}
 				}
 			} //end of for(allMembers)
-			log.info("# members with guardians = " + membersWithGuardians + 
+			log.debug("# members with guardians = " + membersWithGuardians + 
 					 "  # members with guardian SMS addresses = " + membersWithGuardianSmsAddresses + 
 					 "  # members without guardians SMS addresses = " + membersWithoutGuardianSmsAddresses);
     	} catch (Exception e) {
-    		log.severe("exception adjusting guardian SMS Address list sizes: " + e.getMessage());
+    		log.exception("MigrationTaskServlet:adjustGuardianSmsEmailAddressListSizes:Exception", "", e);
     	} finally {
 		    emMember.close();
 		}
@@ -224,7 +226,7 @@ public class MigrationTaskServlet extends HttpServlet {
 		EntityManager emMemberships = EMF.get().createEntityManager();
 		try {
 			List<Member> phoneNumberMemberships = (List<Member>)emMemberships.createNamedQuery("Member.getAll").getResultList();
-			log.info("total number of members to be processed = " + phoneNumberMemberships.size());
+			log.debug("total number of members to be processed = " + phoneNumberMemberships.size());
 			
 			int membersWithPhoneNumbersCount = 0;
 			int guardianPhoneNumberUpdateCount = 0;
@@ -233,7 +235,7 @@ public class MigrationTaskServlet extends HttpServlet {
 				memberCount++;
 //				String phoneNumber = m.getPhoneNumber();
 //				if(phoneNumber != null && phoneNumber.length() > 0) {
-//					log.info("memberCount = " + memberCount + " phoneNumber = " + phoneNumber);
+//					log.debug("memberCount = " + memberCount + " phoneNumber = " + phoneNumber);
 //					phoneNumber =  Utility.extractAllDigits(phoneNumber);
 //					phoneNumber = Utility.stripLeadingOneIfPresent(phoneNumber);
 //					m.setPhoneNumber(phoneNumber);
@@ -252,10 +254,9 @@ public class MigrationTaskServlet extends HttpServlet {
 					}
 				}
 			}
-			log.info("membersWithPhoneNumbersCount = " + membersWithPhoneNumbersCount + " guardianPhoneNumberUpdateCount = " + guardianPhoneNumberUpdateCount);
+			log.debug("membersWithPhoneNumbersCount = " + membersWithPhoneNumbersCount + " guardianPhoneNumberUpdateCount = " + guardianPhoneNumberUpdateCount);
     	} catch (Exception e) {
-    		e.printStackTrace();
-    		log.severe("exception normalizing phone numbers: " + e.getMessage());
+    		log.exception("MigrationTaskServlet:normalizePhoneNumbers:Exception", "", e);
     	} finally {
 		    emMemberships.close();
 		}
@@ -265,7 +266,7 @@ public class MigrationTaskServlet extends HttpServlet {
 		EntityManager emMemberships = EMF.get().createEntityManager();
 		try {
 			List<Member> guardianMemberships = (List<Member>)emMemberships.createNamedQuery("Member.getAll").getResultList();
-			log.info("total number of members to be processed = " + guardianMemberships.size());
+			log.debug("total number of members to be processed = " + guardianMemberships.size());
 			
 			int membersWithGuardiansCount = 0;
 			for(Member m : guardianMemberships) {
@@ -273,9 +274,9 @@ public class MigrationTaskServlet extends HttpServlet {
 					membersWithGuardiansCount++;
 				}
 			}
-			log.info("# of memberships with Guardian updates = " + membersWithGuardiansCount);
+			log.debug("# of memberships with Guardian updates = " + membersWithGuardiansCount);
     	} catch (Exception e) {
-    		log.severe("exception with Guardian updates: " + e.getMessage());
+    		log.exception("MigrationTaskServlet:normalizeGuardianLists:Exception", "", e);
     	} finally {
 		    emMemberships.close();
 		}
@@ -285,17 +286,16 @@ public class MigrationTaskServlet extends HttpServlet {
 		EntityManager emMemberships = EMF.get().createEntityManager();
 		try {
 			List<Member> memberships = (List<Member>)emMemberships.createNamedQuery("Member.getAll").getResultList();
-			log.info("total number of members to be processed = " + memberships.size());
+			log.debug("total number of members to be processed = " + memberships.size());
 			
 			int memberCount = 0;
 			for(Member m : memberships) {
 				memberCount++;
 				m.setDefaultAccessPreferences();
 			}
-			log.info("total number of members processed = " + memberCount);
+			log.debug("total number of members processed = " + memberCount);
     	} catch (Exception e) {
-    		e.printStackTrace();
-    		log.severe("exception in defaultMemberAccessPreferences(): " + e.getMessage());
+    		log.exception("MigrationTaskServlet:defaultMemberAccessPreferences:Exception", "", e);
     	} finally {
 		    emMemberships.close();
 		}

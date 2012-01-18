@@ -42,7 +42,8 @@ import com.google.appengine.api.datastore.KeyFactory;
  *  
  */  
 public class ActivityResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(ActivityResource.class.getName());
+	//private static final Logger log = Logger.getLogger(ActivityResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 	
 	String teamId;
 	String activityId;
@@ -52,24 +53,24 @@ public class ActivityResource extends ServerResource {
     protected void doInit() throws ResourceException {  
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("ActivityResource:doInit() - teamId = " + this.teamId);
+        log.debug("ActivityResource:doInit() - teamId = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("ActivityResource:doInit() - decoded teamId = " + this.teamId);
+            log.debug("ActivityResource:doInit() - decoded teamId = " + this.teamId);
         }
         
         this.media = (String)getRequest().getAttributes().get("media"); 
-        log.info("ActivityResource:doInit() - media = " + this.media);
+        log.debug("ActivityResource:doInit() - media = " + this.media);
         if(this.media != null) {
             this.media = Reference.decode(this.media);
-            log.info("ActivityResource:doInit() - decoded media = " + this.media);
+            log.debug("ActivityResource:doInit() - decoded media = " + this.media);
         }
 
         this.activityId = (String)getRequest().getAttributes().get("activityId"); 
-        log.info("ActivityResource:doInit() - activityId = " + this.activityId);
+        log.debug("ActivityResource:doInit() - activityId = " + this.activityId);
         if(this.activityId != null) {
             this.activityId = Reference.decode(this.activityId);
-            log.info("ActivityResource:doInit() - decoded activityId = " + this.activityId);
+            log.debug("ActivityResource:doInit() - decoded activityId = " + this.activityId);
         } 
     }  
     
@@ -77,7 +78,7 @@ public class ActivityResource extends ServerResource {
     @Put 
     public JsonRepresentation updateActivity(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateActivity(@Put) entered ..... ");
+    	log.debug("updateActivity(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -87,7 +88,7 @@ public class ActivityResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("UserResource:updateActivity:currentUser", "user could not be retrieved from Request attributes");
     		}
     		//::BUSINESSRULE:: user must be network authenticated to update an activity
     		else if(!currentUser.getIsNetworkAuthenticated()) {
@@ -103,7 +104,7 @@ public class ActivityResource extends ServerResource {
     		}
     		else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
     		
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -116,12 +117,12 @@ public class ActivityResource extends ServerResource {
 				Team team = (Team)emTeam.createNamedQuery("Team.getByKey")
 					.setParameter("key", KeyFactory.stringToKey(this.teamId))
 					.getSingleResult();
-				log.info("team retrieved = " + team.getTeamName());
+				log.debug("team retrieved = " + team.getTeamName());
 			} catch (NoResultException e) {
 				apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
-				log.info("invalid team id");
+				log.debug("invalid team id");
 			} catch (NonUniqueResultException e) {
-				log.severe("should never happen - two teams have the same key");
+				log.exception("UserResource:udateUser:NonUniqueResultException", "two teams have the same key", e);
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			} finally {
 				emTeam.close();
@@ -137,12 +138,12 @@ public class ActivityResource extends ServerResource {
 				activity = (Activity)em.createNamedQuery("Activity.getByKey")
 					.setParameter("key", KeyFactory.stringToKey(this.activityId))
 					.getSingleResult();
-				log.info("activity retrieved successfully. LIKE count = " + activity.getNumberOfLikeVotes() + " DISLIKE count = " + activity.getNumberOfDislikeVotes());
+				log.debug("activity retrieved successfully. LIKE count = " + activity.getNumberOfLikeVotes() + " DISLIKE count = " + activity.getNumberOfDislikeVotes());
 			} catch (NoResultException e) {
 				apiStatus = ApiStatusCode.ACTIVITY_NOT_FOUND;
-				log.info("invalid team id");
+				log.debug("invalid team id");
 			} catch (NonUniqueResultException e) {
-				log.severe("should never happen - two or more activities have same key");
+				log.exception("UserResource:udateUser:NonUniqueResultException2", "two or more activities have same key", e);
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			}
 			
@@ -162,10 +163,10 @@ public class ActivityResource extends ServerResource {
 			// Enforce Business Rules
 			if(vote == null || vote.length() == 0) {
 				apiStatus = ApiStatusCode.VOTE_REQUIRED;
-				log.info("required vote field missing");
+				log.debug("required vote field missing");
 			} else if(!ActivityVote.isStatusValid(vote)) {
 				apiStatus = ApiStatusCode.INVALID_VOTE_PARAMETER;
-				log.info("invalid vote parameter");
+				log.debug("invalid vote parameter");
 			}
     		
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -187,12 +188,12 @@ public class ActivityResource extends ServerResource {
 						.setParameter("activityId", this.activityId)
 						.setParameter("userId", currentUserId)
 						.getSingleResult();
-					log.info("activityVote retrieved successfully. Current status = " + activityVote.getStatus());
+					log.debug("activityVote retrieved successfully. Current status = " + activityVote.getStatus());
 				} catch (NoResultException e) {
 					// Not an error - actually, it's the expected result
-					log.info("activityVote not found");
+					log.debug("activityVote not found");
 				} catch (NonUniqueResultException e) {
-					log.severe("should never happen - two or more activityVotes have same activity id and user id");
+					log.exception("UserResource:udateUser:NonUniqueResultException3", "two or more activityVote have same key", e);
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				} 
 			
@@ -212,7 +213,7 @@ public class ActivityResource extends ServerResource {
 				}
 				
 				activityVote.setStatus(vote);
-				log.info("activityVote successfully updated to vote = " + vote);
+				log.debug("activityVote successfully updated to vote = " + vote);
 				
 				if(isActivityVoteNew) {
 					emActivityVote.persist(activityVote);
@@ -248,12 +249,10 @@ public class ActivityResource extends ServerResource {
 			jsonReturn.put("numberOfLikeVotes", activity.getNumberOfLikeVotes());
 			jsonReturn.put("numberOfDislikeVotes", activity.getNumberOfDislikeVotes());
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("UserResource:udateUser:IOException", "error extracting JSON object from Post", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("UserResource:udateUser:JSONException", "error converting json representation into a JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    em.close();
@@ -262,8 +261,7 @@ public class ActivityResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("UserResource:udateUser:JSONException2", "error converting json representation into a JSON object", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -272,7 +270,7 @@ public class ActivityResource extends ServerResource {
     // Handles 'Get activity video' API 
     @Get("json")
     public JsonRepresentation getActivity(Variant variant) {
-        log.info("ActivityResource:getActivity() entered");
+        log.debug("ActivityResource:getActivity() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -283,12 +281,12 @@ public class ActivityResource extends ServerResource {
 	    	User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
 			if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				log.severe("user could not be retrieved from Request attributes!!");
+				log.error("UserResource:getActivity:currentUser", "user could not be retrieved from Request attributes");
 			}
 			// teamId is required
 			else if(this.teamId == null || this.teamId.length() == 0) {
  				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-				log.info("invalid team ID");
+				log.debug("invalid team ID");
 			} else {
 				try {
     	    		team = (Team)em.createNamedQuery("Team.getByKey")
@@ -297,11 +295,11 @@ public class ActivityResource extends ServerResource {
         			
     	    		if(!currentUser.isUserMemberOfTeam(this.teamId)) {
         				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-        				log.info(apiStatus);
+        				log.debug(apiStatus);
                 	}
 				} catch (NoResultException e) {
 		        	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
-		        	log.info("no result exception, team not found");
+		        	log.debug("no result exception, team not found");
 				} 
 			}
 			
@@ -324,7 +322,7 @@ public class ActivityResource extends ServerResource {
     		Activity activity = (Activity)em.createNamedQuery("Activity.getByKey")
     			.setParameter("key", KeyFactory.stringToKey(this.activityId))
     			.getSingleResult();
-    		log.info("activity retrieved = " + activity.getText());
+    		log.debug("activity retrieved = " + activity.getText());
     		
     		if(this.media != null && this.media.equalsIgnoreCase("photo")) {
         		String photoBase64 = activity.getPhotoBase64();
@@ -339,13 +337,13 @@ public class ActivityResource extends ServerResource {
     		}
         } catch (NoResultException e) {
         	apiStatus = ApiStatusCode.ACTIVITY_NOT_FOUND;
-        	log.info("no result exception, activity not found");
+        	log.debug("no result exception, activity not found");
 		} catch (JSONException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error building JSON object");
+			log.exception("UserResource:getActivity:JSONException", "error converting json representation into a JSON object", e);
 		} catch (NonUniqueResultException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("should never happen - two or more activities have same ID");
+			log.exception("UserResource:getActivity:NonUniqueResultException", "two or more activities have same ID", e);
 		} finally {
 			em.close();
 		}
@@ -353,7 +351,7 @@ public class ActivityResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
+			log.exception("UserResource:getActivity:JSONException2", "error converting json representation into a JSON object", e);
 			e.printStackTrace();
 		}
         return new JsonRepresentation(jsonReturn);

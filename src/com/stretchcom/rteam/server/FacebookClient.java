@@ -5,7 +5,8 @@ import java.util.logging.Logger;
 import org.restlet.gwt.data.Reference;
 
 public class FacebookClient {
-	private static final Logger log = Logger.getLogger(FacebookClient.class.getName());
+	//private static final Logger log = Logger.getLogger(FacebookClient.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private static final String APPPLICATION_ID = "178840355459758";
 	private static final String APPPLICATION_SECRET = "4053ef0d83fa3fca87b4803b03fe066e";

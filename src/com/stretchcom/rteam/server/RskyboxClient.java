@@ -33,6 +33,10 @@ public class RskyboxClient {
 	private static final String RSKYBOX_SERVICE_PROVIDER = "GAE Server";
 	private static final String RSKYBOX_USER_NAME = "rTeam Common Code";
 	
+	public RskyboxClient() {
+		this.serverResource = null;
+	}
+	
 	public RskyboxClient(ServerResource serverResource) {
 		this.serverResource = serverResource;
 	}
@@ -44,14 +48,16 @@ public class RskyboxClient {
 		log(theName, RskyboxLog.EXCEPTION_LEVEL, theMessage, theException, theRequest, theIncludeLocalLog);
 	}
 	public void exception(String theName, String theMessage, Exception theException) {
-		log(theName, RskyboxLog.EXCEPTION_LEVEL, theMessage, theException, serverResource.getRequest(), true);
+		Request request = this.serverResource == null ? null : serverResource.getRequest();
+		log(theName, RskyboxLog.EXCEPTION_LEVEL, theMessage, theException, request, true);
 	}
 	
 	public static void error(String theName, String theMessage, Request theRequest, Boolean theIncludeLocalLog) {
 		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, null, theRequest, theIncludeLocalLog);
 	}
 	public void error(String theName, String theMessage) {
-		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, null, serverResource.getRequest(), true);
+		Request request = this.serverResource == null ? null : serverResource.getRequest();
+		log(theName, RskyboxLog.ERROR_LEVEL, theMessage, null, request, true);
 	}
 	
 	public static void info(String theName, String theMessage, Request theRequest, Boolean theIncludeLocalLog) {
@@ -61,7 +67,8 @@ public class RskyboxClient {
 		log(theName, RskyboxLog.INFO_LEVEL, theMessage, null, theRequest, true);
 	}
 	public void info(String theMessage) {
-		log(null, RskyboxLog.INFO_LEVEL, theMessage, null, serverResource.getRequest(), true);
+		Request request = this.serverResource == null ? null : serverResource.getRequest();
+		log(null, RskyboxLog.INFO_LEVEL, theMessage, null, request, true);
 	}
 	
 	public static void debug(String theName, String theMessage, Request theRequest, Boolean theIncludeLocalLog) {
@@ -71,7 +78,8 @@ public class RskyboxClient {
 		log(theName, RskyboxLog.DEBUG_LEVEL, theMessage, null, theRequest, true);
 	}
 	public void debug(String theMessage) {
-		log(null, RskyboxLog.DEBUG_LEVEL, theMessage, null, serverResource.getRequest(), true);
+		Request request = this.serverResource == null ? null : serverResource.getRequest();
+		log(null, RskyboxLog.DEBUG_LEVEL, theMessage, null, request, true);
 	}
 	
 	// --------------

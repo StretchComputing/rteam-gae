@@ -42,7 +42,9 @@ import com.google.appengine.api.datastore.KeyFactory;
  *  
  */  
 public class MessageThreadsResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(MessageThreadsResource.class.getName());
+	//private static final Logger log = Logger.getLogger(MessageThreadsResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
+	
 	private static String SMS_PSEUDO_EMAIL_ADDRESS = "smsPseudoEmailAddress";
   
     // The sequence of characters that identifies the resource.
@@ -64,24 +66,24 @@ public class MessageThreadsResource extends ServerResource {
     protected void doInit() throws ResourceException {  
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("MessageThreadsResource:doInit() - teamId = " + this.teamId);
+        log.debug("MessageThreadsResource:doInit() - teamId = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("MessageThreadsResource:doInit() - decoded teamId = " + this.teamId);
+            log.debug("MessageThreadsResource:doInit() - decoded teamId = " + this.teamId);
         }
    
         this.timeZoneStr = (String)getRequest().getAttributes().get("timeZone"); 
-        log.info("MessageThreadsResource:doInit() - timeZone = " + this.timeZoneStr);
+        log.debug("MessageThreadsResource:doInit() - timeZone = " + this.timeZoneStr);
         if(this.timeZoneStr != null) {
             this.timeZoneStr = Reference.decode(this.timeZoneStr);
-            log.info("MessageThreadsResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+            log.debug("MessageThreadsResource:doInit() - decoded timeZone = " + this.timeZoneStr);
         }
         
         this.newCount = (String)getRequest().getAttributes().get("newCount"); 
-        log.info("MessageThreadsResource:doInit() - newCount = " + this.newCount);
+        log.debug("MessageThreadsResource:doInit() - newCount = " + this.newCount);
         if(this.newCount != null) {
             this.newCount = Reference.decode(this.newCount);
-            log.info("MessageThreadsResource:doInit() - decoded newCount = " + this.newCount);
+            log.debug("MessageThreadsResource:doInit() - decoded newCount = " + this.newCount);
             // TODO ::RELEASE 1 PATCH::
             if(this.newCount.contains("resynchCounter=true")) {
             	this.resynchCounter = "true";
@@ -90,51 +92,51 @@ public class MessageThreadsResource extends ServerResource {
         
 		Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("eventId")) {
 				this.eventId = (String)parameter.getValue();
 				this.eventId = Reference.decode(this.eventId);
-				log.info("MessageThreadsResource:doInit() - decoded eventId = " + this.eventId);
+				log.debug("MessageThreadsResource:doInit() - decoded eventId = " + this.eventId);
 			} else if(parameter.getName().equals("eventType")) {
 				this.eventType = (String)parameter.getValue();
 				this.eventType = Reference.decode(this.eventType);
-				log.info("MessageThreadsResource:doInit() - decoded eventType = " + this.eventType);
+				log.debug("MessageThreadsResource:doInit() - decoded eventType = " + this.eventType);
 			} else if(parameter.getName().equals("oneUseToken")) {
 				this.oneUseToken = (String)parameter.getValue();
 				this.oneUseToken = Reference.decode(this.oneUseToken);
-				log.info("MessageThreadsResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
+				log.debug("MessageThreadsResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
 			} else if(parameter.getName().equals("messageGroup")) {
 				this.messageGroup = (String)parameter.getValue();
 				this.messageGroup = Reference.decode(this.messageGroup);
-				log.info("MessageThreadsResource:doInit() - decoded messageGroup = " + this.messageGroup);
+				log.debug("MessageThreadsResource:doInit() - decoded messageGroup = " + this.messageGroup);
 			} else if(parameter.getName().equals("status")) {
 				this.status = (String)parameter.getValue();
 				this.status = Reference.decode(this.status);
-				log.info("MessageThreadsResource:doInit() - decoded status = " + this.status);
+				log.debug("MessageThreadsResource:doInit() - decoded status = " + this.status);
 			} else if(parameter.getName().equals("includeBodyAndChoices")) {
 				this.includeBodyAndChoicesStr = (String)parameter.getValue();
 				this.includeBodyAndChoicesStr = Reference.decode(this.includeBodyAndChoicesStr);
-				log.info("MessageThreadsResource:doInit() - decoded includeBodyAndChoices = " + this.includeBodyAndChoicesStr);
+				log.debug("MessageThreadsResource:doInit() - decoded includeBodyAndChoices = " + this.includeBodyAndChoicesStr);
 			} else if(parameter.getName().equals("wasViewed")) {
 				this.wasViewedStr = (String)parameter.getValue();
 				this.wasViewedStr = Reference.decode(this.wasViewedStr);
-				log.info("MessageThreadsResource:doInit() - decoded wasViewed = " + this.wasViewedStr);
+				log.debug("MessageThreadsResource:doInit() - decoded wasViewed = " + this.wasViewedStr);
 			} else if(parameter.getName().equals("teamId")) {
 				this.teamId = (String)parameter.getValue();
 				this.teamId = Reference.decode(this.teamId);
-				log.info("MessageThreadsResource:doInit() - decoded teamId = " + this.teamId);
+				log.debug("MessageThreadsResource:doInit() - decoded teamId = " + this.teamId);
 			} else if(parameter.getName().equals("resynchCounter")) {
 				this.resynchCounter = (String)parameter.getValue();
 				this.resynchCounter = Reference.decode(this.resynchCounter);
-				log.info("MessageThreadsResource:doInit() - decoded resynchCounter = " + this.resynchCounter);
+				log.debug("MessageThreadsResource:doInit() - decoded resynchCounter = " + this.resynchCounter);
 			} else if(parameter.getName().equals("includeNewActivity")) {
 				this.includeNewActivity = (String)parameter.getValue();
 				this.includeNewActivity = Reference.decode(this.includeNewActivity);
-				log.info("MessageThreadsResource:doInit() - decoded includeNewActivity = " + this.includeNewActivity);
+				log.debug("MessageThreadsResource:doInit() - decoded includeNewActivity = " + this.includeNewActivity);
 			} else if(parameter.getName().equals("useThreads")) {
 				this.useThreadsStr = (String)parameter.getValue();
 				this.useThreadsStr = Reference.decode(this.useThreadsStr);
-				log.info("MessageThreadsResource:doInit() - decoded useThreadsStr = " + this.useThreadsStr);
+				log.debug("MessageThreadsResource:doInit() - decoded useThreadsStr = " + this.useThreadsStr);
 			}
 		}
     }  
@@ -144,7 +146,7 @@ public class MessageThreadsResource extends ServerResource {
     @Post  
     public JsonRepresentation createMessageThread(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("createMessageThread(@Post) entered ..... ");
+    	log.debug("createMessageThread(@Post) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -155,7 +157,7 @@ public class MessageThreadsResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("MessageThreadsResource:createMessageThread:currentUser", "user could not be retrieved from Request attributes!!");
 				return Utility.apiError(null);
     		}
     		//::BUSINESSRULE:: user must be network authenticated to send a message
@@ -175,7 +177,7 @@ public class MessageThreadsResource extends ServerResource {
 			Team team = (Team)em.createNamedQuery("Team.getByKey")
 				.setParameter("key", KeyFactory.stringToKey(this.teamId))
 				.getSingleResult();
-			log.info("team retrieved = " + team.getTeamName());
+			log.debug("team retrieved = " + team.getTeamName());
 			
 			// TODO use query instead of walking through entire members list.  See MemberResource for example of query.
 			List<Member> members = team.getMembers();
@@ -315,7 +317,7 @@ public class MessageThreadsResource extends ServerResource {
 				messageThread.setActiveThruGmtDate(GMT.addDaysToDate(new Date(), autoArchiveDayCount));
 			}
 			
-			log.info("number of recipientMembers = " + recipientMembers.size());
+			log.debug("number of recipientMembers = " + recipientMembers.size());
 			List<Recipient> recipients = new ArrayList<Recipient>();
 			List<String> oneUseTokens = new ArrayList<String>();
 			List<UserMemberInfo> authorizedTeamRecipients = new ArrayList<UserMemberInfo>();
@@ -414,7 +416,7 @@ public class MessageThreadsResource extends ServerResource {
 			em.persist(messageThread);
 		    em.getTransaction().commit();
 		    String keyWebStr = KeyFactory.keyToString(messageThread.getKey());
-		    log.info("message thread " + messageThread.getSubject() + " with key " + keyWebStr + " created successfully");
+		    log.debug("message thread " + messageThread.getSubject() + " with key " + keyWebStr + " created successfully");
 		    
 		    // PubHub will filter and only send email if appropriate
 		    PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), messageThread.getMessage(), messageThread, team, false, currentUser.getFullName());
@@ -423,20 +425,17 @@ public class MessageThreadsResource extends ServerResource {
 			this.getResponse().setLocationRef(baseUri + "/" + keyWebStr);
 			jsonReturn.put("messageThreadId", keyWebStr);
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("MessageThreadsResource:createMessageThread:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MessageThreadsResource:createMessageThread:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
-			log.severe("team not found");
+			log.exception("MessageThreadsResource:createMessageThread:NoResultException", "team not found", e);
 			apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more teams have same team name");
+			log.exception("MessageThreadsResource:createMessageThread:NonUniqueResultException", "two or more teams have same team name", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} finally {
 		    if (em.getTransaction().isActive()) {
 		        em.getTransaction().rollback();
@@ -447,8 +446,7 @@ public class MessageThreadsResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("MessageThreadsResource:createMessageThread:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -458,7 +456,7 @@ public class MessageThreadsResource extends ServerResource {
     // Handles 'Get MessageThreads for all user teams' API
     @Get("json")
     public JsonRepresentation getMessageThreads(Variant variant) {
-        log.info("MessageThreadsResource:getMessageThreads() entered");
+        log.debug("MessageThreadsResource:getMessageThreads() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -474,7 +472,7 @@ public class MessageThreadsResource extends ServerResource {
     		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("MessageThreadsResource:getMessageThreads:currentUser", "user could not be retrieved from Request attributes!!");
     		}
     		//::BUSINESSRULE:: user must be network authenticated to get messages
     		else if(!currentUser.getIsNetworkAuthenticated()) {
@@ -483,7 +481,7 @@ public class MessageThreadsResource extends ServerResource {
     		// time zone is required except for 'Get New Message Thread Count
     		else if(this.newCount == null) {
         		if(this.timeZoneStr == null || this.timeZoneStr.length() == 0) {
-        			log.info("MessageThreadResource:toJson() timeZone null or zero length");
+        			log.debug("MessageThreadResource:toJson() timeZone null or zero length");
      	        	apiStatus = ApiStatusCode.TIME_ZONE_REQUIRED;
         		} else {
         			tz = GMT.getTimeZone(this.timeZoneStr);
@@ -510,17 +508,17 @@ public class MessageThreadsResource extends ServerResource {
 				
 				if(this.eventId != null && this.eventType == null) {
 					apiStatus = ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_MUST_BE_SPECIFIED_TOGETHER;
-					log.info("if eventId specified, then eventType must also be specified");
+					log.debug("if eventId specified, then eventType must also be specified");
 				} else if(!this.status.equalsIgnoreCase(MessageThread.ACTIVE_STATUS) &&
 						  !this.status.equalsIgnoreCase(MessageThread.ALL_STATUS) &&
 						  !this.status.equalsIgnoreCase(MessageThread.FINALIZED_STATUS) ) {
 					apiStatus = ApiStatusCode.INVALID_STATUS_PARAMETER;
-					log.info("specified status is not supported");
+					log.debug("specified status is not supported");
 				} else if(!this.messageGroup.equalsIgnoreCase(MessageThread.INBOX_MESSAGE_GROUP) &&
 						  !this.messageGroup.equalsIgnoreCase(MessageThread.OUTBOX_MESSAGE_GROUP) &&
 						  !this.messageGroup.equalsIgnoreCase(MessageThread.ALL_MESSAGE_GROUP)  ) {
 					apiStatus = ApiStatusCode.INVALID_MESSAGE_GROUP_PARAMETER;
-					log.info("specified messageGroup is not supported");
+					log.debug("specified messageGroup is not supported");
 				}
 				
 				if(apiStatus.equals(ApiStatusCode.SUCCESS) && this.eventId != null && this.eventType != null) {
@@ -530,7 +528,7 @@ public class MessageThreadsResource extends ServerResource {
 						isGame = false;
 					} else {
 						apiStatus = ApiStatusCode.INVALID_EVENT_TYPE_PARAMETER;
-						log.info("specified eventType is not supported");
+						log.debug("specified eventType is not supported");
 					}
 					
 					//::BUSINESS_RULE:: if eventId is specified, useThreads is silently ignored
@@ -544,7 +542,7 @@ public class MessageThreadsResource extends ServerResource {
 						includeBodyAndChoices = false;
 					} else {
 						apiStatus = ApiStatusCode.INVALID_INCLUDE_BODY_AND_CHOICES_PARAMETER;
-						log.info("specified includeBodyAndChoices value is not supported");
+						log.debug("specified includeBodyAndChoices value is not supported");
 					}
 				}
 				
@@ -555,7 +553,7 @@ public class MessageThreadsResource extends ServerResource {
 						useThreads = false;
 					} else {
 						apiStatus = ApiStatusCode.INVALID_USE_THREADS_PARAMETER;
-						log.info("specified useThreads value is not supported");
+						log.debug("specified useThreads value is not supported");
 					}
 				}
 				
@@ -564,7 +562,7 @@ public class MessageThreadsResource extends ServerResource {
 						wasViewed = false;
 					} else {
 						apiStatus = ApiStatusCode.INVALID_WAS_VIEWED_PARAMETER;
-						log.info("specified wasViewed is not supported");
+						log.debug("specified wasViewed is not supported");
 					}
 				}
 			} else {
@@ -573,12 +571,12 @@ public class MessageThreadsResource extends ServerResource {
 				/////////////////////////////////////////////////////
 				if(this.eventId != null && this.teamId == null) {
 					apiStatus = ApiStatusCode.TEAM_ID_MUST_BE_SPECIFIED_WITH_EVENT_ID;
-					log.info("if eventId specified, then teamId must also be specified");
+					log.debug("if eventId specified, then teamId must also be specified");
 				}
 
 				if(apiStatus.equals(ApiStatusCode.SUCCESS) && this.eventId != null && this.eventType == null) {
 						apiStatus = ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_MUST_BE_SPECIFIED_TOGETHER;
-						log.info("if eventId specified, then eventType must also be specified");
+						log.debug("if eventId specified, then eventType must also be specified");
 				}
 				
 				if(apiStatus.equals(ApiStatusCode.SUCCESS) && this.eventId != null && this.eventType != null) {
@@ -588,19 +586,19 @@ public class MessageThreadsResource extends ServerResource {
 						isGame = false;
 					} else {
 						apiStatus = ApiStatusCode.INVALID_EVENT_TYPE_PARAMETER;
-						log.info("specified eventType is not supported");
+						log.debug("specified eventType is not supported");
 					}
 				}
 
 				if(apiStatus.equals(ApiStatusCode.SUCCESS) && this.resynchCounter != null && !this.resynchCounter.equalsIgnoreCase("true")) {
 						apiStatus = ApiStatusCode.INVALID_RESYNCH_COUNTER_PARAMETER;
-						log.info("resynch counter if present must be set to 'true'");
+						log.debug("resynch counter if present must be set to 'true'");
 				}
 
 				if(apiStatus.equals(ApiStatusCode.SUCCESS) && this.includeNewActivity != null &&
 						!this.includeNewActivity.equalsIgnoreCase("true") && !this.includeNewActivity.equalsIgnoreCase("false")) {
 						apiStatus = ApiStatusCode.INVALID_INCLUDE_NEW_ACTIVITY_PARAMETER;
-						log.info("includeNewActivity must be set to 'true' or 'false'");
+						log.debug("includeNewActivity must be set to 'true' or 'false'");
 				}
 			}
 			
@@ -621,18 +619,18 @@ public class MessageThreadsResource extends ServerResource {
              		
              		memberships =  Member.getMemberShipsWithEmailAddress(currentUser.getEmailAddress(), team);
              		for(Member m : memberships) {
-             			log.info("primary name of matching membership = " + m.getFullName());
+             			log.debug("primary name of matching membership = " + m.getFullName());
              		}
              		
              		if(memberships.size() == 0) {
-     					log.info("member not part of specified team");
+     					log.debug("member not part of specified team");
      					apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
              		}
  				} catch (NoResultException e) {
  					apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
- 					log.info("invalid team id");
+ 					log.debug("invalid team id");
  				} catch (NonUniqueResultException e) {
- 					log.severe("should never happen - two teams have the same key");
+ 	    			log.exception("MessageThreadsResource:getMessageThreads:NonUniqueResultException", "two teams have the same key", e);
  				}
 			}
 			
@@ -645,7 +643,7 @@ public class MessageThreadsResource extends ServerResource {
     			// --------------------------------------------------------------
 				// This is the 'Get New Message Thread Count' API call
     			// --------------------------------------------------------------
-				log.info("This is the 'Get New Message Thread Count' API call");
+				log.debug("This is the 'Get New Message Thread Count' API call");
 				
 				// need to set status and message group before calling getMessages()
 				this.status = MessageThread.ACTIVE_STATUS;
@@ -663,7 +661,7 @@ public class MessageThreadsResource extends ServerResource {
 				// only resynch counter if count is for all teams (i.e. teamId is null)
 				if(this.resynchCounter != null && this.teamId == null) {
 					currentUser.setAndPersistNewMessageCount(inboxMessages.size());
-					log.info("resynching new message counter of current user = " + inboxMessages.size());
+					log.debug("resynching new message counter of current user = " + inboxMessages.size());
 				}
 				
 				// include new activity if it is being requested
@@ -674,9 +672,9 @@ public class MessageThreadsResource extends ServerResource {
 					
 					// PRIORITY TODO: remove this debug code
 					// verify the key was added to the end of the list
-					log.info("size of Team key list = " + teamKeys.size());
+					log.debug("size of Team key list = " + teamKeys.size());
 					for(Key tk : teamKeys) {
-						log.info("team key = " + tk);					
+						log.debug("team key = " + tk);					
 					}
 
 					if(team == null) {
@@ -697,11 +695,11 @@ public class MessageThreadsResource extends ServerResource {
 									.setParameter("key", tk)
 									.getSingleResult();
 							} catch(Exception e) {
-								log.severe("should never happen. Could not find team with the team key");
+			 	    			log.exception("MessageThreadsResource:getMessageThreads:Exception", "Could not find team with the team key", e);
 							}
 							if(aTeam != null) {teams.add(aTeam);}
 						}
-						log.info("number of teams retrieved for current user = " + teams.size());
+						log.debug("number of teams retrieved for current user = " + teams.size());
 						
 						// teams should be in the same order as the newestCacheId, so we can just loop and compare
 						int index = 0;
@@ -709,12 +707,12 @@ public class MessageThreadsResource extends ServerResource {
 							Long newestCacheId = newestCacheIdsFromUser.get(index);
 							// newestCacheId could be 0L, but that's not a problem because even if team Activity not active,
 							// getNewestCacheId() will return a 0L as well.
-							log.info("comparing against team = " + t.getTeamName());
-							log.info("newestCacheId = " + newestCacheId);
-							log.info("t.getNewestCacheId() = " + t.getNewestCacheId());
+							log.debug("comparing against team = " + t.getTeamName());
+							log.debug("newestCacheId = " + newestCacheId);
+							log.debug("t.getNewestCacheId() = " + t.getNewestCacheId());
 							if(newestCacheId < t.getNewestCacheId()) {
 								newActivityFound = true;
-								log.info("new activity found for team = " + t.getTeamName());
+								log.debug("new activity found for team = " + t.getTeamName());
 								break;
 							}
 							index++;
@@ -730,13 +728,13 @@ public class MessageThreadsResource extends ServerResource {
 								Long newestCacheId = newestCacheIdsFromUser.get(index);
 								// newestCacheId could be 0L, but that's not a problem because even if team Activity not active,
 								// getNewestCacheId() will return a 0L as well.
-								log.info("matching team = " + team.getTeamName());
-								log.info("team key = " + teamKey);
-								log.info("newestCacheId = " + newestCacheId);
-								log.info("team.getNewestCacheId() = " + team.getNewestCacheId());
+								log.debug("matching team = " + team.getTeamName());
+								log.debug("team key = " + teamKey);
+								log.debug("newestCacheId = " + newestCacheId);
+								log.debug("team.getNewestCacheId() = " + team.getNewestCacheId());
 								if(newestCacheId < team.getNewestCacheId()) {
 									newActivityFound = true;
-									log.info("new activity found for team = " + team.getTeamName());
+									log.debug("new activity found for team = " + team.getTeamName());
 									break;
 								}
 								break;
@@ -753,7 +751,7 @@ public class MessageThreadsResource extends ServerResource {
 	    			// --------------------------------------------------------------
 					// This is the 'Get MessageThreads for a specified team' API call
 	    			// --------------------------------------------------------------
-	    			log.info("This is the 'Get MessageThreads for a specified team' API call");
+	    			log.debug("This is the 'Get MessageThreads for a specified team' API call");
 	            	
 	    			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
 	    				jsonReturn.put("apiStatus", apiStatus);
@@ -768,15 +766,15 @@ public class MessageThreadsResource extends ServerResource {
 		    			isOutBoxDisabled = true;
 	    			}
 	    			if(inboxMessages == null) {
-	    				log.info("inboxMessages is NULL");
+	    				log.debug("inboxMessages is NULL");
 	    			} else {
-	    				log.info("size of inboxMessages = " + inboxMessages.size());
+	    				log.debug("size of inboxMessages = " + inboxMessages.size());
 	    			}
 				} else {
 	    			// --------------------------------------------------------------
 					// This is the 'Get MessageThreads for all user teams' API call
 	    			// --------------------------------------------------------------
-	    			log.info("This is the 'Get MessageThreads for all user teams' API call");
+	    			log.debug("This is the 'Get MessageThreads for all user teams' API call");
 	    			
 	    			getMessages(isGame, wasViewed, null, currentUser, em, inboxMessages, outboxMessages, false);
 				}
@@ -800,16 +798,14 @@ public class MessageThreadsResource extends ServerResource {
 	        	jsonReturn.put("removedOld", true);
 			}
         } catch (NoResultException e) {
-        	log.info("no result exception, messageThread not found");
+        	log.debug("no result exception, messageThread not found");
         	apiStatus = ApiStatusCode.MESSAGE_THREAD_NOT_FOUND;
 		} catch (JSONException e) {
-			log.severe("error building JSON object");
+ 			log.exception("MessageThreadsResource:getMessageThreads:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more messageThreads have same ID");
+ 			log.exception("MessageThreadsResource:getMessageThreads:NonUniqueResultException2", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} finally {
 			em.close();
 		}
@@ -817,8 +813,7 @@ public class MessageThreadsResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+ 			log.exception("MessageThreadsResource:getMessageThreads:JSONException2", "", e);
 		}
 		
         return new JsonRepresentation(jsonReturn);
@@ -995,7 +990,7 @@ public class MessageThreadsResource extends ServerResource {
     @Put 
     public JsonRepresentation updateMessageThreads(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateMessageThreads(@Put) entered ..... ");
+    	log.debug("updateMessageThreads(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -1005,7 +1000,7 @@ public class MessageThreadsResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
     			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("MessageThreadsResource:updateMessageThreads:currentUser", "user could not be retrieved from Request attributes!!");
     		}
     		//::BUSINESSRULE:: user must be network authenticated to update message threads
     		else if(!currentUser.getIsNetworkAuthenticated()) {
@@ -1019,7 +1014,7 @@ public class MessageThreadsResource extends ServerResource {
 
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
-			log.info("received json object = " + json.toString());
+			log.debug("received json object = " + json.toString());
 			
 			//////////////////////////////////
 			// Parse the incoming JSON object
@@ -1028,7 +1023,7 @@ public class MessageThreadsResource extends ServerResource {
 			if(json.has("messageThreadIds")) {
 				JSONArray messageThreadIdsJsonArray = json.getJSONArray("messageThreadIds");
 				int numOfMessageThreads = messageThreadIdsJsonArray.length();
-				log.info("json messageThread IDs array length = " + numOfMessageThreads);
+				log.debug("json messageThread IDs array length = " + numOfMessageThreads);
 				for(int i=0; i<numOfMessageThreads; i++) {
 					messageThreadIds.add(messageThreadIdsJsonArray.getString(i));
 				}
@@ -1038,7 +1033,7 @@ public class MessageThreadsResource extends ServerResource {
 			if(json.has("status")) {
 				status = json.getString("status");
 				if(!status.equalsIgnoreCase(MessageThread.ARCHIVED_STATUS)) {
-	                log.info("updateMessageThreads() status did not have a value of 'archived'");
+	                log.debug("updateMessageThreads() status did not have a value of 'archived'");
 	 				jsonReturn.put("apiStatus", ApiStatusCode.INVALID_STATUS_PARAMETER);
 					return new JsonRepresentation(jsonReturn);
 				}
@@ -1048,7 +1043,7 @@ public class MessageThreadsResource extends ServerResource {
 			if(json.has("messageLocation")) {
 				messageLocation = json.getString("messageLocation");
 				if(!messageLocation.equalsIgnoreCase("inbox") && !messageLocation.equalsIgnoreCase("outbox")) {
-	                log.info("updateMessageThreads() invalid message location");
+	                log.debug("updateMessageThreads() invalid message location");
 	 				jsonReturn.put("apiStatus", ApiStatusCode.INVALID_MESSAGE_LOCATION);
 					return new JsonRepresentation(jsonReturn);
 				}
@@ -1093,7 +1088,7 @@ public class MessageThreadsResource extends ServerResource {
 		        			recipientOfThisUser.setStatus(Recipient.ARCHIVED_STATUS);
 		        		} else {
 		        			// no error because this API silently ignores when this happens. Log for debug purposes only.
-		        			log.info("no recipient found for messageThreadId = " + mtId);
+		        			log.debug("no recipient found for messageThreadId = " + mtId);
 		        		}
 	    			} else {
 	    				// User must be the creator of the messageThread ID
@@ -1101,18 +1096,17 @@ public class MessageThreadsResource extends ServerResource {
 	    					messageThread.setStatus(MessageThread.ARCHIVED_STATUS);
 	    				} else {
 		        			// no error because this API silently ignores when this happens. Log for debug purposes only.
-		        			log.info("user is not creator of messageThreadId = " + mtId);
+		        			log.debug("user is not creator of messageThreadId = " + mtId);
 		        		}
 	    			}
         			
 					em.getTransaction().commit();
 				}
 			} catch (NoResultException e) {
-				log.info("messageThread not found");
+				log.debug("messageThread not found");
 				apiStatus = ApiStatusCode.MESSAGE_THREAD_NOT_FOUND;
 			} catch (NonUniqueResultException e) {
-				log.severe("should never happen - two or more messageThreads have same team name");
-				e.printStackTrace();
+    			log.exception("MessageThreadsResource:updateMessageThreads:NonUniqueResultException", "two or more messageThreads have same team name", e);
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			} finally {
 			    if (em.getTransaction().isActive()) {
@@ -1121,20 +1115,17 @@ public class MessageThreadsResource extends ServerResource {
 			    em.close();
 			}
         } catch (IOException e) {
-			log.severe("error extracting JSON object from Put");
-			e.printStackTrace();
+			log.exception("MessageThreadsResource:updateMessageThreads:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("MessageThreadsResource:updateMessageThreads:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		}
 		
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("MessageThreadsResource:updateMessageThreads:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
         
@@ -1150,7 +1141,7 @@ public class MessageThreadsResource extends ServerResource {
 	
     private void getMessages(Boolean theIsGame, Boolean theWasViewed, Member theMember, User theCurrentUser, EntityManager em,
     		List<Recipient> theInboxMessages, List<MessageThread> theOutboxMessages, Boolean theIsOutboxDisabled) {
-		log.info("getMessages() entered");
+		log.debug("getMessages() entered");
     	List<Recipient> inboxMessages = null;
 		List<MessageThread> outboxMessages = null;
 		if(this.status.equalsIgnoreCase(MessageThread.ALL_STATUS)) {
@@ -1168,7 +1159,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("emailAddress", theCurrentUser.getEmailAddress())
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (1)inbox messages with any status");
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (1)inbox messages with any status");
 					} else {
 						if(theMember == null) {
 							inboxMessages = (List<Recipient>)em.createNamedQuery("Recipient.getByUserIdAndNotViewed")
@@ -1182,7 +1173,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("wasViewed", theWasViewed)
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (2)unviewed inbox messages with any status and not viewed");
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (2)unviewed inbox messages with any status and not viewed");
 					}
 				}
 				if(!theIsOutboxDisabled && (this.messageGroup.equalsIgnoreCase(MessageThread.OUTBOX_MESSAGE_GROUP) || this.messageGroup.equalsIgnoreCase(MessageThread.ALL_MESSAGE_GROUP))) {
@@ -1197,7 +1188,7 @@ public class MessageThreadsResource extends ServerResource {
 							.setParameter("teamId", this.teamId)
 							.getResultList();
 					}
-					log.info("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (3)outbox messages with any status");
+					log.debug("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (3)outbox messages with any status");
 				}
 			} else {
 				if(this.messageGroup.equalsIgnoreCase(MessageThread.INBOX_MESSAGE_GROUP) || this.messageGroup.equalsIgnoreCase(MessageThread.ALL_MESSAGE_GROUP)) {
@@ -1217,7 +1208,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("isGame", theIsGame)
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (4)inbox messages with any status and a specific event ID");
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (4)inbox messages with any status and a specific event ID");
 					} else {
 						if(theMember == null) {
 							inboxMessages = (List<Recipient>)em.createNamedQuery("Recipient.getByUserIdAndEventIdAndEventTypeAndNotViewed")
@@ -1235,7 +1226,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("wasViewed", theWasViewed)
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (5)unviewed inbox messages with any status and a specific event ID");
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (5)unviewed inbox messages with any status and a specific event ID");
 					}
 				}
 				if(!theIsOutboxDisabled && (this.messageGroup.equalsIgnoreCase(MessageThread.OUTBOX_MESSAGE_GROUP) || this.messageGroup.equalsIgnoreCase(MessageThread.ALL_MESSAGE_GROUP))) {
@@ -1254,7 +1245,7 @@ public class MessageThreadsResource extends ServerResource {
 							.setParameter("teamId", this.teamId)
 							.getResultList();
 					}
-					log.info("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (6)outbox messages with any status");
+					log.debug("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (6)outbox messages with any status");
 				}
 			}
 		} else {
@@ -1275,7 +1266,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("status", Recipient.ARCHIVED_STATUS)
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (7)inbox messages with status = " + this.status);
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (7)inbox messages with status = " + this.status);
 					} else {
 						if(theMember == null) {
 							inboxMessages = (List<Recipient>)em.createNamedQuery("Recipient.getByUserIdAndNotStatusAndNotViewed")
@@ -1291,7 +1282,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("wasViewed", theWasViewed)
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (8)unviewed inbox messages with status = " + this.status);
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (8)unviewed inbox messages with status = " + this.status);
 					}
 				}
 				if(!theIsOutboxDisabled && (this.messageGroup.equalsIgnoreCase(MessageThread.OUTBOX_MESSAGE_GROUP) || this.messageGroup.equalsIgnoreCase(MessageThread.ALL_MESSAGE_GROUP))) {
@@ -1308,7 +1299,7 @@ public class MessageThreadsResource extends ServerResource {
 							.setParameter("teamId", this.teamId)
 							.getResultList();
 					}
-					log.info("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (9)outbox messages with status = " + this.status);
+					log.debug("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (9)outbox messages with status = " + this.status);
 				}
 			} else {
 				if(this.messageGroup.equalsIgnoreCase(MessageThread.INBOX_MESSAGE_GROUP) || this.messageGroup.equalsIgnoreCase(MessageThread.ALL_MESSAGE_GROUP)) {
@@ -1330,7 +1321,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("status", Recipient.ARCHIVED_STATUS)
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (10)inbox messages with a specific event ID and with status = " + this.status);
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (10)inbox messages with a specific event ID and with status = " + this.status);
 					} else {
 						if(theMember == null) {
 							inboxMessages = (List<Recipient>)em.createNamedQuery("Recipient.getByUserIdAndEventIdAndEventTypeAndNotStatusAndNotViewed")
@@ -1350,7 +1341,7 @@ public class MessageThreadsResource extends ServerResource {
 								.setParameter("wasViewed", theWasViewed)
 								.getResultList();
 						}
-						log.info("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (11)unviewed inbox messages with a specific event ID and with status = " + this.status);
+						log.debug("MessageThreadsResource.getMessageThreads(): found " + inboxMessages.size() + " (11)unviewed inbox messages with a specific event ID and with status = " + this.status);
 					}
 				}
 				if(!theIsOutboxDisabled && (this.messageGroup.equalsIgnoreCase(MessageThread.OUTBOX_MESSAGE_GROUP) || this.messageGroup.equalsIgnoreCase(MessageThread.ALL_MESSAGE_GROUP))) {
@@ -1371,7 +1362,7 @@ public class MessageThreadsResource extends ServerResource {
 							.setParameter("teamId", this.teamId)
 						.getResultList();
 					}
-					log.info("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (12)outbox messages with any status");
+					log.debug("MessageThreadsResource.getMessageThreads(): found " + outboxMessages.size() + " (12)outbox messages with any status");
 				}
 			}
 		}
@@ -1421,9 +1412,9 @@ public class MessageThreadsResource extends ServerResource {
 		if(theJson.has("recipients")) {
 			JSONArray recipientsJsonArray = theJson.getJSONArray("recipients");
 			int arraySize = recipientsJsonArray.length();
-			log.info("json recipients array length = " + arraySize);
+			log.debug("json recipients array length = " + arraySize);
 			for(int i=0; i<arraySize; i++) {
-				log.info("storing member " + i);
+				log.debug("storing member " + i);
 				theMemberIds.add(recipientsJsonArray.getString(i));
 			}
 		}
@@ -1432,7 +1423,7 @@ public class MessageThreadsResource extends ServerResource {
 		theCoordinatorsOnly = false;
 		if(theJson.has("coordinatorsOnly")) {
 			theCoordinatorsOnly = theJson.getBoolean("coordinatorsOnly");
-			log.info("json coordinatorsOnly = " + theCoordinatorsOnly.toString());
+			log.debug("json coordinatorsOnly = " + theCoordinatorsOnly.toString());
 		}
 		
 		// defaults to 'false' if not specified
@@ -1440,7 +1431,7 @@ public class MessageThreadsResource extends ServerResource {
 		String isAlertStr = null;
 		if(theJson.has("isAlert")) {
 			isAlertStr = theJson.getString("isAlert");
-			log.info("json isAlert = " + isAlertStr);
+			log.debug("json isAlert = " + isAlertStr);
 		}
 		if(isAlertStr != null && isAlertStr.equalsIgnoreCase("true")) {
 			theMessageThread.setIsAlert(false);
@@ -1451,7 +1442,7 @@ public class MessageThreadsResource extends ServerResource {
 		String includeFansStr = null;
 		if(theJson.has("includeFans")) {
 			includeFansStr = theJson.getString("includeFans");
-			log.info("json includeFans = " + includeFansStr);
+			log.debug("json includeFans = " + includeFansStr);
 		}
 		if(includeFansStr != null && !includeFansStr.equalsIgnoreCase("true")) {
 			theIncludeFans = false;
@@ -1462,7 +1453,7 @@ public class MessageThreadsResource extends ServerResource {
 		String isPublicStr = null;
 		if(theJson.has("isPublic")) {
 			isPublicStr = theJson.getString("isPublic");
-			log.info("json isPublic = " + isPublicStr);
+			log.debug("json isPublic = " + isPublicStr);
 		}
 		if(isPublicStr != null && !isPublicStr.equalsIgnoreCase("true")) {
 			theMessageThread.setIsPublic(false);

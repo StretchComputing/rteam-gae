@@ -19,7 +19,8 @@ import org.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 
 public class C2dmClient {
-	private static final Logger log = Logger.getLogger(C2dmClient.class.getName());
+	//private static final Logger log = Logger.getLogger(C2dmClient.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private static final String SEND_URL = "https://android.clients.google.com/c2dm/send";
 	private static final String TOKEN_URL = "https://www.google.com/accounts/ClientLogin";

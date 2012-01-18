@@ -23,15 +23,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.activation.DataHandler;
 
 public class EmailHandlerServlet extends HttpServlet {
-	private static final Logger log = Logger.getLogger(EmailHandlerServlet.class.getName());
+	//private static final Logger log = Logger.getLogger(EmailHandlerServlet.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		log.info("EmailHandlerServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
+		log.debug("EmailHandlerServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
 	}
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		log.info("EmailHandlerServlet.doPost() entered");
+		log.debug("EmailHandlerServlet.doPost() entered");
 		String response = "email sent successfully";
 		resp.setContentType("text/plain");
 		String returnedText = "";
@@ -51,15 +52,15 @@ public class EmailHandlerServlet extends HttpServlet {
         	
         	String fromEmailAddress = fromAddress[0].toString();
         	if(fromEmailAddress != null && fromEmailAddress.length() > 0) {
-        		log.info("raw from email address: " + fromEmailAddress);
+        		log.debug("raw from email address: " + fromEmailAddress);
             	fromEmailAddress = Utility.extractEmailAddress(fromEmailAddress);
-        		log.info("extracted from email address: " + fromEmailAddress);
+        		log.debug("extracted from email address: " + fromEmailAddress);
         	}
         	
-        	if(sender != null) log.info("sender: " + sender.toString());
-        	if(replyToAddress != null && replyToAddress.length > 0) log.info("reply to address: " + replyToAddress[0].toString());
-        	if(subject != null) log.info("subject: " + subject);
-        	if(toRecipient != null && toRecipient.length > 0) log.info("toRecipient: " + toRecipient[0].toString());
+        	if(sender != null) log.debug("sender: " + sender.toString());
+        	if(replyToAddress != null && replyToAddress.length > 0) log.debug("reply to address: " + replyToAddress[0].toString());
+        	if(subject != null) log.debug("subject: " + subject);
+        	if(toRecipient != null && toRecipient.length > 0) log.debug("toRecipient: " + toRecipient[0].toString());
 
 	        String contentType = message.getContentType();
 	        Object content = message.getContent();
@@ -69,24 +70,24 @@ public class EmailHandlerServlet extends HttpServlet {
 	        	String contentStr = content.toString();
 	        	int contentLength = contentStr.length();
 	        	if(contentLength > 1000) {contentLength = 1000;}
-	        	log.info("beginning of message received = " + contentStr.substring(0, contentLength));
+	        	log.debug("beginning of message received = " + contentStr.substring(0, contentLength));
 	        	body = contentStr;
 	        } else if(content instanceof Multipart) {
-	        	log.info("received multipart email");
+	        	log.debug("received multipart email");
 	        	for(int i=0; i<((Multipart)content).getCount(); i++) {
 	        		BodyPart bodyPart = ((Multipart)content).getBodyPart(i);
-	        		log.info("bodyPart " + i + " has content type = " + bodyPart.getContentType());
+	        		log.debug("bodyPart " + i + " has content type = " + bodyPart.getContentType());
 	        		String disposition = bodyPart.getDisposition();
-	        		log.info("disposition = " + disposition);
+	        		log.debug("disposition = " + disposition);
 	        		if (disposition != null && (disposition.equals(BodyPart.ATTACHMENT))) {
-	        			log.info("Mail have some attachment : ");
+	        			log.debug("Mail have some attachment : ");
 	                } else {
-	                	log.info(bodyPart.getContent().toString());
+	                	log.debug(bodyPart.getContent().toString());
 	                	if(i == 0) {body = bodyPart.getContent().toString();}
 	                }	        	
 	        	}
 	        } else {
-	        	log.severe("email received neither plain text or multi-part");
+	        	log.error("EmailHandlerServlet:doPost", "email received neither plain text or multi-part");
 	        }
 	        
 	        String toRecipientEmailAddress = toRecipient[0].toString().toLowerCase();
@@ -97,17 +98,17 @@ public class EmailHandlerServlet extends HttpServlet {
 	        if(toRecipientEmailAddress.startsWith(Emailer.JOIN)) {
 	        	isTextMessage = true;
 	        	fromUserName = Emailer.SMS;
-	        	log.info("handling 'join' response");
+	        	log.debug("handling 'join' response");
 	        	returnedText = Member.confirmNewMemberViaSms(fromEmailAddress);
 	        } else if(toRecipientEmailAddress.startsWith(Emailer.SMS)) {
 	        	isTextMessage = true;
 	        	fromUserName = Emailer.SMS;
 	        	// Confirmation, poll response or unsolicited response from a SMS member
-	        	log.info("handling 'text' response");
+	        	log.debug("handling 'text' response");
 	        	returnedText = Recipient.handleSmsResponse(extractPhoneNumber(fromEmailAddress), body);
 	        } else if(toRecipientEmailAddress.contains(Emailer.REPLY_EMAIL_ADDRESS)) {
 	        	// Unsolicited email reply
-	        	log.info("handling 'reply' response. fromEmailAddress raw = " + fromEmailAddress);
+	        	log.debug("handling 'reply' response. fromEmailAddress raw = " + fromEmailAddress);
 	        	// extract the token from the body
 	        	String emailReplyToken = getEmailReplyToken(body);
 	        	if(emailReplyToken != null && emailReplyToken.length() > 0) {
@@ -118,7 +119,7 @@ public class EmailHandlerServlet extends HttpServlet {
 	        		returnedText = Recipient.handleEmailReplyUsingFromAddressAndSubject(body, fromEmailAddress, subject);
 	        	}
 	        } else if(toRecipientEmailAddress.startsWith("noreply")) {
-	        	log.info("handling 'noreply' response");
+	        	log.debug("handling 'noreply' response");
 	        	// not sure if I have the originator of the email, but if so, let them know this is a noreply mailbox
 	        	returnedText = UserInterfaceMessage.NOREPLY_MESSAGE;
 	        }
@@ -129,9 +130,9 @@ public class EmailHandlerServlet extends HttpServlet {
 	    		Emailer.send(fromEmailAddress, "Ack", returnedText, fromUserName);
 	        }
 		} catch (MessagingException ex) {
-			log.severe("Should not happen. Email MessagingException: " + ex.getMessage());
+        	log.exception("EmailHandlerServlet:MessagingException", "", ex);
 		} catch (Exception ex) {
-			log.severe("Should not happen. Email Exception: " + ex.getMessage());
+        	log.exception("EmailHandlerServlet:Exception", "", ex);
 		}
 	}
 	
@@ -162,7 +163,7 @@ public class EmailHandlerServlet extends HttpServlet {
 	private String extractPhoneNumber(String theEmailAddress) {
 		int endIndex = theEmailAddress.indexOf("@");
 		String pn = theEmailAddress.substring(0, endIndex);
-		log.info("extracted phone number = " + pn);
+		log.debug("extracted phone number = " + pn);
 		return pn;
 	}
 }

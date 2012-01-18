@@ -105,7 +105,8 @@ import com.google.appengine.api.datastore.Text;
       ),
 })
 public class MessageThread {
-	private static final Logger log = Logger.getLogger(MessageThread.class.getName());
+	//private static final Logger log = Logger.getLogger(MessageThread.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	//constants
 	public static final String NONE_TYPE = "none";
@@ -405,10 +406,10 @@ public class MessageThread {
         		mt.setActiveThruGmtDate(activeThruGmtDate);
         		emMessageThread.getTransaction().commit();
     		}
-    		log.info("ActiveThruGmtDate adjusted: messageThread count = " + messageThreads.size());
+    		log.debug("ActiveThruGmtDate adjusted: messageThread count = " + messageThreads.size());
     		
     	} catch (Exception e) {
-    		log.severe("Query MessageThread.getBySenderUserIdAndStatus failed");
+    		log.exception("MessageThread:upateUserActiveThruGmtDate:Exception", "Query MessageThread.getBySenderUserIdAndStatus failed", e);
     	} finally {
     		emMessageThread.close();
     	}
@@ -474,7 +475,7 @@ public class MessageThread {
 		} catch (NoResultException e) {
 			// NOT and error,there may not be a Who's Coming poll yet for this event
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two who's coming polls for the same event");
+    		log.exception("MessageThread:getWhoIsComingMessageThread:NonUniqueResultException", "two who's coming polls for the same event", e);
 		} finally {
     		em.close();
     	}

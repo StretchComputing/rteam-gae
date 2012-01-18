@@ -27,7 +27,8 @@ import com.google.appengine.api.datastore.Key;
     ),
 })
 public class EventDetails {
-	private static final Logger log = Logger.getLogger(EventDetails.class.getName());
+	//private static final Logger log = Logger.getLogger(EventDetails.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private Date createdGmtDate;
 	private String timeZone;

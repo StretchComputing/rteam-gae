@@ -34,11 +34,12 @@ import org.restlet.resource.ServerResource;
 ///////////////////////////////////////////////////
 
 public class EmailerResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(EmailerResource.class.getName());
+	//private static final Logger log = Logger.getLogger(EmailerResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 
     @Override  
     protected void doInit() throws ResourceException {  
-    	log.info("EmailerResource::doInit() entered");
+    	log.debug("EmailerResource::doInit() entered");
     	
     	////////////////////////////////////////////////////////////////////////////////////////////////////////
     	// NOTE: Other Resource classes can extract URL embedded query parameters in this doInit() method
@@ -50,18 +51,18 @@ public class EmailerResource extends ServerResource {
 	// Called by task queue to send a single email  
     @Post  
     public void sendEmail(Form theForm) {
-    	log.info("sendEmail(@Post) entered ..... ");
+    	log.debug("sendEmail(@Post) entered ..... ");
     	
 		String emailAddress = theForm.getFirstValue("emailAddress");
-		log.info("emailAddress parameter: "	+ emailAddress);
+		log.debug("emailAddress parameter: "	+ emailAddress);
 		String fromEmailAddress = theForm.getFirstValue("fromEmailAddress");
-		log.info("fromEmailAddress parameter: "	+ fromEmailAddress);
+		log.debug("fromEmailAddress parameter: "	+ fromEmailAddress);
 		String fromEmailUser = theForm.getFirstValue("fromEmailUser");
-		log.info("fromEmailUser parameter: "	+ fromEmailUser);
+		log.debug("fromEmailUser parameter: "	+ fromEmailUser);
 		String subject = theForm.getFirstValue("subject");
-		log.info("subject parameter: "	+ subject);
+		log.debug("subject parameter: "	+ subject);
 		String message = theForm.getFirstValue("message");
-		log.info("message parameter: "	+ message);
+		log.debug("message parameter: "	+ message);
 		
 		this.setStatus(Status.SUCCESS_CREATED);
 	    Properties props = new Properties();
@@ -71,7 +72,7 @@ public class EmailerResource extends ServerResource {
 	    if(emailAddress == null || emailAddress.length() == 0 ||
 	    		subject == null || subject.length() == 0 ||
 	    		message == null || message.length() == 0) {
-	    	log.severe("Emailer.send(): null or empty parameter");
+	    	log.error("EmailerResource:sendMail:parameters", "null or empty parameter");
 	    	return;
 	    }
 
@@ -85,20 +86,19 @@ public class EmailerResource extends ServerResource {
 	        //************************************************************************************
 	        msg.setSubject(subject);
 	        msg.setContent(message, "text/html");
-	        log.info("sending email to: " + emailAddress + " with subject: " + subject);
+	        log.debug("sending email to: " + emailAddress + " with subject: " + subject);
 	        Transport.send(msg);
 
 	    } catch (AddressException e) {
-	        log.severe("email Address exception " + e.getMessage());
+			log.exception("EmailerResource:sendMail:AddressException", "", e);
 	    } catch (MessagingException e) {
-	    	log.severe("email had bad message: " + e.getMessage());
+			log.exception("EmailerResource:sendMail:MessagingException", "", e);
 	    } catch (UnsupportedEncodingException e) {
-	    	log.severe("email address with unsupported format "  + e.getMessage());
+			log.exception("EmailerResource:sendMail:UnsupportedEncodingException", "", e);
 	    } catch (Exception e) {
 	    	// Received com.google.apphosting.api.ApiProxy$ApiDeadlineExceededException a couple of times.
 	    	// Not sure why this is happening since Transport.send() is supposed to be a asynchronous call.
-	    	log.severe("email address exception "  + e.getMessage());
-	    	e.printStackTrace();
+			log.exception("EmailerResource:sendMail:Exception", "", e);
 	    }
 		return;
     }
