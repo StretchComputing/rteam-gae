@@ -40,7 +40,8 @@ import com.google.appengine.api.datastore.KeyFactory;
  *  
  */  
 public class PracticesResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(PracticesResource.class.getName());
+	//private static final Logger log = Logger.getLogger(PracticesResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
   
     // The sequence of characters that identifies the resource.
     String teamId;
@@ -53,37 +54,37 @@ public class PracticesResource extends ServerResource {
     protected void doInit() throws ResourceException {  
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("PracticesResource:doInit() - teamName = " + this.teamId);
+        log.debug("PracticesResource:doInit() - teamName = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("PracticesResource:doInit() - decoded teamName = " + this.teamId);
+            log.debug("PracticesResource:doInit() - decoded teamName = " + this.teamId);
         }
    
         this.timeZoneStr = (String)getRequest().getAttributes().get("timeZone"); 
-        log.info("PracticesResource:doInit() - timeZone = " + this.timeZoneStr);
+        log.debug("PracticesResource:doInit() - timeZone = " + this.timeZoneStr);
         if(this.timeZoneStr != null) {
             this.timeZoneStr = Reference.decode(this.timeZoneStr);
-            log.info("PracticesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+            log.debug("PracticesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
         }
         
         this.multiple = (String)getRequest().getAttributes().get("multiple"); 
-        log.info("GamesResource:doInit() - multiple = " + this.multiple);
+        log.debug("GamesResource:doInit() - multiple = " + this.multiple);
         if(this.multiple != null) {
             this.multiple = Reference.decode(this.multiple);
-            log.info("GamesResource:doInit() - decoded multiple = " + this.multiple);
+            log.debug("GamesResource:doInit() - decoded multiple = " + this.multiple);
         }
         
 		Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("eventType"))  {
 				this.eventType = (String)parameter.getValue();
 				this.eventType = Reference.decode(this.eventType);
-				log.info("PracticeResource:doInit() - decoded eventType = " + this.eventType);
+				log.debug("PracticeResource:doInit() - decoded eventType = " + this.eventType);
 			} else if(parameter.getName().equals("happening"))  {
 				this.happening = (String)parameter.getValue();
 				this.happening = Reference.decode(this.happening);
-				log.info("PracticeResource:doInit() - decoded happening = " + this.happening);
+				log.debug("PracticeResource:doInit() - decoded happening = " + this.happening);
 			}
 		}
     }  
@@ -93,7 +94,7 @@ public class PracticesResource extends ServerResource {
     @Post  
     public JsonRepresentation createPractice(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("createPractice(@Post) entered ..... ");
+    	log.debug("createPractice(@Post) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -107,15 +108,15 @@ public class PracticesResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				log.severe("user could not be retrieved from Request attributes!!");
+				log.error("PracticesResource:createPractice:currentUser", "user could not be retrieved from Request attributes!!");
     		}
 			// teamId is required
 			else if(this.teamId == null || this.teamId.length() == 0) {
 				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-				log.info("invalid team ID");
+				log.debug("invalid team ID");
 			} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
     		
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
@@ -128,7 +129,7 @@ public class PracticesResource extends ServerResource {
 			Team team = (Team)em.createNamedQuery("Team.getByKey")
 				.setParameter("key", KeyFactory.stringToKey(this.teamId))
 				.getSingleResult();
-			log.info("team retrieved = " + team.getTeamName());
+			log.debug("team retrieved = " + team.getTeamName());
 			// need to access members before closing transaction since it's lazy init and used after tran closed
 			team.getMembers();
 			
@@ -156,13 +157,13 @@ public class PracticesResource extends ServerResource {
 			if(!isCoordinator) {
 				apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR;
 				jsonReturn.put("apiStatus", apiStatus);
-				log.info(apiStatus);
+				log.debug(apiStatus);
 				return new JsonRepresentation(jsonReturn);
 			}
 
     		JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
-			log.info("received json object = " + json.toString());
+			log.debug("received json object = " + json.toString());
 			
 			String timeZoneStr = null;
 			if(json.has("timeZone")) {
@@ -216,7 +217,7 @@ public class PracticesResource extends ServerResource {
 				if(json.has("practices")) {
 					JSONArray practicesJsonArray = json.getJSONArray("practices");
 					int arraySize = practicesJsonArray.length();
-					log.info("practices json array length = " + arraySize);
+					log.debug("practices json array length = " + arraySize);
 					for(int i=0; i<arraySize; i++) {
 						Practice practice = new Practice();
 						practices.add(practice);
@@ -251,7 +252,7 @@ public class PracticesResource extends ServerResource {
 				//////////////////////////////
 				Practice practice = practices.get(0);
 			    String keyWebStr = KeyFactory.keyToString(practice.getKey());
-			    log.info("practice " + practice.getDescription() + " with key " + keyWebStr + " created successfully");
+			    log.debug("practice " + practice.getDescription() + " with key " + keyWebStr + " created successfully");
 			    
 				this.getResponse().setLocationRef(baseUri + "/" + keyWebStr);
 				jsonReturn.put("practiceId", keyWebStr);
@@ -262,7 +263,7 @@ public class PracticesResource extends ServerResource {
 				JSONArray practiceIdsJsonArray = new JSONArray();
 				for(Practice p : practices) {
 				    String keyWebStr = KeyFactory.keyToString(p.getKey());
-				    log.info("practice " + p.getDescription() + " with key " + keyWebStr + " created successfully");
+				    log.debug("practice " + p.getDescription() + " with key " + keyWebStr + " created successfully");
 				    practiceIdsJsonArray.put(keyWebStr);
 				}
 				this.getResponse().setLocationRef(baseUri + "/");
@@ -274,19 +275,16 @@ public class PracticesResource extends ServerResource {
 				PubHub.sendNewEventMessage(members, currentUser, team, null, practices, notificationType);
 			}
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("PracticesResource:createPractice:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("PracticesResource:createPractice:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
-        	log.info("no result exception, team not found");
+        	log.debug("no result exception, team not found");
         	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more teams have same key");
-			e.printStackTrace();
+			log.exception("PracticesResource:createPractice:NonUniqueResultException", "", e);
         	this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -298,8 +296,7 @@ public class PracticesResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("PracticesResource:createPractice:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -395,7 +392,7 @@ public class PracticesResource extends ServerResource {
     // Handles 'Get list of practices for all user teams' API
     @Get("json")
     public JsonRepresentation getPracticeList(Variant variant) {
-        log.info("PracticesResource:getPracticeList() entered");
+        log.debug("PracticesResource:getPracticeList() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 		
@@ -406,7 +403,7 @@ public class PracticesResource extends ServerResource {
     		TimeZone tz = GMT.getTimeZone(this.timeZoneStr);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-   			log.severe("user could not be retrieved from Request attributes!!");
+				log.error("PracticesResource:getPracticeList:currentUser", "user could not be retrieved from Request attributes!!");
     		} else if(tz == null) {
     			apiStatus = ApiStatusCode.INVALID_TIME_ZONE_PARAMETER;
     		}
@@ -446,16 +443,16 @@ public class PracticesResource extends ServerResource {
     			// --------------------------------------------------------------
 				// This is the 'Get practice list for a specified team' API call
     			// --------------------------------------------------------------
-    			log.info("This is the 'Get practice list for a specified team' API call");
+    			log.debug("This is the 'Get practice list for a specified team' API call");
 			
     			// teamId is required
     			if(this.teamId == null || this.teamId.length() == 0) {
     				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-    				log.info("Team ID not provided and it is required");
+    				log.debug("Team ID not provided and it is required");
     			} 
     			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
     				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-    				log.info(apiStatus);
+    				log.debug(apiStatus);
             	}
     			
     			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -474,18 +471,18 @@ public class PracticesResource extends ServerResource {
 					.setParameter("eventType", this.eventType)
 					.getResultList();
     			}
-    			log.info("getPracticeList(): number of practices found = " + practices.size());
+    			log.debug("getPracticeList(): number of practices found = " + practices.size());
     		} else {
     			// --------------------------------------------------------------
 				// This is the 'Get practice list for all user teams' API call
     			// --------------------------------------------------------------
-    			log.info("This is the 'Get practice list for all user teams' API call");
+    			log.debug("This is the 'Get practice list for all user teams' API call");
     			
         		User user = (User)em.createNamedQuery("User.getByKey")
 					.setParameter("key", currentUser.getKey())
 					.getSingleResult();
 	    		List<Key> teamKeys = user.getTeams();
-	    		log.info("number of user teams = " + teamKeys.size());
+	    		log.debug("number of user teams = " + teamKeys.size());
     		
 	    		teams = new ArrayList<Team>();
 	    		if(teamKeys.size() > 0) {
@@ -524,8 +521,8 @@ public class PracticesResource extends ServerResource {
 							.getResultList();
 		    			games.addAll(moreGames);
 		    		}
-		    		log.info("getPracticeList(): number of practices found = " + practices.size());
-		    		log.info("getPracticeList(): number of games found = " + games.size());
+		    		log.debug("getPracticeList(): number of practices found = " + practices.size());
+		    		log.debug("getPracticeList(): number of games found = " + games.size());
 		    		
 		    		// split the 'today' and 'tomorrow' games/practices
 		    		for(Practice p : practices) {
@@ -537,7 +534,7 @@ public class PracticesResource extends ServerResource {
 		    					(p.getEventGmtStartDate().equals(tomorrowDates.get(1)) || p.getEventGmtStartDate().before(tomorrowDates.get(1)))) {
 		    				tomorrowPractices.add(p);
 		    			} else {
-		    				log.severe("practice could not be mapped into Today's events or Tomorrow's events");
+		    				log.error("PracticesResource:getPracticeList:practiceMapping", "practice could not be mapped into Today's events or Tomorrow's events");
 		    			}
 		    		}
 		    		for(Game g : games) {
@@ -550,7 +547,7 @@ public class PracticesResource extends ServerResource {
 		    					(g.getEventGmtStartDate().equals(tomorrowDates.get(1)) || g.getEventGmtStartDate().before(tomorrowDates.get(1)))) {
 		    				tomorrowGames.add(g);
 		    			} else {
-		    				log.severe("game could not be mapped into Today's events or Tomorrow's events");
+		    				log.error("PracticesResource:getPracticeList:gameMapping", "game could not be mapped into Today's events or Tomorrow's events");
 		    			}
 		    		}
 	    		} else {
@@ -568,7 +565,7 @@ public class PracticesResource extends ServerResource {
 		    			}
 		    			practices.addAll(morePractices);
 		    		}
-		    		log.info("getPracticeList(): number of practices found = " + practices.size());
+		    		log.debug("getPracticeList(): number of practices found = " + practices.size());
 	    		}
 
     		}
@@ -589,14 +586,12 @@ public class PracticesResource extends ServerResource {
         		jsonReturn.put("practices", jsonArray);
     		}
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("PracticesResource:getPracticeList:JSONException1", "", e);
 		} catch (NoResultException e) {
-        	log.info("no result exception, user not found");
+        	log.debug("no result exception, user not found");
         	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same key");
-			e.printStackTrace();
+			log.exception("PracticesResource:getPracticeList:JSONException", "two or more users have same key", e);
         	this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 			em.close();
@@ -605,8 +600,7 @@ public class PracticesResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("PracticesResource:getPracticeList:JSONException2", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -642,10 +636,10 @@ public class PracticesResource extends ServerResource {
 					if(participantRole != null) {
 						jsonPracticeObj.put("participantRole", participantRole);
 					} else {
-						log.severe("User's partipant role could not be found on team = " + t.getTeamName());
+						log.error("PracticesResource:getPracticeList:participantRole", "User's partipant role could not be found on team = " + t.getTeamName());
 					}
 				} else {
-					log.severe("could not find team associated with the practice");
+					log.error("PracticesResource:getPracticeList:teamForPractice", "could not find team associated with the practice" + t.getTeamName());
 				}
 			}
 			//TODO  what happens when a put is done and the practice attribute is null?
@@ -706,10 +700,10 @@ public class PracticesResource extends ServerResource {
 					if(participantRole != null) {
 						jsonGameObj.put("participantRole", participantRole);
 					} else {
-						log.severe("User's partipant role could not be found on team = " + t.getTeamName());
+						log.error("PracticesResource:getPracticeList:teamForPractice", "User's partipant role could not be found on team = " + t.getTeamName());
 					}
 				} else {
-					log.severe("could not find team associated with the game");
+					log.error("PracticesResource:getPracticeList:teamForPractice", "User's partipant role could not be found on team = " + t.getTeamName());
 				}
 			}
 			jsonGameObj.put(theEventIdName, KeyFactory.keyToString(g.getKey()));
@@ -784,8 +778,7 @@ public class PracticesResource extends ServerResource {
     			}
     		}
     	} catch (Exception e) {
-    		log.severe("getAttendeesForEvent exception = " + e.getMessage());
-    		e.printStackTrace();
+			log.exception("PracticesResource:getPracticeList:teamForPractice", "", e);
     	} finally {
     		em.close();
     	}
