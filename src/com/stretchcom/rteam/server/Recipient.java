@@ -225,7 +225,8 @@ import com.google.appengine.api.datastore.Text;
       ),
 })
 public class Recipient {
-	private static final Logger log = Logger.getLogger(Recipient.class.getName());
+	//private static final Logger log = Logger.getLogger(Recipient.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	// Recipient STATUS
 	public static final String PENDING_NETWORK_AUTHENTICATION_STATUS = "pending_network_authentication";
@@ -590,10 +591,10 @@ public class Recipient {
         		r.setActiveThruGmtDate(activeThruGmtDate);
         		emRecipients.getTransaction().commit();
     		}
-    		log.info("ActiveThruGmtDate adjusted: recipients count = " + recipients.size());
+    		log.debug("ActiveThruGmtDate adjusted: recipients count = " + recipients.size());
     		
     	} catch (Exception e) {
-    		log.severe("Query Recipient.getByUserIdAndNotStatus failed");
+    		log.exception("Recipient:upateUserActiveThruGmtDate:Exception", "Query Recipient.getByUserIdAndNotStatus failed", e);
     	} finally {
     		emRecipients.close();
     	}
@@ -604,7 +605,7 @@ public class Recipient {
 	// theToken: 10 digit phone number or real token
 	// theSmsResponse: response SMS message received. May be NULL.
 	public static String handleSmsResponse(String theToken, String theSmsResponse) {
-		log.info("handleSmsResponse() entered, theToken = " + theToken);
+		log.debug("handleSmsResponse() entered, theToken = " + theToken);
 		if(theSmsResponse == null) {theSmsResponse = "";}
 		else {theSmsResponse = theSmsResponse.trim();}
 		
@@ -623,12 +624,12 @@ public class Recipient {
 			if(recipients.size() == 0) {
 				// UNSOLICITED MESSAGE
 				if(theSmsResponse.length() > 0) {
-					log.info("processing unsolicited SMS message = " + theSmsResponse);
+					log.debug("processing unsolicited SMS message = " + theSmsResponse);
 					
 					List<Member> smsConfirmedMemberships = (List<Member>)emRecipient.createNamedQuery("Member.getBySmsConfirmedPhoneNumber")
 						.setParameter("phoneNumber", theToken)
 						.getResultList();
-					log.info("number of memberships with confirmed SMS phone number " + theToken + " = " + smsConfirmedMemberships.size());
+					log.debug("number of memberships with confirmed SMS phone number " + theToken + " = " + smsConfirmedMemberships.size());
 					
 					Member smsSender = null;
 					if(smsConfirmedMemberships.size() > 0) {
@@ -636,7 +637,7 @@ public class Recipient {
 						// ::PINGME::
 						smsSender = smsConfirmedMemberships.get(0);
 						if(smsConfirmedMemberships.size() > 1) {
-							log.info("sender member of multiple teams - need PingMe feature");
+							log.debug("sender member of multiple teams - need PingMe feature");
 						}
 						sendReplyMessage(smsSender.getTeam(), theSmsResponse, emRecipient);
 						returnResult = UserInterfaceMessage.UNSOLICITED_MESSAGE_SUCCESSFUL;
@@ -644,16 +645,16 @@ public class Recipient {
 				} else {
 					returnResult = UserInterfaceMessage.UNSOLICITED_MESSAGE_SUCCESSFUL;
 				}
-				log.info("empty unsolicited SMS message received");
+				log.debug("empty unsolicited SMS message received");
 			} else {
 				// REPLY to rTeam MESSAGE SENT
-				log.info("processing rTeam SMS message = " + theSmsResponse);
+				log.debug("processing rTeam SMS message = " + theSmsResponse);
 	    		int matchingPollCount = 0;
 	    		int totalPollCount = 0;
 	    		int confirmedMessageCount = 0;
 	    		Boolean unsolicitiedReplySuccessful = false;
 				for(Recipient r : recipients) {
-					log.info("processing recipient with status=" + r.getStatus());
+					log.debug("processing recipient with status=" + r.getStatus());
 					MessageThread messageThread = r.getMessageThread();
 	    			if(messageThread.isPoll()) {
 	    				totalPollCount++;
@@ -679,7 +680,7 @@ public class Recipient {
 		        			
 							// who's coming reply has to update the pre-game attendance
 							if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
-								log.info("who's coming reply = " + theSmsResponse);
+								log.debug("who's coming reply = " + theSmsResponse);
 								String eventType = Utility.getEventType(r.getIsGame());
 								// ::BACKWARD COMPATIBILITY:: recipient started storing eventName on 1/5/2012 so handle null eventName for awhile
 								String eventName = r.getEventName() == null ? "" : r.getEventName();
@@ -717,11 +718,11 @@ public class Recipient {
 					returnResult = UserInterfaceMessage.UNSOLICITED_RESPONSE_SUCCESSFUL;
 				}
 				
-	    		log.info("recipients with token " + theToken + ": # outstanding polls = " + totalPollCount + " matching polls = " + matchingPollCount);
-	    		log.info("number of recipients with token " + theToken + " confirmed via SMS = " + confirmedMessageCount);
+	    		log.debug("recipients with token " + theToken + ": # outstanding polls = " + totalPollCount + " matching polls = " + matchingPollCount);
+	    		log.debug("number of recipients with token " + theToken + " confirmed via SMS = " + confirmedMessageCount);
 			}
 		} catch (Exception e) {
-    		log.severe("handleSmsResponse(): Query Recipient.getByOneUseSmsTokenAndTokenStatusAndStatus failed. exception = " + e.getMessage());
+    		log.exception("Recipient:handleSmsResponse:Exception", "Query Recipient.getByOneUseSmsTokenAndTokenStatusAndStatus failed. exception = " + e.getMessage(), e);
     		return UserInterfaceMessage.SERVER_ERROR;
     	} finally {
     		emRecipient.close();
@@ -744,20 +745,20 @@ public class Recipient {
 
 			// TODO made need more sophisticated logic here to remove the original message.
 			// typically, the reply of an email will contain the original message. Extract just the reply portion.
-			log.info("full body of reply email = " +  theReplyBody);
+			log.debug("full body of reply email = " +  theReplyBody);
 			int indexOfOriginalMessage = theReplyBody.indexOf(recipient.getMessage());
 			if(indexOfOriginalMessage > -1) {
 				theReplyBody = theReplyBody.substring(0, indexOfOriginalMessage);
 			}
-			log.info("body of reply email less than original message = " +  theReplyBody);
+			log.debug("body of reply email less than original message = " +  theReplyBody);
     		
     		sendReplyMessage(recipient, theReplyBody, emRecipient);
     		returnResult = UserInterfaceMessage.UNSOLICITED_RESPONSE_SUCCESSFUL;
 		} catch (NoResultException e) {
-			log.severe("handleEmailReplyUsingToken(): recipient/team token not found");
+			log.exception("Recipient:handleEmailReplyUsingToken:NoResultException", "recipient/team token not found", e);
 			returnResult = UserInterfaceMessage.ALREADY_REPLIED;
 		} catch (NonUniqueResultException e) {
-			log.severe("handleEmailReplyUsingToken(): should never happen - two or more recipients/teams had the same token");
+			log.exception("Recipient:handleEmailReplyUsingToken:NonUniqueResultException", "two or more recipients/teams had the same token", e);
 			returnResult = UserInterfaceMessage.SERVER_ERROR;
 		} finally {
     		emRecipient.close();
@@ -772,12 +773,12 @@ public class Recipient {
 		String returnResult = "";
 		
 		try {
-			log.info("about to query recipients");
+			log.debug("about to query recipients");
 			List<Recipient> recipients = (List<Recipient>)emRecipient.createNamedQuery("Recipient.getByEmailAddressAndNotStatus")
 				.setParameter("emailAddress", theFromAddress)
 				.setParameter("status", Recipient.ARCHIVED_STATUS)
 				.getResultList();
-			log.info("number of recipients = " + recipients.size());
+			log.debug("number of recipients = " + recipients.size());
 			
 			Recipient matchingRecipient = null;
 			if(recipients.size() == 1) {
@@ -790,7 +791,7 @@ public class Recipient {
 				matchingRecipient = findRecipientWithBestSubjectMatch(recipients, theSubject);
 			}
 			
-			log.info("matchingRecipient = " + matchingRecipient);
+			log.debug("matchingRecipient = " + matchingRecipient);
 			if(matchingRecipient != null) {
 	    		sendReplyMessage(matchingRecipient, theReplyBody, emRecipient);
 	    		returnResult = UserInterfaceMessage.UNSOLICITED_RESPONSE_SUCCESSFUL;
@@ -798,7 +799,7 @@ public class Recipient {
 				returnResult = UserInterfaceMessage.INACTIVE_MESSAGE;
 			}
 		} catch (Exception e) {
-			log.severe("handleEmailReplyUsingFromAddressAndSubject(): exception = " + e.getMessage());
+			log.exception("Recipient:handleEmailReplyUsingFromAddressAndSubject:Exception", "handleEmailReplyUsingFromAddressAndSubject(): exception = " + e.getMessage(), e);
 			e.printStackTrace();
 			returnResult = UserInterfaceMessage.SERVER_ERROR;
 		} finally {
@@ -811,21 +812,21 @@ public class Recipient {
 	private static void sendReplyMessage(Recipient theRecipient, String theReplyBody, EntityManager theEmRecipient) {
 		MessageThread messageThread = theRecipient.getMessageThread();
 		String senderUserId = messageThread.getSenderUserId();
-		log.info("senderUserId = " + senderUserId);
+		log.debug("senderUserId = " + senderUserId);
 		
 		String teamId = theRecipient.getTeamId();
-		log.info("teamId = " + teamId);
+		log.debug("teamId = " + teamId);
 		Team team = null;
 		try {
 			team = (Team)theEmRecipient.createNamedQuery("Team.getByKey")
 				.setParameter("key", KeyFactory.stringToKey(teamId))
 				.getSingleResult();
-			log.info("team retrieved = " + team.getTeamName());
+			log.debug("team retrieved = " + team.getTeamName());
 		} catch (NoResultException e) {
-			log.severe("sendReplyMessage(): team not found");
+			log.exception("Recipient:sendReplyMessage:NoResultException", "sendReplyMessage(): team not found", e);
 			return;
 		} catch (NonUniqueResultException e) {
-			log.severe("sendReplyMessage(): should never happen - two or more teams had the same token");
+			log.exception("Recipient:sendReplyMessage:NonUniqueResultException", "sendReplyMessage(): should never happen - two or more teams had the same token", e);
 			return;
 		}
 
@@ -855,7 +856,7 @@ public class Recipient {
     		if(memberRecipients.size() > 0) {
 	    		PubHub.sendReplyToEmailMessage(messageThread.getSubject(), team, memberRecipients, theReplyBody);
     		} else {
-    			log.info("no reply sent since no team members are users");
+    			log.debug("no reply sent since no team members are users");
     		}
 		} else {
 			//////////////////////////////
@@ -869,7 +870,7 @@ public class Recipient {
     			if(memberRecipients.size() > 0) {
     				PubHub.sendReplyToEmailMessage(messageThread.getSubject(), team, memberRecipients, theReplyBody);
     			} else {
-	    			log.info("no reply sent since sender of original message no longer a member of this team");
+	    			log.debug("no reply sent since sender of original message no longer a member of this team");
     			}
     		}
 		}
@@ -898,7 +899,7 @@ public class Recipient {
 		if(memberRecipients.size() > 0) {
     		PubHub.sendReplyToEmailMessage(UserInterfaceMessage.SMS_SUBJECT_FOR_UNSOLICITED_MESSAGE, theSenderTeam, memberRecipients, theReplyBody);
 		} else {
-			log.info("no reply sent since no team members are users");
+			log.debug("no reply sent since no team members are users");
 		}
 	}
 	
@@ -935,9 +936,9 @@ public class Recipient {
 	// Returns the matching choice if there is a match, null otherwise
 	private static String doesResponseMatchPollChoices(String thePollResponse, List<String> thePollChoices) {
 		//::TODO make the matching more flexible
-		log.info("attempting to match poll repsonse = " + thePollResponse);
+		log.debug("attempting to match poll repsonse = " + thePollResponse);
 		for(String pc : thePollChoices) {
-			log.info("checking poll choice = " + pc);
+			log.debug("checking poll choice = " + pc);
 			if(pc.equalsIgnoreCase(thePollResponse)) {
 				return pc;
 			}
@@ -946,14 +947,14 @@ public class Recipient {
 	}
 	
 	public Boolean isPendingReply() {
-		log.info("isPendingReply(): memberName=" + this.memberName + " status=" + this.status + " reply=" + this.reply + " type=" + this.type);
+		log.debug("isPendingReply(): memberName=" + this.memberName + " status=" + this.status + " reply=" + this.reply + " type=" + this.type);
 		if(this.status == null) {return false;}
 		
 		// Pending -- sent_status or MAYBE reply for a who's coming message
 		if(this.status.equalsIgnoreCase(SENT_STATUS) ||
 		   (this.type != null && this.type.equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE) &&
 		    this.status.equalsIgnoreCase(REPLIED_STATUS) && this.reply.equalsIgnoreCase(MessageThread.MAYBE_WHO_IS_COMING_CHOICE)) ) {
-			log.info("isPending true for memberName=" + this.memberName);
+			log.debug("isPending true for memberName=" + this.memberName);
 			return true;
 		}
 		return false;
@@ -969,7 +970,7 @@ public class Recipient {
 				.setParameter("memberId", theMemberId)
 				.setParameter("type", MessageThread.WHO_IS_COMING_TYPE)
 				.getSingleResult();
-			log.info("updateAllMemberPollsForEvent(): recipient found");
+			log.debug("updateAllMemberPollsForEvent(): recipient found");
 			
 			// This is a "first" response wins scenario. So mark other individuals that are part of this same
 			// membership as having replied.
@@ -992,10 +993,10 @@ public class Recipient {
 			emRecipient.getTransaction().commit();
 		} catch (NoResultException e) {
 			// NOT an error -- there may not have been a poll sent out
-			log.info("updateWhoIsComingPollForMember(): no who's coming poll found for the member and event");
+			log.debug("updateWhoIsComingPollForMember(): no who's coming poll found for the member and event");
 			return;
 		} catch (NonUniqueResultException e) {
-			log.severe("sendReplyMessage(): should never happen - two or more active polls found for same member and same event");
+			log.exception("Recipient:updateWhoIsComingPollForMember:NonUniqueResultException", "two or more active polls found for same member and same event", e);
 			return;
 		} finally {
     		emRecipient.close();

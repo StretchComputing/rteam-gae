@@ -42,7 +42,8 @@ import com.google.appengine.api.datastore.Text;
     ),
 })
 public class Team {
-	private static final Logger log = Logger.getLogger(Team.class.getName());
+	//private static final Logger log = Logger.getLogger(Team.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	//constants
 	public static final String FEMALE_GENDER = "female";
@@ -208,7 +209,7 @@ public class Team {
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass()) {
-			//log.info("***** Team.equals(): classes did NOT match ********");
+			//log.debug("***** Team.equals(): classes did NOT match ********");
 			return false;
 		}
 
@@ -217,7 +218,7 @@ public class Team {
 			if (other.key != null)
 				return false;
 		} else if (!key.equals(other.key)) {
-			//log.info("keys did not match: key = " + key.toString() + " other key = " + other.key.toString());
+			//log.debug("keys did not match: key = " + key.toString() + " other key = " + other.key.toString());
 			return false;
 		}
 		return true;
@@ -434,9 +435,9 @@ public class Team {
 				.getSingleResult();
 			team.setIsCacheStale(theIsCacheStale);
 		} catch (NoResultException e) {
-			log.severe("Should never happen: team not found using key (101)");
+			log.exception("Team:updateCacheStale:NoResultException", "team not found using key (101)", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two teams have the same key (101");
+			log.exception("Team:updateCacheStale:NoResultException", "two teams have the same key (101", e);
 		} finally {
 			em.close();
 		}
@@ -452,9 +453,9 @@ public class Team {
 				.getSingleResult();
 			team.setNewestCacheId(theCacheId);
 		} catch (NoResultException e) {
-			log.severe("Should never happen: team not found using key");
+			log.exception("Team:updateNewestCacheId:NoResultException", "team not found using key", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two teams have the same key");
+			log.exception("Team:updateNewestCacheId:NonUniqueResultException", "two teams have the same key", e);
 		} finally {
 			em.close();
 		}

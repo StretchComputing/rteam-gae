@@ -20,7 +20,8 @@ import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Text;
 
 public class PubHub {
-	private static final Logger log = Logger.getLogger(PubHub.class.getName());
+	//private static final Logger log = Logger.getLogger(PubHub.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	//constants
 	// determined this max size by trial and error - not very scientific
@@ -94,7 +95,7 @@ public class PubHub {
 				smsInfos.add(umi);
 			}
 			if(!umi.isAnyMessageAccessEnabled()) {
-				log.severe("No message access enabled for member = " + umi.getFullName());
+				log.error("PubHub:sendMessageThreadToMembers:noMessageAccess", "No message access enabled for member = " + umi.getFullName());
 			}
 		}
 		
@@ -277,19 +278,19 @@ public class PubHub {
     	/////////////////////////
     	// DEBUG INPUT PARAMETERS
     	/////////////////////////
-//    	log.info("theSubject = " + theSubject);
+//    	log.debug("theSubject = " + theSubject);
 //    	if(theBodys == null) {
-//    		log.info("theBodys = NULL");
+//    		log.debug("theBodys = NULL");
 //    	} else {
-//    		log.info("size of theBodys = " + theBodys.size());
+//    		log.debug("size of theBodys = " + theBodys.size());
 //    	}
-//    	log.info("theMessageType = " + theMessageType);
+//    	log.debug("theMessageType = " + theMessageType);
 //    	if(theTeam == null) {
-//    		log.info("theTeam = NULL");
+//    		log.debug("theTeam = NULL");
 //    	} else {
-//    		log.info("theTeam = " + theTeam.getTeamName());
+//    		log.debug("theTeam = " + theTeam.getTeamName());
 //    	}
-//    	log.info("theMessageLinkOnly = " + theMessageLinkOnly);
+//    	log.debug("theMessageLinkOnly = " + theMessageLinkOnly);
     	
     	
     	try {
@@ -354,7 +355,7 @@ public class PubHub {
     				recipient.setOneUseTokenStatus(Recipient.NEW_TOKEN_STATUS);
     			}
     			
-    			log.info("adding recipient = " + recipient.toString());
+    			log.debug("adding recipient = " + recipient.toString());
     			recipients.add(recipient);
     			index++;
     		}
@@ -365,7 +366,7 @@ public class PubHub {
     		em.persist(messageThread);
     	    em.getTransaction().commit();
     	    String keyWebStr = KeyFactory.keyToString(messageThread.getKey());
-    	    log.info("message thread " + messageThread.getSubject() + " with key " + keyWebStr + " created successfully");
+    	    log.debug("message thread " + messageThread.getSubject() + " with key " + keyWebStr + " created successfully");
     	} finally {
     		em.close();
     	}
@@ -549,7 +550,7 @@ public class PubHub {
 	public static void sendMemberWelcomeMessage(Member theMember, List<String> theNewMemberEmailAddresses, User theInitiator) {
 		// for members, it is possible that an email address was not specified. If not, just return
 		if(theNewMemberEmailAddresses.size() == 0) {
-			log.info("sendMemberWelcomeMessage(): email address list was empty - no work to do ...");
+			log.debug("sendMemberWelcomeMessage(): email address list was empty - no work to do ...");
 			return;
 		}
 		
@@ -609,7 +610,7 @@ public class PubHub {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	public static void sendMemberWelcomeMessageToUsers(Member theMember, List<User> theUsersWithNewMembership, Team theTeam, User theInitiator) {
 		if(theUsersWithNewMembership.size() == 0) {
-			log.info("sendMemberWelcomeMessageToUsers(): user list was empty - no work to do ...");
+			log.debug("sendMemberWelcomeMessageToUsers(): user list was empty - no work to do ...");
 			return;
 		}
 		
@@ -817,7 +818,7 @@ public class PubHub {
 				postSms(smsAddress, "Info Update", smsMessage, Emailer.NO_REPLY);
 			}
 			if(!umi.isAnyMessageAccessEnabled()) {
-				log.severe("No message access enabled for member = " + umi.getFullName());
+				log.error("PubHub:sendMemberUpdatedMessage:noMessageAccess", "No message access enabled for member = " + umi.getFullName());
 			}
 		}
     	
@@ -2203,7 +2204,7 @@ public class PubHub {
 	//      Not applicable.
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static void postScoreActivity(Team theTeam, Game theGame, Integer theScoreUs, Integer theScoreThem) {
-		//log.info("posting end of game score: us=" + theScoreUs + " them=" + theScoreThem);
+		//log.debug("posting end of game score: us=" + theScoreUs + " them=" + theScoreThem);
 		///////////////////
 		// #4 Post Activity
 		///////////////////
@@ -2362,7 +2363,7 @@ public class PubHub {
 				
 				if(alertMsg != null || newMessageCount != null) {
 					httpResponse = UrbanAirshipClient.push(alertMsg, newMessageCount, u.getAlertToken(), isDeveloper);
-					log.info("UrbanAirship response = " + httpResponse + " for user = " + u.getFullName());
+					log.debug("UrbanAirship response = " + httpResponse + " for user = " + u.getFullName());
 				}
 			}
 		}
@@ -2414,7 +2415,7 @@ public class PubHub {
 			theActivityBody = Language.abbreviate(theActivityBody);
 		}
 		
-    	log.info("abbreviated postActivity() body = " + theActivityBody);
+    	log.debug("abbreviated postActivity() body = " + theActivityBody);
 		// enforce twitter max character count by truncating if necessary
 		List<String> posts = new ArrayList<String>();
 		if(theActivityBody.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT) {
@@ -2423,7 +2424,7 @@ public class PubHub {
 				int upperIndex = TwitterClient.MAX_TWITTER_CHARACTER_COUNT;
 				while(true) {
 					String postMsg = theActivityBody.substring(lowerIndex, upperIndex);
-					//log.info("postMsg = " + postMsg);
+					//log.debug("postMsg = " + postMsg);
 					posts.add(postMsg);
 					lowerIndex = lowerIndex + TwitterClient.MAX_TWITTER_CHARACTER_COUNT;
 					upperIndex = upperIndex + TwitterClient.MAX_TWITTER_CHARACTER_COUNT;
@@ -2458,7 +2459,7 @@ public class PubHub {
 //		com.stretchcom.rteam.server.TwitterClient updateStatus: updated status sent to Twitter = Joe Wroblewski took attendance for game Sun, Mar 13, 11:20 PM. Members present include: Jerry C, Wilma F, Pebbles F, William S, Fred F, Tom. Status ID = 47075670295195648			
 		
 		int numberOfPosts = posts.size();
-		log.info("number of posts = " + numberOfPosts);
+		log.debug("number of posts = " + numberOfPosts);
 		twitter4j.Status twitterStatus = null;
 		EntityManager emActivity = EMF.get().createEntityManager();
 		try {
@@ -2482,7 +2483,7 @@ public class PubHub {
 					
 					// if Twitter update failed, log error, but continue because activity post will be stored by rTeam
 					if(twitterStatus == null) {
-						log.severe("Twitter update failed, but continuing on ...");
+						log.error("PubHub:postActivity:Twitter", "Twitter update failed, but continuing on ...");
 					} else {
 						newActivity.setTwitterId(twitterStatus.getId());
 						// if posted to twitter, match the exact twitter date
@@ -2494,12 +2495,12 @@ public class PubHub {
 				emActivity.getTransaction().begin();
 				emActivity.persist(newActivity);
 				emActivity.getTransaction().commit();
-				log.info("new Activity was successfully persisted");
+				log.debug("new Activity was successfully persisted");
 				
 				numberOfPosts--;
 			}
 		} catch(Exception e) {
-			log.severe("createActivity() exception = " + e.getMessage());
+			log.exception("PubHub:postActivity:Exception", "createActivity() exception = " + e.getMessage(), e);
 		} finally {
 			emActivity.close();
 		}

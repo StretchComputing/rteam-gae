@@ -30,23 +30,26 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 
 public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
-	private static final Logger log = Logger.getLogger(SynchActivityWithTwitterTaskServlet.class.getName());
+	//private static final Logger log = Logger.getLogger(SynchActivityWithTwitterTaskServlet.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
+	
+	
 	private static int MAX_TASK_RETRY_COUNT = 3;
 	private static int MAX_TWITTER_TWEETS_ON_SYNCH = 100;
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		log.info("SynchActivityWithTwitterTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
+		log.debug("SynchActivityWithTwitterTaskServlet.doGet() entered - SHOULD NOT BE CALLED!!!!!!!!!!!!!!!!!");
 	}
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		log.info("SynchActivityWithTwitterTaskServlet.doPost() entered");
+		log.debug("SynchActivityWithTwitterTaskServlet.doPost() entered");
 		String response = "activities synched with Twitter successfully";
 		resp.setContentType("text/plain");
 
 		try {
 			String teamId = req.getParameter("teamId");
-			log.info("teamId parameter: "	+ teamId);
+			log.debug("teamId parameter: "	+ teamId);
 			
 			// need to get the retry count
 			String taskRetryCountStr = req.getHeader("X-AppEngine-TaskRetryCount");
@@ -55,16 +58,16 @@ public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
 			try {
 				taskRetryCount = new Integer(taskRetryCountStr);
 			} catch (Exception e1) {
-				log.info("should never happen, but no harm, no foul -- default above kicks in");
+				log.debug("should never happen, but no harm, no foul -- default above kicks in");
 			}
-			log.info("taskRetryCount = " + taskRetryCount);
+			log.debug("taskRetryCount = " + taskRetryCount);
 
 		    Properties props = new Properties();
 		    Session session = Session.getDefaultInstance(props, null);
 		    
 		    // ensure valid parameters
 		    if(teamId == null || teamId.length() == 0) {
-		    	log.severe("SynchActivityWithTwitterTaskServlet: null or empty parameter");
+		    	log.error("SynchActivityWithTwitterTaskServlet:doPost:parameters", "SynchActivityWithTwitterTaskServlet: null or empty parameter");
 		    	return;
 		    }
 		    
@@ -78,13 +81,13 @@ public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
         			.getSingleResult();
         		newestCacheId = team.getNewestCacheId();
 		    } catch (NoResultException e) {
-	        	log.info("SynchActivityWithTwitterTaskServlet: no result exception, team not found");
+	        	log.debug("SynchActivityWithTwitterTaskServlet: no result exception, team not found");
 			} finally {
 				emTeam.close();
 			}
 			
 			if(newestCacheId.equals(0L)) {
-				log.info("SynchActivityWithTwitterTaskServlet: no activities for this team so no work to do");
+				log.debug("SynchActivityWithTwitterTaskServlet: no activities for this team so no work to do");
 				return;
 			}
 
@@ -102,7 +105,7 @@ public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
 					.getResultList();
 				
 				if(teamRequestedActivities.size() == 0) {
-					log.severe("SynchActivityWithTwitterTaskServlet: no activities found, but there should have been");
+					log.error("SynchActivityWithTwitterTaskServlet:doPost:parameters", "SynchActivityWithTwitterTaskServlet: no activities found, but there should have been");
 					return;
 				}
 				
@@ -124,7 +127,7 @@ public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
 					
 					// if Twitter update failed just log and continue on
 					if(twitterStatus == null) {
-						log.severe("Twitter update failed, but continuing on ...");
+						log.error("SynchActivityWithTwitterTaskServlet:doPost:Twitter", "Twitter update failed, but continuing on ...");
 					} else {
 						a.setTwitterId(twitterStatus.getId());
 					}
@@ -135,7 +138,7 @@ public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
 	    		
 	    		resp.setStatus(HttpServletResponse.SC_OK);
 	        } catch (Exception e) {
-				log.severe("SynchActivityWithTwitterTaskServlet: EntityManager exception = " + e.getMessage());
+				log.exception("SynchActivityWithTwitterTaskServlet:doPost:Exception", "SynchActivityWithTwitterTaskServlet: EntityManager exception = " + e.getMessage(), e);
 				resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			} finally {
 			    em.close();
@@ -151,7 +154,7 @@ public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
 		}
 		catch (Exception ex) {
 			response = "Should not happen. SynchActivityWithTwitterTaskServlet: failure : " + ex.getMessage();
-			log.info(response);
+			log.debug(response);
 			resp.setStatus(HttpServletResponse.SC_OK);
 			resp.getWriter().println(response);
 		}

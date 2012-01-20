@@ -49,7 +49,8 @@ import org.apache.commons.codec.binary.Base64;
  * @author joepwro
  */
 public class TeamResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(TeamResource.class.getName());
+	//private static final Logger log = Logger.getLogger(TeamResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 
     // The sequence of characters that identifies the resource.
     String teamId;  
@@ -61,27 +62,27 @@ public class TeamResource extends ServerResource {
     protected void doInit() throws ResourceException {  
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
-        log.info("UserResource:doInit() - teamId = " + this.teamId);
+        log.debug("UserResource:doInit() - teamId = " + this.teamId);
         if(this.teamId != null) {
             this.teamId = Reference.decode(this.teamId);
-            log.info("UserResource:doInit() - decoded teamName = " + this.teamId);
+            log.debug("UserResource:doInit() - decoded teamName = " + this.teamId);
         }
         
 		Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
-			log.info("parameter " + parameter.getName() + " = " + parameter.getValue());
+			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());
 			if(parameter.getName().equals("oneUseToken")) {
 				this.oneUseToken = (String)parameter.getValue();
 				this.oneUseToken = Reference.decode(this.oneUseToken);
-				log.info("TeamResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
+				log.debug("TeamResource:doInit() - decoded oneUseToken = " + this.oneUseToken);
 			} else if(parameter.getName().equals("oauthVerifier")) {
 				this.oauthVerifier = (String)parameter.getValue();
 				this.oauthVerifier = Reference.decode(this.oauthVerifier);
-				log.info("TeamResource:doInit() - decoded oauthVerifier = " + this.oauthVerifier);
+				log.debug("TeamResource:doInit() - decoded oauthVerifier = " + this.oauthVerifier);
 			} else if(parameter.getName().equals("includePhoto"))  {
 				this.includePhoto = (String)parameter.getValue();
 				this.includePhoto = Reference.decode(this.includePhoto);
-				log.info("TeamResource:doInit() - decoded includePhoto = " + this.includePhoto);
+				log.debug("TeamResource:doInit() - decoded includePhoto = " + this.includePhoto);
 			}
 		}
     }  
@@ -89,7 +90,7 @@ public class TeamResource extends ServerResource {
     // Handles 'Get team info' API
     @Get("json")
     public JsonRepresentation getTeamInfo(Variant variant) {
-        log.info("TeamResource:toJson() entered");
+        log.debug("TeamResource:toJson() entered");
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -100,13 +101,13 @@ public class TeamResource extends ServerResource {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("TeamResource:createGame:currentUser", "user could not be retrieved from Request attributes!!");
     		} else if(this.teamId == null || this.teamId.length() == 0) {
-        		log.info("TeamResource:toJson() teamId null or zero length");
+        		log.debug("TeamResource:toJson() teamId null or zero length");
 				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
         	} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -119,7 +120,7 @@ public class TeamResource extends ServerResource {
         		Team team = (Team)em.createNamedQuery("Team.getByKey")
         			.setParameter("key", teamKey)
         			.getSingleResult();
-        		log.info("team retrieved = " + team.getTeamName());
+        		log.debug("team retrieved = " + team.getTeamName());
             	
             	// always return the required fields
     			jsonReturn.put("teamName", team.getTeamName());
@@ -160,14 +161,13 @@ public class TeamResource extends ServerResource {
             	}
         	}
         } catch (NoResultException e) {
-        	log.info("no result exception, team not found");
+        	log.debug("no result exception, team not found");
         	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
 		} catch (JSONException e) {
-			log.severe("error building JSON object");
-			e.printStackTrace();
+			log.exception("TeamResource:getTeamInfo:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same key");
+			log.exception("TeamResource:getTeamInfo:NonUniqueResultException", "two or more users have same key", e);
 			e.printStackTrace();
         	this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
@@ -177,8 +177,7 @@ public class TeamResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamResource:getTeamInfo:JSONException2", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -192,7 +191,7 @@ public class TeamResource extends ServerResource {
     //                 registers and becomes a user.
     @Delete
     public JsonRepresentation remove() {
-    	log.info("TeamResource:remove() entered");
+    	log.debug("TeamResource:remove() entered");
     	EntityManager em = EMF.get().createEntityManager();
     	JSONObject jsonReturn = new JSONObject();
     	
@@ -202,13 +201,13 @@ public class TeamResource extends ServerResource {
 	    	User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("TeamResource:createGame:currentUser", "user could not be retrieved from Request attributes!!");
     		} else if(this.teamId == null || this.teamId.length() == 0) {
-        		log.info("TeamResource:toJson() teamId null or zero length");
+        		log.debug("TeamResource:toJson() teamId null or zero length");
 				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
         	} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.info(apiStatus);
+				log.debug(apiStatus);
         	}
 			
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -223,7 +222,7 @@ public class TeamResource extends ServerResource {
         		Team team = (Team)em.createNamedQuery("Team.getByKey")
 					.setParameter("key", KeyFactory.stringToKey(this.teamId))
 					.getSingleResult();
-        		log.info("team retrieved = " + team.getTeamName());
+        		log.debug("team retrieved = " + team.getTeamName());
         		
         		//::TODO refactor and build fan and non-fan list via queries. Relevant if #fans in team gets very large
         		//-----------------------------------------------------------------------------------------------------
@@ -268,7 +267,7 @@ public class TeamResource extends ServerResource {
         			members.remove(memberToRemove);
         			wasMemberRemoved = true;
         		} else {
-        			log.severe("should never happen: user did not have membership on this team");
+        			log.error("TeamResource:remove:noMembership", "user did not have membership on this team");
         		}
         		
         		boolean shouldRemoveTeam = false;
@@ -303,17 +302,17 @@ public class TeamResource extends ServerResource {
         		// send notifications after closing transaction
         		///////////////////////////////////////////////
         		if(notifyMemberUsersTheyAreNowCoordinators) {
-        			log.info("sendNewCoordinatorMessage to " + memberParticipantsThatAreUsers.size() + " member participant users.");
+        			log.debug("sendNewCoordinatorMessage to " + memberParticipantsThatAreUsers.size() + " member participant users.");
         			PubHub.sendNewCoordinatorMessage(memberParticipantsThatAreUsers, team);
         		} else if(notifymemberParticipantsThereAreNoMoreCoordinators) {
-        			log.info("sendNoCoordinatorMessage to " + memberParticipants.size() + " member participants.");
+        			log.debug("sendNoCoordinatorMessage to " + memberParticipants.size() + " member participants.");
         			PubHub.sendNoCoordinatorMessage(memberParticipants, team);
         		} else if(notifyFansTeamHasBeenDisbanded) {
-        			log.info("sendTeamInactiveMessage to " + fanParticipants.size() + " fans.");
+        			log.debug("sendTeamInactiveMessage to " + fanParticipants.size() + " fans.");
         			PubHub.sendTeamInactiveMessage(fanParticipants, team);
         		}
             } catch (NoResultException e) {
-            	log.info("no result exception, team not found");
+            	log.debug("no result exception, team not found");
             	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
     		} finally {
     		    if (em.getTransaction().isActive()) {
@@ -338,7 +337,7 @@ public class TeamResource extends ServerResource {
     					.setParameter("emailAddress", currentUser.getEmailAddress())
     					.setParameter("status", Recipient.ARCHIVED_STATUS)
     					.getResultList();
-        			log.info("archiving " + nonarchivedInboxMessages.size() + " user's inbox messages for the team they are no longer part of");
+        			log.debug("archiving " + nonarchivedInboxMessages.size() + " user's inbox messages for the team they are no longer part of");
     	        	
     	        	for(Recipient r : nonarchivedInboxMessages) {
     	        		r.setWasViewed(true);
@@ -351,7 +350,7 @@ public class TeamResource extends ServerResource {
 						.setParameter("status", MessageThread.ACTIVE_STATUS)
 						.setParameter("teamId", this.teamId)
 						.getResultList();
-    	        	log.info("archiving " + nonarchivedOutboxMessages.size() + " user's outbox messages for the team they are no longer part of");
+    	        	log.debug("archiving " + nonarchivedOutboxMessages.size() + " user's outbox messages for the team they are no longer part of");
     	        	for(MessageThread mt : nonarchivedOutboxMessages) {
     	        		// finalize polls, archive the rest
     	        		if(mt.isPoll()) {
@@ -362,14 +361,14 @@ public class TeamResource extends ServerResource {
     	        	}
     	        	
     	        } catch (Exception e) {
-    				log.severe("Should never happen: error getting nonarchivedMessages - exeception = " + e.getMessage());
+    				log.exception("TeamResource:remove:Exception", "error getting nonarchivedMessages - exeception = " + e.getMessage(), e);
     			} finally {
     				emMessages.close();
     			}
     		}
 
 			// update User in a separate transaction - don't think User and Team are in the same Entity Group
-			log.info("adding Team to user team list");
+			log.debug("adding Team to user team list");
 			EntityManager em2 = EMF.get().createEntityManager();
 			em2.getTransaction().begin();
 	        try {
@@ -381,18 +380,17 @@ public class TeamResource extends ServerResource {
         		List<Key> teamKeys = currentUser.getTeams();
         		for(Key k : teamKeys) {
         			if(k.equals(KeyFactory.stringToKey(this.teamId))) {
-        				log.info("removing user from team with ID = " + KeyFactory.keyToString(k));
+        				log.debug("removing user from team with ID = " + KeyFactory.keyToString(k));
         				currentUser.removeTeam(k);
         				break;
         			}
         		}
 	    		em2.getTransaction().commit();
 	        } catch (NoResultException e) {
-				log.severe("user not found");
+				log.exception("TeamResource:remove:NoResultException", "user not found", e);
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			} catch (NonUniqueResultException e) {
-				log.severe("should never happen - two or more users have same key");
-				e.printStackTrace();
+				log.exception("TeamResource:remove:NonUniqueResultException", "two or more users have same key", e);
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			} finally {
 			    if (em2.getTransaction().isActive()) {
@@ -401,8 +399,7 @@ public class TeamResource extends ServerResource {
 			    em2.close();
 			}
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamResource:remove:JSONException", "error converting json representation into a JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		}
 		
@@ -410,8 +407,7 @@ public class TeamResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamResource:remove:JSONException", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -420,7 +416,7 @@ public class TeamResource extends ServerResource {
     // Handles 'Twitter Callback Confirmation' API (for GWT)
     @Put 
     public JsonRepresentation updateTeam(Representation entity) {
-    	log.info("updateTeam(@Put) entered ..... ");
+    	log.debug("updateTeam(@Put) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 		JSONObject jsonReturn = new JSONObject();
 		
@@ -433,7 +429,7 @@ public class TeamResource extends ServerResource {
     			// --------------------------------------------------
     			// This is the 'Get Twitter Confirmation' API call
     			// --------------------------------------------------
-        		log.info("this is 'Get Twitter Confirmation' API handling");
+        		log.debug("this is 'Get Twitter Confirmation' API handling");
         		
         		Team team = null;
         		try {
@@ -441,7 +437,7 @@ public class TeamResource extends ServerResource {
         				.setParameter("oneUseToken", this.oneUseToken)
         				.setParameter("oneUseTokenStatus", Recipient.NEW_TOKEN_STATUS)
         				.getSingleResult();
-        			log.info("updateTeam(): team found");
+        			log.debug("updateTeam(): team found");
         			
         			team.setOneUseTokenStatus(Team.USED_TOKEN_STATUS);
         			
@@ -460,7 +456,7 @@ public class TeamResource extends ServerResource {
     					
     					// schedule task that will post recent Activity to Twitter
     					scheduleSynchActivityWithTwitterTask(KeyFactory.keyToString(team.getKey()));
-    					log.info("after scheduleSynchActivityWithTwitterTask() call");
+    					log.debug("after scheduleSynchActivityWithTwitterTask() call");
         			} else {
         				apiStatus = ApiStatusCode.TWITTER_ERROR;
         			}
@@ -470,7 +466,7 @@ public class TeamResource extends ServerResource {
         			// Not an error - twitter callback is not longer active (though not sure why this would happen)
         			apiStatus = ApiStatusCode.TWITTER_CALLBACK_TOKEN_NO_LONGER_ACTIVE;
         		} catch (NonUniqueResultException e) {
-        			log.severe("updateMessageThread(): should never happen - two or more teams have same oneUseToken");
+        			log.exception("TeamResource:updateTeam:NonUniqueResultException", "two or more teams have same oneUseToken", e);
         			this.setStatus(Status.SERVER_ERROR_INTERNAL);
         		}  // "finally" to clean up entity manager is done by the outer try/catch block
         		
@@ -483,22 +479,22 @@ public class TeamResource extends ServerResource {
     			// --------------------------------------------------
     			// This is the 'Update team' API call
     			// --------------------------------------------------
-        		log.info("this is 'Update team' API handling");
+        		log.debug("this is 'Update team' API handling");
         		
             	User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     			if(currentUser == null) {
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    				log.severe("user could not be retrieved from Request attributes!!");
+    				log.error("TeamResource:createGame:currentUser", "user could not be retrieved from Request attributes!!");
     			}
     			// teamId is required
     			else if(this.teamId == null || this.teamId.length() == 0) {
     				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
-    				log.info("invalid team ID");
+    				log.debug("invalid team ID");
     			}
     			// must be a member of the team
     			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
     				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-    				log.info(apiStatus);
+    				log.debug(apiStatus);
             	}
     			
     			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
@@ -509,7 +505,7 @@ public class TeamResource extends ServerResource {
         		Team team = (Team)em.createNamedQuery("Team.getByKey")
     				.setParameter("key", KeyFactory.stringToKey(this.teamId))
     				.getSingleResult();
-    			log.info("team retrieved = " + team.getTeamName());
+    			log.debug("team retrieved = " + team.getTeamName());
     			
     			// TODO use query instead of walking through entire members list.  See MemberResource for example of query.
     			List<Member> members = team.getTeamMates(currentUser);
@@ -538,13 +534,13 @@ public class TeamResource extends ServerResource {
     			if(!isCoordinator) {
     				apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR;
     				jsonReturn.put("apiStatus", apiStatus);
-    				log.info(apiStatus);
+    				log.debug(apiStatus);
     				return new JsonRepresentation(jsonReturn);
     			}
     	
     			JsonRepresentation jsonRep = new JsonRepresentation(entity);
     			JSONObject json = jsonRep.toJsonObject();
-    			log.info("received json object = " + json.toString());
+    			log.debug("received json object = " + json.toString());
     			
     			// if new field is empty, original value is not updated.
     			if(json.has("teamName")) {
@@ -581,7 +577,7 @@ public class TeamResource extends ServerResource {
     				
     				//::BUSINESS_RULE:: must be NA to set up a Twitter account
     				if(useTwitter && !currentUser.getIsNetworkAuthenticated()) {
-						log.info("user must be network authenticated to connect to a Twitter account");
+						log.debug("user must be network authenticated to connect to a Twitter account");
 						jsonReturn.put("apiStatus", ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
 						return new JsonRepresentation(jsonReturn);
     				}
@@ -653,7 +649,7 @@ public class TeamResource extends ServerResource {
 				Boolean isPortrait = null;
 				if(json.has("isPortrait")) {
 					isPortrait = json.getBoolean("isPortrait");
-					log.info("json isPortrait = " + isPortrait);
+					log.debug("json isPortrait = " + isPortrait);
 				}
     			
     			if(json.has("photo")) {
@@ -697,7 +693,7 @@ public class TeamResource extends ServerResource {
     					} else if(oldPhoto.length() > 0 && photoBase64.length() == 0) {
     						teamUpdateMessage = "Team Photo was removed";
     					}
-    					log.info("modMessage = " + teamUpdateMessage);
+    					log.debug("modMessage = " + teamUpdateMessage);
     					notificationMessage = notificationMessage + " " + teamUpdateMessage;
     				} catch(Exception e) {
     					apiStatus = ApiStatusCode.INVALID_PHOTO_PARAMETER;
@@ -785,19 +781,16 @@ public class TeamResource extends ServerResource {
 
         	}
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("TeamResource:createGame:IOException", "error extracting JSON object from Post", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamResource:createGame:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NoResultException e) {
         	apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
-			log.info(apiStatus);
+			log.debug(apiStatus);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more teams have same team name");
-			e.printStackTrace();
+			log.exception("TeamResource:createGame:IOException", "should never happen - two or more teams have same team name", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -809,8 +802,7 @@ public class TeamResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamResource:createGame:JSONException2", "", e);
 		}
         return new JsonRepresentation(jsonReturn);
     }
