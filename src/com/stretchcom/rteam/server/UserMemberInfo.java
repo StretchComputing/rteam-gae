@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class UserMemberInfo {
-	private static final Logger log = Logger.getLogger(UserMemberInfo.class.getName());
+	//private static final Logger log = Logger.getLogger(UserMemberInfo.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private String apiStatus;
 	private String firstName;
@@ -292,7 +293,7 @@ public class UserMemberInfo {
 					outMatch.setEmailAddress(in.getEmailAddress());
 				} else if(!in.getEmailAddress().equalsIgnoreCase(outMatch.getEmailAddress())) {
 					// error because both EAs are not null and they don't equal
-					log.severe("input EA = " + in.getEmailAddress() + " not equal to output EA = " + outMatch.getEmailAddress());
+					log.error("UserMemberInfo:filterDuplicates:emailBadMatch", "input EA = " + in.getEmailAddress() + " not equal to output EA = " + outMatch.getEmailAddress());
 				}
 			
 				if(in.getUserId() == null && outMatch.getUserId() != null) {
@@ -301,7 +302,7 @@ public class UserMemberInfo {
 					outMatch.setUserId(in.getUserId());
 				} else if(!in.getUserId().equalsIgnoreCase(outMatch.getUserId())) {
 					// error because both userIds are not null and they don't equal
-					log.severe("input userId = " + in.getUserId() + " not equal to output userId = " + outMatch.getUserId());
+					log.error("UserMemberInfo:filterDuplicates:userIdBadMatch", "input userId = " + in.getUserId() + " not equal to output userId = " + outMatch.getUserId());
 				}
 
 				if(in.getPhoneNumber() == null && outMatch.getPhoneNumber() != null) {
@@ -310,7 +311,7 @@ public class UserMemberInfo {
 					outMatch.setPhoneNumber(in.getPhoneNumber());
 				} else if(!in.getPhoneNumber().equalsIgnoreCase(outMatch.getPhoneNumber())) {
 					// error because both PNs are not null and they don't equal
-					log.severe("input PN = " + in.getPhoneNumber() + " not equal to output PN = " + outMatch.getPhoneNumber());
+					log.error("UserMemberInfo:filterDuplicates:phoneNumberBadMatch", "input PN = " + in.getPhoneNumber() + " not equal to output PN = " + outMatch.getPhoneNumber());
 				}
 
 			} else {

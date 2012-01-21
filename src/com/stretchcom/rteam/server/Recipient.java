@@ -800,7 +800,6 @@ public class Recipient {
 			}
 		} catch (Exception e) {
 			log.exception("Recipient:handleEmailReplyUsingFromAddressAndSubject:Exception", "handleEmailReplyUsingFromAddressAndSubject(): exception = " + e.getMessage(), e);
-			e.printStackTrace();
 			returnResult = UserInterfaceMessage.SERVER_ERROR;
 		} finally {
     		emRecipient.close();

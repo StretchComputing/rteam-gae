@@ -15,8 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import com.handinteractive.mobile.UAgentInfo;
 
 public class UrlRewriteFilter implements Filter {
-
-    private static final Logger log = Logger.getLogger(UrlRewriteFilter.class.getName());
+    //private static final Logger log = Logger.getLogger(UrlRewriteFilter.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 
     @Override
     public void destroy() {
@@ -29,7 +29,7 @@ public class UrlRewriteFilter implements Filter {
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             String uri = httpRequest.getRequestURI();
-            log.info("Url Rewrite filter. Before URI: " + uri);
+            log.debug("Url Rewrite filter. Before URI: " + uri);
             
             // for any legacy REST API, we need to add in the v1 to the REST URL
             if(!uri.toLowerCase().contains("v1") &&
@@ -47,7 +47,7 @@ public class UrlRewriteFilter implements Filter {
                uri.toLowerCase().startsWith("/cron"))
                ) {
                 uri = "/v1" + uri;
-                log.info("Url Rewrite filter. After URI: " + uri);
+                log.debug("Url Rewrite filter. After URI: " + uri);
                 RequestDispatcher rd = httpRequest.getRequestDispatcher(uri);
                 rd.forward(request, response);
                 return;

@@ -16,7 +16,8 @@ import org.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 
 public class UrbanAirshipClient {
-	private static final Logger log = Logger.getLogger(UrbanAirshipClient.class.getName());
+	//private static final Logger log = Logger.getLogger(UrbanAirshipClient.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	// HTTP Methods
 	private static final String HTTP_PUT = "PUT";
@@ -39,7 +40,7 @@ public class UrbanAirshipClient {
 
 	// Returns response from API. Can be null.
 	static public String register(String theDeviceToken, Boolean theIsDeveloper) {
-		log.info("UrbanAirshipClient::register entered, theDeviceToken = " + theDeviceToken);
+		log.debug("UrbanAirshipClient::register entered, theDeviceToken = " + theDeviceToken);
 		
 		if(theDeviceToken == null) {
 			return null;
@@ -59,14 +60,14 @@ public class UrbanAirshipClient {
 			url = new URL(urlStr);
 			response = send(url, HTTP_PUT, null, applicationKey, applicationSecret);
 		} catch (MalformedURLException e) {
-			log.severe("MalformedURLException exception: " + e.getMessage());
+			log.exception("UrbanAirShipClient:register:MalformedURLException", "", e);
 		}
 		
 		return response;
 	}
 	
 	static public String push(String theAlert, Integer theBadge, String theDeviceToken, Boolean theIsDeveloper) {
-		log.info("UrbanAirshipClient::push entered, theAlert = " + theAlert);
+		log.debug("UrbanAirshipClient::push entered, theAlert = " + theAlert);
 		
 		String applicationKey = URBAN_AIRSHIP_APPLICATION_KEY;
 		String applicationMasterSecret = URBAN_AIRSHIP_APPLICATION_MASTER_SECRET;
@@ -94,10 +95,10 @@ public class UrbanAirshipClient {
 			}
 			jsonPayload.put("aps", jsonAps);
 		} catch (JSONException e1) {
-			log.severe("JSONException exception: " + e1.getMessage());
+			log.exception("UrbanAirShipClient:push:JSONException", "", e1);
 			return null;
 		}
-		log.info("jsonPayload = " + jsonPayload.toString());
+		log.debug("jsonPayload = " + jsonPayload.toString());
 		
 		String response = null;
 		String urlStr = URBAN_AIRSHIP_BASE_URL + URBAN_AIRSHIP_PUSH + "/";
@@ -106,7 +107,7 @@ public class UrbanAirshipClient {
 			url = new URL(urlStr);
 			response = send(url, HTTP_POST, jsonPayload.toString(), applicationKey, applicationMasterSecret);
 		} catch (MalformedURLException e) {
-			log.severe("MalformedURLException exception: " + e.getMessage());
+			log.exception("UrbanAirShipClient:push:MalformedURLException", "", e);
 		}
 		
 		return response;
@@ -118,8 +119,8 @@ public class UrbanAirshipClient {
 	static private String send(URL theUrl, String theHttpMethod, String theJsonPayload,
 			       String theBasicAuthUserName, String theBasicAuthPassword) {
 		// TODO add parameter verification
-		log.info("UrbanAirshipClient::send theUrl = " + theUrl.toString());
-		log.info("UrbanAirshipClient::send theJsonPayload = " + theJsonPayload);
+		log.debug("UrbanAirshipClient::send theUrl = " + theUrl.toString());
+		log.debug("UrbanAirshipClient::send theJsonPayload = " + theJsonPayload);
 
 		String response = "";
 		HttpURLConnection connection = null;
@@ -147,7 +148,7 @@ public class UrbanAirshipClient {
 			try {
 				bytes = buf.toString().getBytes("ISO-8859-1");
 			} catch (java.io.UnsupportedEncodingException uee) {
-				log.severe("base64 encoding failed: " + uee.getMessage());
+				log.exception("UrbanAirShip:send:UnsupportedEncodingException", "", uee);
 			}
 
 			String header = "Basic " + Base64.encodeBase64String(bytes);
@@ -169,7 +170,7 @@ public class UrbanAirshipClient {
 			// Get HTTP response
 			////////////////////
 			int responseCode = connection.getResponseCode();
-			log.info("responseCode = " + responseCode);
+			log.debug("responseCode = " + responseCode);
 			
 			if (responseCode == HttpURLConnection.HTTP_OK) {
 				// read-back the response
@@ -185,25 +186,25 @@ public class UrbanAirshipClient {
 				response = responseBuffer.toString();
 			} else // Server returned HTTP error code.
 			{
-				log.severe("UrbanAirshipClient::push server returned error code: " + responseCode);
+				log.error("UrbanAirShip:send:http", "UrbanAirshipClient::push server returned error code: " + responseCode);
 			}
 
 		} catch (UnsupportedEncodingException ex) {
-			log.severe("UrbanAirshipClient::push UnsupportedEncodingException: " + ex);
+			log.exception("UrbanAirShip:send:UnsupportedEncodingException", "", ex);
 		} catch (MalformedURLException ex) {
-			log.severe("UrbanAirshipClient::push MalformedURLException: " + ex);
+			log.exception("UrbanAirShip:send:MalformedURLException", "", ex);
 		} catch (IOException ex) {
-			log.severe("UrbanAirshipClient::push IOException: " + ex);
+			log.exception("UrbanAirShip:send:MalformedURLException", "", ex);
 		} finally {
 			try {
 				if (writer != null) {writer.close();}
 			} catch (Exception ex) {
-				log.severe("UrbanAirshipClient::push Exception closing writer: " + ex);
+				log.exception("UrbanAirShip:send:Exception1", "", ex);
 			}
 			try {
 				if (reader != null) {reader.close();}
 			} catch (Exception ex) {
-				log.severe("UrbanAirshipClient::push Exception closing reader: " + ex);
+				log.exception("UrbanAirShip:send:Exception2", "", ex);
 			}
 			if (connection != null) {connection.disconnect();}
 		}

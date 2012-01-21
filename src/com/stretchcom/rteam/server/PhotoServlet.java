@@ -49,7 +49,6 @@ public class PhotoServlet extends HttpServlet {
             out = resp.getOutputStream();
             out.write(photo);
         } catch (Exception e) {
-            e.printStackTrace();
             log.debug("PhotoServlet exception = " + e.getMessage());
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {

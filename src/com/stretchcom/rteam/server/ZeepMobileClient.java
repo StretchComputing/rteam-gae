@@ -45,7 +45,8 @@ public class ZeepMobileClient {
 	// For your user to use the JOIN command, they simply text "JOIN rTeam" to 88147
 
 	
-	private static final Logger log = Logger.getLogger(ZeepMobileClient.class.getName());
+	//private static final Logger log = Logger.getLogger(ZeepMobileClient.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	// HTTP Methods
 	private static final String HTTP_PUT = "PUT";
@@ -66,7 +67,7 @@ public class ZeepMobileClient {
 			URL url = new URL(POST_URL);
 			response = send(url, theUserId, theMessage);
 		} catch (MalformedURLException e) {
-			log.severe("MalformedURLException exception: " + e.getMessage());
+			log.exception("ZeepMobileClient:postSms:MalformedExeption", "", e);
 		}
 		
 		return response;
@@ -75,9 +76,9 @@ public class ZeepMobileClient {
 	// theUrl: complete url
 	// theMessage: the SMS message to send.
 	static private String send(URL theUrl, String theUserId, String theMessage) {
-		log.info("ZeepMobileClient::send theUrl = " + theUrl.toString());
-		log.info("ZeepMobileClient::send theUserId = " + theUserId);
-		log.info("ZeepMobileClient::send thePayload = " + theMessage);
+		log.debug("ZeepMobileClient::send theUrl = " + theUrl.toString());
+		log.debug("ZeepMobileClient::send theUserId = " + theUserId);
+		log.debug("ZeepMobileClient::send thePayload = " + theMessage);
 
 		String response = "";
 		HttpURLConnection connection = null;
@@ -105,7 +106,7 @@ public class ZeepMobileClient {
 			String encodedMessage = URLEncoder.encode(theMessage, "UTF-8");
 			String encodedUserId = URLEncoder.encode(theUserId, "UTF-8");
 			String content = "user_id=" + encodedUserId + "&body=" + encodedMessage;
-			log.info("content = " + content);
+			log.debug("content = " + content);
 			connection.setRequestProperty("Content-Length", ""+content.length());
 
 			////////////////////
@@ -121,7 +122,7 @@ public class ZeepMobileClient {
 			// Get HTTP response
 			////////////////////
 			int responseCode = connection.getResponseCode();
-			log.info("responseCode = " + responseCode);
+			log.debug("responseCode = " + responseCode);
 			
 			if (responseCode == HttpURLConnection.HTTP_OK) {
 				// read-back the response
@@ -137,25 +138,25 @@ public class ZeepMobileClient {
 				response = responseBuffer.toString();
 			} else // Server returned HTTP error code.
 			{
-				log.severe("ZeepMobileClient::send server returned error code: " + responseCode);
+				log.error("ZeepMobileClient:postSms:errorCode", "send server returned error code: " + responseCode);
 			}
 
 		} catch (UnsupportedEncodingException ex) {
-			log.severe("ZeepMobileClient::send UnsupportedEncodingException: " + ex);
+			log.exception("ZeepMobileClient:postSms:UnsupportedEncodingException", "", ex);
 		} catch (MalformedURLException ex) {
-			log.severe("ZeepMobileClient::send MalformedURLException: " + ex);
+			log.exception("ZeepMobileClient:postSms:MalformedURLException", "", ex);
 		} catch (IOException ex) {
-			log.severe("ZeepMobileClient::send IOException: " + ex);
+			log.exception("ZeepMobileClient:postSms:IOException", "", ex);
 		} finally {
 			try {
 				if (writer != null) {writer.close();}
 			} catch (Exception ex) {
-				log.severe("ZeepMobileClient::send Exception closing writer: " + ex);
+				log.exception("ZeepMobileClient:postSms:Exception1", "", ex);
 			}
 			try {
 				if (reader != null) {reader.close();}
 			} catch (Exception ex) {
-				log.severe("ZeepMobileClient::send Exception closing reader: " + ex);
+				log.exception("ZeepMobileClient:postSms:Exception2", "", ex);
 			}
 			if (connection != null) {connection.disconnect();}
 		}
@@ -185,16 +186,16 @@ public class ZeepMobileClient {
 		      
 		    }
 		    catch (NoSuchAlgorithmException e) {
-		      log.severe("NoSuchAlgorithmException exception = " + e.getMessage());
+		      log.exception("ZeepMobileClient:getAuthentication:NoSuchAlgorithmException", "", e);
 		    }
 		    catch (UnsupportedEncodingException e) {
-		    	log.severe("UnsupportedEncodingException exception = " + e.getMessage());
+			      log.exception("ZeepMobileClient:getAuthentication:UnsupportedEncodingException", "", e);
 		    }
 		    catch (InvalidKeyException e) {
-		    	log.severe("InvalidKeyException exception = " + e.getMessage());
+			      log.exception("ZeepMobileClient:getAuthentication:InvalidKeyException", "", e);
 		    }
 		    
-		    log.info("authentication = " + authentication);
+		    log.debug("authentication = " + authentication);
 		    return authentication;
 	}
 	

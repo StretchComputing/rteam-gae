@@ -60,6 +60,8 @@ public class TeamResource extends ServerResource {
     
     @Override  
     protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
         log.debug("UserResource:doInit() - teamId = " + this.teamId);
@@ -168,7 +170,6 @@ public class TeamResource extends ServerResource {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (NonUniqueResultException e) {
 			log.exception("TeamResource:getTeamInfo:NonUniqueResultException", "two or more users have same key", e);
-			e.printStackTrace();
         	this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 			em.close();
@@ -763,7 +764,6 @@ public class TeamResource extends ServerResource {
 //    					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 //    				} catch (NonUniqueResultException e) {
 //    					log.severe("should never happen - two or more users have same key");
-//    					e.printStackTrace();
 //    					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 //    				} finally {
 //    				    if (em2.getTransaction().isActive()) {

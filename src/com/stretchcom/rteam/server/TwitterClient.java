@@ -28,7 +28,8 @@ import twitter4j.http.RequestToken;
 import com.google.appengine.api.datastore.KeyFactory;
 
 public class TwitterClient {
-	private static final Logger log = Logger.getLogger(TwitterClient.class.getName());
+	//private static final Logger log = Logger.getLogger(TwitterClient.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	private static final String API_KEY = "fAqwt1YyGDnhH54AjNRYQ";
 	private static final String CONSUMER_KEY = "fAqwt1YyGDnhH54AjNRYQ";
@@ -57,7 +58,7 @@ public class TwitterClient {
 				twitter = new TwitterFactory().getInstance();
 				twitter.setOAuthConsumer(CONSUMER_KEY, CONSUMER_SECRET);
 				String callbackUrl = RteamApplication.BASE_URL_WITH_SLASH + RteamApplication.GWT_HOST_PAGE + "?twittertoken=" + theOneUseToken;
-				log.info("callback URL sent to twitter = " + callbackUrl);
+				log.debug("callback URL sent to twitter = " + callbackUrl);
 				requestToken = twitter.getOAuthRequestToken(callbackUrl);
 				
 				String authorizationUrl = requestToken.getAuthorizationURL();
@@ -66,14 +67,14 @@ public class TwitterClient {
 				theRequestTokenInfo.add(twitterRequestToken);
 				String twitterRequestTokenSecret = requestToken.getTokenSecret();
 				theRequestTokenInfo.add(twitterRequestTokenSecret);
-				log.info("twitter authorization URL = " + authorizationUrl);
-				log.info("twitter request token = " + twitterRequestToken);
-				log.info("twitter request token secret = " + twitterRequestTokenSecret);
+				log.debug("twitter authorization URL = " + authorizationUrl);
+				log.debug("twitter request token = " + twitterRequestToken);
+				log.debug("twitter request token secret = " + twitterRequestTokenSecret);
 			} catch (TwitterException e) {
-				log.info("getRequestToken() twitter exception = " + e.getMessage());
+				log.debug("getRequestToken() twitter exception = " + e.getMessage());
 				returnValue = false;
 			} catch (Exception e) {
-				log.info("getRequestToken() exception = " + e.getMessage());
+				log.debug("getRequestToken() exception = " + e.getMessage());
 				returnValue = false;
 			}
 			return returnValue;
@@ -95,23 +96,23 @@ public class TwitterClient {
 			
 			String twitterAccessToken = accessToken.getToken();
 			theAccessTokenInfo.add(twitterAccessToken);
-			log.info("twitter access token = " + twitterAccessToken);
+			log.debug("twitter access token = " + twitterAccessToken);
 			
 			String twitterAccessTokenSecret = accessToken.getTokenSecret();
 			theAccessTokenInfo.add(twitterAccessTokenSecret);
-			log.info("twitter access token secret = " + twitterAccessTokenSecret);
+			log.debug("twitter access token secret = " + twitterAccessTokenSecret);
 			
 			String screenNameParam = accessToken.getScreenName();
 			theAccessTokenInfo.add(screenNameParam);
-			log.info("screen name = " + screenNameParam);
+			log.debug("screen name = " + screenNameParam);
 			
 			int userId = accessToken.getUserId();
-			log.info("user id = " + userId);
+			log.debug("user id = " + userId);
 		} catch (TwitterException e) {
-			log.info("getAccessToken() twitter exception = " + e.getMessage());
+			log.debug("getAccessToken() twitter exception = " + e.getMessage());
 			returnValue = false;
 		} catch (Exception e) {
-			log.info("getAccessToken() exception = " + e.getMessage());
+			log.debug("getAccessToken() exception = " + e.getMessage());
 			returnValue = false;
 		}
 		return returnValue;
@@ -126,11 +127,11 @@ public class TwitterClient {
 			twitter.setOAuthConsumer(CONSUMER_KEY, CONSUMER_SECRET);
 			twitter.setOAuthAccessToken(theTwitterAccessToken, theTwitterAccessTokenSecret);
 			returnValue = twitter.updateStatus(theNewStatus);
-			log.info("updated status sent to Twitter = " + returnValue.getText() + ". Status ID = " + returnValue.getId());
+			log.debug("updated status sent to Twitter = " + returnValue.getText() + ". Status ID = " + returnValue.getId());
 		} catch (TwitterException e) {
-			log.info("updateStatus() twitter exception = " + e.getMessage());
+			log.debug("updateStatus() twitter exception = " + e.getMessage());
 		} catch (Exception e) {
-			log.info("updateStatus() exception = " + e.getMessage());
+			log.debug("updateStatus() exception = " + e.getMessage());
 		}
 		return returnValue;
 	}
@@ -162,7 +163,7 @@ public class TwitterClient {
 				if(statuses.size() == 0) break;
 				allStatuses.addAll(statuses);
 				if(allStatuses.size() > MAX_STATUSES) {
-					log.severe("TwitterClient::getTeamActivities() MAX_STATUSES exceeded");
+					log.error("TwitterClient:getTeamActivities:maxStatuses", "TwitterClient::getTeamActivities() MAX_STATUSES exceeded");
 				}
 				pageCount++;
 				paging.setPage(pageCount);
@@ -178,12 +179,11 @@ public class TwitterClient {
 				activities.add(a);
 			}
 			
-			log.info("TwitterClient::getTeamActivities() number of activties retrieved from Twitter = " + activities.size());
+			log.debug("TwitterClient::getTeamActivities() number of activties retrieved from Twitter = " + activities.size());
 		} catch (TwitterException e) {
-			log.info("getTeamActivities() twitter exception = " + e.getMessage());
+			log.exception("TwitterClient:getTeamActivities:TwitterException", "", e);
 		} catch (Exception e) {
-			log.info("getTeamActivities() exception = " + e.getMessage());
-			e.printStackTrace();
+			log.exception("TwitterClient:getTeamActivities:TwitterException", "", e);
 		}
 		return activities;
 	}

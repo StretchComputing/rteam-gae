@@ -19,7 +19,9 @@ import org.restlet.ext.servlet.ServletUtils;
 import sun.misc.BASE64Encoder;
 
 public class Utility {
-	private static final Logger log = Logger.getLogger(Utility.class.getName());
+	//private static final Logger log = Logger.getLogger(Utility.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
+	
 	public static final String NOT_SPECIFIED = "(not specified)";
 	
 	public static String removeAllWhiteSpace(String theInputString) {
@@ -112,7 +114,7 @@ public class Utility {
     	theOldValue = theOldValue.trim().length() == 0 ? NOT_SPECIFIED : theOldValue.trim();
     	theNewValue = theNewValue.trim().length() == 0 ? NOT_SPECIFIED : theNewValue.trim();
     	String modMessage = theFieldName + ": from '" + theOldValue + "' to '" + theNewValue + "'";
-    	log.info("modMessage = " + modMessage);
+    	log.debug("modMessage = " + modMessage);
     	return modMessage;
     }
     
@@ -138,7 +140,7 @@ public class Utility {
     public static String getEventType(Game theGame, Practice thePractice) {
     	String eventTypeStr = theGame != null ? Practice.GAME_EVENT_TYPE : Practice.PRACTICE_EVENT_TYPE;
     	if(thePractice != null) {
-    		log.info("thePractice.getEventType() = " + thePractice.getEventType());
+    		log.debug("thePractice.getEventType() = " + thePractice.getEventType());
     	}
     	if(eventTypeStr.equalsIgnoreCase(Practice.PRACTICE_EVENT_TYPE) && thePractice.getEventType().equalsIgnoreCase(Practice.GENERIC_EVENT_TYPE)) {
     		eventTypeStr = "event";
@@ -178,7 +180,7 @@ public class Utility {
 			// convert encrypted bytes to base64 encoded string so data can be stored in the database
 			encryptedText = Base64.encodeBase64String(raw);
 		} catch (Exception e) {
-			log.severe("Utility::encrypt() exception = " + e.getMessage());
+			log.exception("Utility:encrypt:Exception", "", e);
 		}
 		return encryptedText;
 	}
@@ -226,11 +228,11 @@ public class Utility {
     	JSONObject json = new JSONObject();
     	try {
         	if(theApiStatus != null) {
-        		log.info("returning apiStatus = " + theApiStatus);
+        		log.debug("returning apiStatus = " + theApiStatus);
     			json.put("apiStatus", theApiStatus);
         	}
 		} catch (JSONException e) {
-			log.severe("Utility::apiError()  exception = " + e.getMessage());
+			log.exception("Utility:apiError:JSONException", "", e);
 		}
 		return new JsonRepresentation(json);
 	}

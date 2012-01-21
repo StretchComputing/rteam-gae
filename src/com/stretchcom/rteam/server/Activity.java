@@ -302,7 +302,6 @@ public class Activity implements Comparable<Activity> {
 			}
     	} catch (Exception e) {
 			log.exception("Activity:getActivityIdOfEventPhoto:Exception", "", e);
-			e.printStackTrace();
 		} finally {
 		    em.close();
 		}

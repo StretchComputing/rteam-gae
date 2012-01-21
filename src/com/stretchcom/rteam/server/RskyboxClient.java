@@ -114,7 +114,9 @@ public class RskyboxClient {
 
 		// No matter what, do the local logging if it is turned on
 		if(theIncludeLocalLog != null && theIncludeLocalLog) {
-			if(theLevel.equalsIgnoreCase(RskyboxLog.DEBUG_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.INFO_LEVEL)) {
+			if(theLevel.equalsIgnoreCase(RskyboxLog.DEBUG_LEVEL)) {
+				log.fine(theMessage);
+			} else if(theLevel.equalsIgnoreCase(RskyboxLog.INFO_LEVEL)) {
 				log.info(theMessage);
 			} else if(theLevel.equalsIgnoreCase(RskyboxLog.ERROR_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.EXCEPTION_LEVEL)) {
 				if(theException != null) {

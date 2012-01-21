@@ -56,6 +56,8 @@ public class MessageThreadResource extends ServerResource {
     
     @Override  
     protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         // attribute values taken from the URI template /team/{teamId}/messageThreads/{messageThreadId}/{timeZone}
     	
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 

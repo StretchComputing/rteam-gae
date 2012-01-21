@@ -22,6 +22,7 @@ import org.restlet.representation.StringRepresentation;
 import org.restlet.representation.Variant;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
 import com.google.appengine.api.datastore.Key;
@@ -32,14 +33,19 @@ import com.google.appengine.api.datastore.KeyFactory;
  * 
  */
 public class TeamsResource extends ServerResource {
-	private static final Logger log = Logger.getLogger(TeamsResource.class
-			.getName());
+	//private static final Logger log = Logger.getLogger(TeamsResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
 
-	// Handles 'Create a new team' API
+    @Override  
+    protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    }
+
+    // Handles 'Create a new team' API
 	@Post
 	public JsonRepresentation createTeam(Representation entity) {
 		JSONObject jsonReturn = new JSONObject();
-		log.info("createTeam(@Post) entered ..... ");
+		log.debug("createTeam(@Post) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 
 		String apiStatus = ApiStatusCode.SUCCESS;
@@ -52,10 +58,10 @@ public class TeamsResource extends ServerResource {
 			currentUser = (User) this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
 			if (currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				log.severe("user could not be retrieved from Request attributes!!");
+				log.error("TeamsResource:createTeam:currentUser", "user could not be retrieved from Request attributes!!");
 				return new JsonRepresentation(jsonReturn);
 			} else {
-				log.info("currentUser = " + currentUser.getFullName());
+				log.debug("currentUser = " + currentUser.getFullName());
 			}
 
 			team = new Team();
@@ -80,7 +86,7 @@ public class TeamsResource extends ServerResource {
 			boolean useTwitter = false;
 			if(json.has("useTwitter")) {
 				useTwitter = json.getBoolean("useTwitter");
-				log.info("json useTwitter = " + useTwitter);
+				log.debug("json useTwitter = " + useTwitter);
 			}
 			team.setUseTwitter(useTwitter);
 
@@ -175,7 +181,7 @@ public class TeamsResource extends ServerResource {
 			if(apiStatus.equals(ApiStatusCode.SUCCESS) && team.getUseTwitter()) {
 				if(!currentUser.getIsNetworkAuthenticated()) {
 					apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
-					log.info("user must be network authenticated to connect to a Twitter account");
+					log.debug("user must be network authenticated to connect to a Twitter account");
 				}
 			}
 
@@ -260,7 +266,7 @@ public class TeamsResource extends ServerResource {
 			em.persist(team);
 			em.getTransaction().commit();
 			String keyWebStr = KeyFactory.keyToString(team.getKey());
-			log.info("team " + team.getTeamName() + " with key " + keyWebStr + " created successfully");
+			log.debug("team " + team.getTeamName() + " with key " + keyWebStr + " created successfully");
 
 			// TODO URL should be filtered to have only legal characters
 			String baseUri = this.getRequest().getHostRef().getIdentifier();
@@ -272,12 +278,10 @@ public class TeamsResource extends ServerResource {
 				jsonReturn.put("twitterAuthorizationUrl", team.getTwitterAuthorizationUrl());
 			}
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("TeamsResource:createTeam:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamsResource:createTeam:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 			if (em.getTransaction().isActive()) {
@@ -289,7 +293,7 @@ public class TeamsResource extends ServerResource {
 		// update User in a separate transaction - User and Team are in the same
 		// Entity Group?
 		if (currentUser != null && this.getStatus().equals(Status.SUCCESS_CREATED)) {
-			log.info("adding Team to user team list");
+			log.debug("adding Team to user team list");
 			EntityManager em2 = EMF.get().createEntityManager();
 			em2.getTransaction().begin();
 			try {
@@ -297,16 +301,15 @@ public class TeamsResource extends ServerResource {
 						.setParameter("key", currentUser.getKey())
 						.getSingleResult();
 				List<Key> teams = currentUser.getTeams();
-				log.info("number of teams for user " + currentUser.getLastName() + " = " + teams.size());
-				log.info("about to add team to user: team key = " + team.getKey());
+				log.debug("number of teams for user " + currentUser.getLastName() + " = " + teams.size());
+				log.debug("about to add team to user: team key = " + team.getKey());
 				currentUser.addTeam(team);
 				em2.getTransaction().commit();
 			} catch (NoResultException e) {
-				log.severe("user not found");
+				log.exception("TeamsResource:createTeam:NoResultException", "user not found", e);
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			} catch (NonUniqueResultException e) {
-				log.severe("should never happen - two or more users have same key");
-				e.printStackTrace();
+				log.exception("TeamsResource:createTeam:NonUniqueResultException", "should never happen - two or more users have same key", e);
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			} finally {
 				if (em2.getTransaction().isActive()) {
@@ -319,8 +322,7 @@ public class TeamsResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamsResource:createTeam:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
 	}
@@ -328,7 +330,7 @@ public class TeamsResource extends ServerResource {
 	// Handles 'Get list of teams' API
 	@Get("json")
 	public JsonRepresentation getTeamList(Variant variant) {
-		log.info("TeamResource:toJson() entered");
+		log.debug("TeamResource:toJson() entered");
 		JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
 
@@ -338,7 +340,7 @@ public class TeamsResource extends ServerResource {
 			User currentUser = (User) this.getRequest().getAttributes().get(
 					RteamApplication.CURRENT_USER);
 			if (currentUser == null) {
-				log.severe("user could not be retrieved from Request attributes!!");
+				log.error("TeamsResource:getTeamList:currentUser", "user could not be retrieved from Request attributes!!");
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				return new JsonRepresentation(jsonReturn);
 			}
@@ -347,7 +349,7 @@ public class TeamsResource extends ServerResource {
 					.setParameter("key", currentUser.getKey())
 					.getSingleResult();
 			List<Key> teamKeys = user.getTeams();
-			log.info("number of user teams = " + teamKeys.size());
+			log.debug("number of user teams = " + teamKeys.size());
 
 			// cannot use a NamedQuery for a batch get of keys
 			List<Team> teams = new ArrayList<Team>();
@@ -382,7 +384,7 @@ public class TeamsResource extends ServerResource {
 				jsonTeamObj.put("participantRole", Member.CREATOR_PARTICIPANT);
 				for (Member m : members) {
 					if (m.getTeam().equals(t)) {
-						log.info("participantRole is being set = " + m.getParticipantRole());
+						log.debug("participantRole is being set = " + m.getParticipantRole());
 						jsonTeamObj.put("participantRole", m.getParticipantRole());
 						break;
 					}
@@ -393,24 +395,19 @@ public class TeamsResource extends ServerResource {
 			}
 			jsonReturn.put("teams", jsonArray);
 		} catch (NoResultException e) {
-			log.severe("user not found");
+			log.exception("TeamsResource:getTeamList:NoResultException", "user not found", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same key");
+			log.exception("TeamsResource:getTeamList:NonUniqueResultException", "two or more users have same key", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamsResource:getTeamList:JSONException1", "", e);
 		}
 
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log
-					.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("TeamsResource:getTeamList:JSONException1", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
 	}

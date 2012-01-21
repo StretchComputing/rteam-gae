@@ -51,6 +51,8 @@ public class ActivityResource extends ServerResource {
 	
     @Override  
     protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
         log.debug("ActivityResource:doInit() - teamId = " + this.teamId);
@@ -352,7 +354,6 @@ public class ActivityResource extends ServerResource {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
 			log.exception("UserResource:getActivity:JSONException2", "error converting json representation into a JSON object", e);
-			e.printStackTrace();
 		}
         return new JsonRepresentation(jsonReturn);
     }

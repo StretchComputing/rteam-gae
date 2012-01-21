@@ -48,6 +48,8 @@ public class GameResource extends ServerResource {
     
     @Override  
     protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         // attribute values taken from the URI template /team/{teamId}/game/{gameId}/{timeZone}
     	
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
@@ -287,7 +289,6 @@ public class GameResource extends ServerResource {
     		}    		
 		} catch (JSONException e) {
 			log.exception("GameResource:getGameInfo:JSONException1", "", e);
-			e.printStackTrace();
 		} finally {
 			em.close();
 		}
@@ -296,7 +297,6 @@ public class GameResource extends ServerResource {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
 			log.exception("GameResource:getGameInfo:JSONException2", "", e);
-			e.printStackTrace();
 		}
         return new JsonRepresentation(jsonReturn);
     }

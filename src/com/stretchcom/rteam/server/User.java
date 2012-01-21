@@ -65,7 +65,8 @@ import com.google.appengine.api.datastore.Text;
     ),
 })
 public class User {
-	private static final Logger log = Logger.getLogger(User.class.getName());
+	//private static final Logger log = Logger.getLogger(User.class.getName());
+	private static RskyboxClient log = new RskyboxClient();
 	
 	public static final Integer AUTO_ARCHIVE_DAY_COUNT_DEFAULT = 30;
 	public static final Integer THUMB_NAIL_SHORT_SIDE  = 60;
@@ -362,11 +363,11 @@ public class User {
 		
 		// PRIORITY TODO: remove this debug code
 		// verify the key was added to the end of the list
-		log.info("addTeam(): size of Team key list = " + this.teams.size());
+		log.debug("addTeam(): size of Team key list = " + this.teams.size());
 		int cnt = 0;
 		for(Key tk : this.teams) {
 			if(tk.equals(teamKey)) {
-				log.info("addTeam(): index of new team key in list = " + cnt);
+				log.debug("addTeam(): index of new team key in list = " + cnt);
 				break;
 			}
 			cnt++;
@@ -400,7 +401,7 @@ public class User {
 		
 		// TODO Remove this robustness enhancer
 		if(entityIsOutOfSynch) {
-			log.severe("Should never happen: number of user teams not equal to number of newest Cache Ids. Cache IDs all being reset to 0L.");
+			log.error("User:removeTeam:teamCount", "number of user teams not equal to number of newest Cache Ids. Cache IDs all being reset to 0L.");
 			// rebuild the cache ID list setting them all back to zero 
 			this.teamNewestCacheIds.clear();
 			for(int i=0; i<this.teams.size(); i++) {
@@ -425,7 +426,7 @@ public class User {
 	
 	public void resetNewestCacheId(String theTeamId) {
 		if(this.teams.size() != this.teamNewestCacheIds.size()) {
-			log.severe("resetNewestCacheId(): should never happen. team size = " + this.teams.size() + " newestCacheId size = " + this.teamNewestCacheIds.size());
+			log.error("User:resetNewestCacheId:adjustTeamSize", "team size = " + this.teams.size() + " newestCacheId size = " + this.teamNewestCacheIds.size());
 			return;
 		}
 		
@@ -433,7 +434,7 @@ public class User {
 		try {
 			specifiedKey = KeyFactory.stringToKey(theTeamId);
 		} catch (Exception e) {
-			log.severe("resetNewestCacheId(): should never happen. exception = " + e.getMessage());
+			log.exception("User:resetNewestCacheId:Exception", "", e);
 			return;
 		}
 		
@@ -456,9 +457,9 @@ public class User {
 				.getSingleResult();
 			user.decrementNewMessageCount();
 		} catch (NoResultException e) {
-			log.severe("user not found using key");
+			log.exception("User:decrementAndPersistNewMessageCount:NoResultException", "user not found using key", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two users have the same key");
+			log.exception("User:decrementAndPersistNewMessageCount:NoResultException", "two users have the same key", e);
 		} finally {
 			em.close();
 		}
@@ -475,9 +476,9 @@ public class User {
 				.getSingleResult();
 			user.setNewMessageCount(theNewMessageCount);
 		} catch (NoResultException e) {
-			log.severe("user not found using key");
+			log.exception("User:setAndPersistNewMessageCount:NoResultException", "user not found using key", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two users have the same key");
+			log.exception("User:setAndPersistNewMessageCount:NoResultException", "two users have the same key", e);
 		} finally {
 			em.close();
 		}
@@ -732,8 +733,7 @@ public class User {
 	    		return users.get(0);
 	    	}
     	} catch (Exception e) {
-    		log.severe("Query User.getByEmailAddressAndIsNetworkAuthenticated failed");
-    		e.printStackTrace();
+    		log.exception("User:getUserWithEmailAddress:Exception", "Query User.getByEmailAddressAndIsNetworkAuthenticated failed", e);
     	} finally {
     		em.close();
     	}
@@ -748,9 +748,9 @@ public class User {
 				.setParameter("key", theUserKey)
 				.getSingleResult();
 		} catch (NoResultException e) {
-			log.info("user not found using key");
+			log.debug("user not found using key");
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two users have the same key");
+			log.exception("User:getUserWithEmailAddress:Exception", "two users have the same key", e);
 		} finally {
 			em.close();
 		}
@@ -774,11 +774,11 @@ public class User {
     	// associated memberships with user by setting the appropriate user ID in the member
 		/////////////////////////////////////////////////////////////////////////////////////
 		try {
-			log.info("user email address = " + theUser.getEmailAddress());
+			log.debug("user email address = " + theUser.getEmailAddress());
 			memberships = (List<Member>)em.createNamedQuery("Member.getByNetworkAuthenticatedEmailAddress")
 				.setParameter("emailAddress", theUser.getEmailAddress())
 				.getResultList();
-			log.info("# of memberships found = " + memberships.size());
+			log.debug("# of memberships found = " + memberships.size());
 			
 			// TODO - get "illegal argument" if I try to update multiple members in the same transaction
 			for(Member m : memberships) {
@@ -801,8 +801,7 @@ public class User {
     			em.getTransaction().commit();
 			}
     	} catch (Exception e) {
-    		log.severe("exception associating memberships: " + e.getMessage());
-    		e.printStackTrace();
+    		log.exception("User:synchUpWithAuthorizedMemberships:Exception1", "", e);
     	} finally {
 		    if (em.getTransaction().isActive()) {
 		    	em.getTransaction().rollback();
@@ -821,7 +820,7 @@ public class User {
 				.setParameter("emailAddress", theUser.getEmailAddress())
 				.setParameter("participantRole", Member.CREATOR_PARTICIPANT)
 				.getResultList();
-			log.info("# of creator memberships found = " + creatorMemberships.size());
+			log.debug("# of creator memberships found = " + creatorMemberships.size());
 			
 			// TODO - get "illegal argument" if I try to update multiple members in the same transaction
 			for(Member m : creatorMemberships) {
@@ -840,8 +839,7 @@ public class User {
     			em4.getTransaction().commit();
 			}
     	} catch (Exception e) {
-    		log.severe("exception NAing memberships created by user: " + e.getMessage());
-    		e.printStackTrace();
+    		log.exception("User:synchUpWithAuthorizedMemberships:Exception2", "", e);
     	} finally {
 		    if (em4.getTransaction().isActive()) {
 		    	em4.getTransaction().rollback();
@@ -863,7 +861,7 @@ public class User {
 							.setParameter("memberId", KeyFactory.keyToString(m.getKey()))
 							.setParameter("emailAddress", m.getEmailAddress())
 							.getResultList();
-    					log.info("# of recipients found = " + recipients.size());
+    					log.debug("# of recipients found = " + recipients.size());
     					
     					// TODO - get "illegal argument" if I try to update multiple recipients in the same transaction
     					for(Recipient r : recipients) {
@@ -887,8 +885,7 @@ public class User {
     				}
     			}
         	} catch (Exception e) {
-        		log.severe("exception updating recipients: " + e.getMessage());
-        		e.printStackTrace();
+        		log.exception("User:synchUpWithAuthorizedMemberships:Exception3", "", e);
         	} finally {
     		    if (em2.getTransaction().isActive()) {
     		    	em2.getTransaction().rollback();
@@ -928,11 +925,9 @@ public class User {
 					
 				em3.getTransaction().commit();
         	} catch (NoResultException e) {
-            	log.severe("user not found");
-            	e.printStackTrace();
+        		log.exception("User:synchUpWithAuthorizedMemberships:NoResultException", "user not found", e);
     		} catch (NonUniqueResultException e) {
-    			log.severe("should never happen - two or more users have same key");
-    			e.printStackTrace();
+    			log.exception("User:synchUpWithAuthorizedMemberships:NonUniqueResultException", "two or more users have same key", e);
     		} finally {
     		    if (em3.getTransaction().isActive()) {
     		    	em3.getTransaction().rollback();
@@ -958,11 +953,11 @@ public class User {
     	// associated memberships with user by setting the appropriate user ID in the member
 		/////////////////////////////////////////////////////////////////////////////////////
 		try {
-			log.info("user phone number = " + theUser.getPhoneNumber());
+			log.debug("user phone number = " + theUser.getPhoneNumber());
 			memberships = (List<Member>)em.createNamedQuery("Member.getBySmsConfirmedPhoneNumber")
 				.setParameter("phoneNumber", theUser.getPhoneNumber())
 				.getResultList();
-			log.info("# of memberships found = " + memberships.size());
+			log.debug("# of memberships found = " + memberships.size());
 			
 			// TODO - get "illegal argument" if I try to update multiple members in the same transaction
 			for(Member m : memberships) {
@@ -985,8 +980,7 @@ public class User {
     			em.getTransaction().commit();
 			}
     	} catch (Exception e) {
-    		log.severe("exception associating memberships: " + e.getMessage());
-    		e.printStackTrace();
+    		log.exception("User:synchUpWithSmsConfirmedMemberships:Exception", "", e);
     	} finally {
 		    if (em.getTransaction().isActive()) {
 		    	em.getTransaction().rollback();
@@ -1013,11 +1007,9 @@ public class User {
 				withinTransactionUser.setTeamNewestCacheIds(allTeamNewestCacheIds);
 				em3.getTransaction().commit();
         	} catch (NoResultException e) {
-            	log.severe("user not found");
-            	e.printStackTrace();
-    		} catch (NonUniqueResultException e) {
-    			log.severe("should never happen - two or more users have same key");
-    			e.printStackTrace();
+            	log.exception("User:synchUpWithSmsConfirmedMemberships:NoResultException", "user not found", e);
+     		} catch (NonUniqueResultException e) {
+    			log.exception("User:synchUpWithSmsConfirmedMemberships:NoResultException", "two or more users have same key", e);
     		} finally {
     		    if (em3.getTransaction().isActive()) {
     		    	em3.getTransaction().rollback();
@@ -1052,11 +1044,9 @@ public class User {
 			user.addTeam(theTeam);
 			em.getTransaction().commit();
     	} catch (NoResultException e) {
-        	log.severe("user not found");
-        	e.printStackTrace();
+        	log.exception("User:addTeam:NoResultException", "user not found", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same key");
-			e.printStackTrace();
+			log.exception("User:addTeam:NonUniqueResultException", "two or more users have same key", e);
 		} finally {
 		    if (em.getTransaction().isActive()) {
 		    	em.getTransaction().rollback();
@@ -1075,19 +1065,17 @@ public class User {
 			user.addTeam(theTeam);
 			if(theUser.getMemberBoundEmailAddress() != null) {
 				user.setEmailAddress(theUser.getMemberBoundEmailAddress());
-				log.info("user email address set to member bound value = " + theUser.getMemberBoundEmailAddress());
+				log.debug("user email address set to member bound value = " + theUser.getMemberBoundEmailAddress());
 			}
 			if(theUser.getMemberBoundPhoneNumber() != null) {
 				user.setPhoneNumber(theUser.getMemberBoundPhoneNumber());
-				log.info("user phone number set to member bound value = " + theUser.getMemberBoundPhoneNumber());
+				log.debug("user phone number set to member bound value = " + theUser.getMemberBoundPhoneNumber());
 			}
 			em.getTransaction().commit();
     	} catch (NoResultException e) {
-        	log.severe("user not found");
-        	e.printStackTrace();
+        	log.exception("User:addTeamAndSetBoundValues:NoResultException", "user not found", e);
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two or more users have same key");
-			e.printStackTrace();
+			log.exception("User:addTeamAndSetBoundValues:NonUniqueResultException", "should never happen - two or more users have same key", e);
 		} finally {
 		    if (em.getTransaction().isActive()) {
 		    	em.getTransaction().rollback();

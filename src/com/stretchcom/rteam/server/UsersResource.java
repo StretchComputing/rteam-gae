@@ -26,6 +26,7 @@ import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Post;
 import org.restlet.resource.Put;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
 import com.google.appengine.api.datastore.Key;
@@ -40,12 +41,18 @@ import com.google.appengine.api.labs.taskqueue.TaskOptions.Method;
  *  
  */  
 public class UsersResource extends ServerResource {  
-	private static final Logger log = Logger.getLogger(UsersResource.class.getName());
+	//private static final Logger log = Logger.getLogger(UsersResource.class.getName());
+	private RskyboxClient log = new RskyboxClient(this);
   
+    @Override  
+    protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    }
+    
     // Handles 'Create a new user' API
     @Post("json")
     public JsonRepresentation createUser(Representation entity) {
-    	log.info("createUser(@Post) entered ..... ");
+    	log.debug("createUser(@Post) entered ..... ");
         User user = new User();
         JSONObject jsonReturn = new JSONObject();
 		EntityManager em = EMF.get().createEntityManager();
@@ -54,7 +61,7 @@ public class UsersResource extends ServerResource {
 		this.setStatus(Status.SUCCESS_CREATED);
         try {
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			log.info("jsonRep = " + jsonRep.toString());
+			log.debug("jsonRep = " + jsonRep.toString());
 			JSONObject json = jsonRep.toJsonObject();
 			
 			Boolean alreadyMember = null;
@@ -81,7 +88,7 @@ public class UsersResource extends ServerResource {
 			if(json.has("password")) {
 				String plainTextPassword = json.getString("password");
 				String encryptedPassword = Utility.encrypt(plainTextPassword);
-				log.info("encryptedPassword = " + encryptedPassword);
+				log.debug("encryptedPassword = " + encryptedPassword);
 				if(encryptedPassword == null) {
 					this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				} else {
@@ -172,8 +179,8 @@ public class UsersResource extends ServerResource {
 				}
 			}
 			
-//			log.info("status = " + this.getStatus().toString());
-//			log.info("Log message apiStatus = " + apiStatus);
+//			log.debug("status = " + this.getStatus().toString());
+//			log.debug("Log message apiStatus = " + apiStatus);
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
 				jsonReturn.put("apiStatus", apiStatus);
 				return new JsonRepresentation(jsonReturn);
@@ -204,12 +211,10 @@ public class UsersResource extends ServerResource {
 			
 			jsonReturn.put("token", token);
 		} catch (IOException e) {
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("UsersResource:createUser:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("UsersResource:createUser:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 		} finally {
 		    if (em.getTransaction().isActive()) {
@@ -221,8 +226,7 @@ public class UsersResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error creating JSON return object");
-			e.printStackTrace();
+			log.exception("UsersResource:createUser:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -230,7 +234,7 @@ public class UsersResource extends ServerResource {
     // Handles 'Delete All Users' API
     @Delete
     public JsonRepresentation removeAllUsers() {
-    	log.info("UsersResource:remove() entered");
+    	log.debug("UsersResource:remove() entered");
     	EntityManager em = EMF.get().createEntityManager();
         JSONObject jsonReturn = new JSONObject();
         
@@ -240,7 +244,7 @@ public class UsersResource extends ServerResource {
     		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-    			log.severe("user could not be retrieved from Request attributes!!");
+    			log.error("UsersResource:removeAllUsers:userNotRetrieved", "user could not be retrieved from Request attributes!!");
     		} else if(!currentUser.getIsSuperUser()) {
     			apiStatus = ApiStatusCode.NOT_A_SUPER_USER;
     		}
@@ -248,7 +252,7 @@ public class UsersResource extends ServerResource {
         		List<User> users = (List<User>)em.createNamedQuery("User.getAllNonSuperUsers")
         			.setParameter("isSuperUser", false)
         			.getResultList();
-        		log.info("UsersResource.remove(): removing " + users.size() + " Users");
+        		log.debug("UsersResource.remove(): removing " + users.size() + " Users");
         		
         		// tried to remove all users in a single transaction, but got the following error:
         		// "can't operate on multiple entity groups in a single transaction"
@@ -265,7 +269,7 @@ public class UsersResource extends ServerResource {
     		}
         } catch (NoResultException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("no result exception");
+			log.exception("UsersResource:removeAllUsers:NoResultException", "no result exception", e);
 		} finally {
 		    if (em.getTransaction().isActive()) {
 		        em.getTransaction().rollback();
@@ -276,8 +280,7 @@ public class UsersResource extends ServerResource {
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("UsersResource:removeAllUsers:JSONException", "no result exception", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     }
@@ -286,7 +289,7 @@ public class UsersResource extends ServerResource {
     @Put 
     public JsonRepresentation handleMigration(Representation entity) {
     	JSONObject jsonReturn = new JSONObject();
-    	log.info("updateUsers(@Put) entered ..... private migration");
+    	log.debug("updateUsers(@Put) entered ..... private migration");
 		
 		String apiStatus = ApiStatusCode.SUCCESS;
 		this.setStatus(Status.SUCCESS_OK);
@@ -294,7 +297,7 @@ public class UsersResource extends ServerResource {
         try {
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			JSONObject json = jsonRep.toJsonObject();
-			log.info("received json object = " + json.toString());
+			log.debug("received json object = " + json.toString());
 			
 			if(json.has("secret")) {
 				String secret = json.getString("secret");
@@ -326,31 +329,28 @@ public class UsersResource extends ServerResource {
 							} else if(migrationName.equalsIgnoreCase("addActiveThruGmtDateToRecipients")) {
 								addActiveThruGmtDateToRecipientsMigration();
 							} else {
-								log.severe("could NOT match migrationName");
+								log.error("UsersResource:handleMigration:migrationNameMatch", "could NOT match migrationName");
 							}
 						}
 					}
 					else {
-						log.severe("migration called with no 'migrationName' parameter");
+						log.error("UsersResource:handleMigration:noMigrationName", "migration called with no 'migrationName' parameter");
 					}
 				}
 			}
         } catch (IOException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error extracting JSON object from Post");
-			e.printStackTrace();
+			log.exception("UsersResource:handleMigration:IOException", "error extracting JSON object from Post", e);
 		} catch (JSONException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("UsersResource:handleMigration:JSONException1", "", e);
 		} finally {
 		}
 		
 		try {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
-			log.severe("error converting json representation into a JSON object");
-			e.printStackTrace();
+			log.exception("UsersResource:handleMigration:JSONException2", "", e);
 		}
 		return new JsonRepresentation(jsonReturn);
     	
@@ -374,7 +374,7 @@ public class UsersResource extends ServerResource {
 		
 		try {
 			List<User> users = (List<User>)em.createNamedQuery("User.getAll").getResultList();
-			log.info("UsersResource.updateUsers(): migrating " + users.size() + " Users by adding cacheIds when needed.");
+			log.debug("UsersResource.updateUsers(): migrating " + users.size() + " Users by adding cacheIds when needed.");
 		
 			// try this without a transaction
 			for(User u : users) {
@@ -385,10 +385,10 @@ public class UsersResource extends ServerResource {
 					teamNewestCacheIds.add(0L);
 				}
 				u.setTeamNewestCacheIds(teamNewestCacheIds);
-				log.info("user " + u.getFullName() + " successfully migrated. Number of cacheIds = " + teams.size());
+				log.debug("user " + u.getFullName() + " successfully migrated. Number of cacheIds = " + teams.size());
 			}
 		} catch(Exception e) {
-			log.severe("createUserCacheIdsMigration() exception = " + e.getMessage());
+			log.exception("UsersResource:createUserCacheIdsMigration:Exception", "", e);
 		} finally {
 		    em.close();
 		}
@@ -399,7 +399,7 @@ public class UsersResource extends ServerResource {
 		
 		try {
 			List<User> users = (List<User>)em.createNamedQuery("User.getAll").getResultList();
-			log.info("UsersResource.updateUsers(): migrating " + users.size() + " Users by encrypting their password.");
+			log.debug("UsersResource.updateUsers(): migrating " + users.size() + " Users by encrypting their password.");
 		
 			// try this without a transaction
 			for(User u : users) {
@@ -410,10 +410,10 @@ public class UsersResource extends ServerResource {
 				String plainTextPassword = u.getPassword();
 				String encryptedPassword = Utility.encrypt(plainTextPassword);
 				u.setPassword(encryptedPassword);
-				log.info("user " + u.getFullName() + " password successfully encrypted.");
+				log.debug("user " + u.getFullName() + " password successfully encrypted.");
 			}
 		} catch(Exception e) {
-			log.severe("encryptPasswordsMigration() exception = " + e.getMessage());
+			log.exception("UsersResource:encryptPasswordsMigration:Exception", "", e);
 		} finally {
 		    em.close();
 		}
@@ -422,7 +422,7 @@ public class UsersResource extends ServerResource {
     
     private void bindMembersToUserMigration(String theParameterOne) {
 		if(theParameterOne == null) {
-			log.info("no email address passed in, migration terminated immediately");
+			log.debug("no email address passed in, migration terminated immediately");
 		}
 		
     	EntityManager emUser = EMF.get().createEntityManager();
@@ -431,11 +431,11 @@ public class UsersResource extends ServerResource {
 			user = (User)emUser.createNamedQuery("User.getByEmailAddress")
 				.setParameter("emailAddress", theParameterOne.toLowerCase())
 				.getSingleResult();
-			log.info("user found = " + user.getFullName());
+			log.debug("user found = " + user.getFullName());
 		} catch (NoResultException e) {
-			log.info("user not found using supplied email address");
+			log.debug("user not found using supplied email address");
 		} catch (NonUniqueResultException e) {
-			log.severe("should never happen - two users have the same email address");
+			log.exception("UsersResource:bindMembersToUserMigration:NonUniqueResultException", "two users have the same email address", e);
 		} finally {
 			emUser.close();
 		}
@@ -450,7 +450,7 @@ public class UsersResource extends ServerResource {
 				.setParameter("emailAddress", theParameterOne.toLowerCase())
 				.setParameter("participantRole", Member.CREATOR_PARTICIPANT)
 				.getResultList();
-			log.info("# of creator memberships found = " + creatorMemberships.size());
+			log.debug("# of creator memberships found = " + creatorMemberships.size());
 			
 			for(Member m : creatorMemberships) {
     	    	emMemberships.getTransaction().begin();
@@ -461,14 +461,13 @@ public class UsersResource extends ServerResource {
 				// Setting the user ID in member indicates that is is 'synched up' with the user. The member can
 				// hold user IDs for each of its email addresses, that why we set the user ID using the email address.
         		singleMember.setUserIdByEmailAddress(KeyFactory.keyToString(user.getKey()), theParameterOne);
-        		log.info("membership for team = " + singleMember.getTeam().getTeamName() + " bound to user " + user.getFullName());
+        		log.debug("membership for team = " + singleMember.getTeam().getTeamName() + " bound to user " + user.getFullName());
         		singleMember.setAutoArchiveDayCountByEmailAddress(user.getAutoArchiveDayCount(), user.getEmailAddress());
         		
     			emMemberships.getTransaction().commit();
 			}
     	} catch (Exception e) {
-    		log.severe("exception when binding memberships created by user: " + e.getMessage());
-    		e.printStackTrace();
+			log.exception("UsersResource:bindMembersToUserMigration:Exception", "two users have the same email address", e);
     	} finally {
 		    if (emMemberships.getTransaction().isActive()) {
 		    	emMemberships.getTransaction().rollback();
@@ -488,9 +487,9 @@ public class UsersResource extends ServerResource {
 			for(User u : users) {
 				u.setAutoArchiveDayCount(30);
 			}
-			log.info("Migrated " + users.size() + " Users by adding AutoArchiveDayCount.");
+			log.debug("Migrated " + users.size() + " Users by adding AutoArchiveDayCount.");
 		} catch(Exception e) {
-			log.severe("addAutoArchiveDayCountToUsersMigration() exception = " + e.getMessage());
+			log.exception("UsersResource:addAutoArchiveDayCountToUsersMigration:Exception", "", e);
 		} finally {
 		    em.close();
 		}
@@ -511,9 +510,9 @@ public class UsersResource extends ServerResource {
 					totalIndividualCountsUpdated++;
 				}
 			}
-			log.info("Migrated " + members.size() + " Members by adding AutoArchiveDayCount. Total totalIndividualCountsUpdated = " + totalIndividualCountsUpdated);
+			log.debug("Migrated " + members.size() + " Members by adding AutoArchiveDayCount. Total totalIndividualCountsUpdated = " + totalIndividualCountsUpdated);
 		} catch(Exception e) {
-			log.severe("addAutoArchiveDayCountToNaMembersMigration() exception = " + e.getMessage());
+			log.exception("UsersResource:addAutoArchiveDayCountToNaMembersMigration:Exception", "", e);
 		} finally {
 		    em.close();
 		}
@@ -534,9 +533,9 @@ public class UsersResource extends ServerResource {
 	    		activeThruGmtDate = GMT.setToFutureDate(activeThruGmtDate);
 	    		mt.setActiveThruGmtDate(activeThruGmtDate);
 			}
-			log.info("ActiveThruGmtDate set for messageThread count = " + messageThreads.size());
+			log.debug("ActiveThruGmtDate set for messageThread count = " + messageThreads.size());
 		} catch(Exception e) {
-			log.severe("addActiveThruGmtDateToMessageThreadsMigration() exception = " + e.getMessage());
+			log.exception("UsersResource:addActiveThruGmtDateToMessageThreadsMigration:Exception", "", e);
 		} finally {
 		    em.close();
 		}
@@ -557,9 +556,9 @@ public class UsersResource extends ServerResource {
 	    		activeThruGmtDate = GMT.setToFutureDate(activeThruGmtDate);
 	    		r.setActiveThruGmtDate(activeThruGmtDate);
 			}
-			log.info("ActiveThruGmtDate adjusted: recipients count = " + recipients.size());
+			log.debug("ActiveThruGmtDate adjusted: recipients count = " + recipients.size());
 		} catch(Exception e) {
-			log.severe("addActiveThruGmtDateToRecipientsMigration() exception = " + e.getMessage());
+			log.exception("UsersResource:addActiveThruGmtDateToRecipientsMigration:Exception", "", e);
 		} finally {
 		    em.close();
 		}

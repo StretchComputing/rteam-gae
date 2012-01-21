@@ -56,6 +56,8 @@ public class MemberResource extends ServerResource {
     
     @Override  
     protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
         log.debug("MemberResource:doInit() - teamId = " + this.teamId);

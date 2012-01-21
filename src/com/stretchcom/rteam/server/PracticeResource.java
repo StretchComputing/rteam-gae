@@ -48,6 +48,8 @@ public class PracticeResource extends ServerResource {
     
     @Override  
     protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         // attribute values taken from the URI template /team/{teamId}/practice/{practiceId}/{timeZone}
     	
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 

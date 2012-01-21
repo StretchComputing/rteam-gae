@@ -55,7 +55,8 @@ public class AttendeesResource extends ServerResource {
     
     @Override  
     protected void doInit() throws ResourceException {  
-		
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
 		Form form = getRequest().getResourceRef().getQueryAsForm();
 		for (Parameter parameter : form) {
 			log.debug("parameter " + parameter.getName() + " = " + parameter.getValue());

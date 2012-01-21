@@ -69,7 +69,9 @@ public class ActivitiesResource extends ServerResource {
 	String userVote;
   
     @Override  
-    protected void doInit() throws ResourceException {  
+    protected void doInit() throws ResourceException {
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         // Get the "teamId" attribute value taken from the URI template /team/{teamId} 
         this.teamId = (String)getRequest().getAttributes().get("teamId"); 
         log.debug("ActivitiesResource:doInit() - teamId = " + this.teamId);
@@ -303,7 +305,6 @@ public class ActivitiesResource extends ServerResource {
 		} catch (NonUniqueResultException e) {
 			log.exception("ActivitiesResource:createActivity:NonUniqueResultException", "two or more teams have same team id", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} finally {
 		    em.close();
 		}
@@ -761,7 +762,6 @@ public class ActivitiesResource extends ServerResource {
 					em4.getTransaction().commit();
 	        	} catch (NoResultException e) {
 					log.exception("ActivitiesResource:getActivities:NoResultException", "Failed in getting Activity from cache", e);
-	            	e.printStackTrace();
 	    		} catch (NonUniqueResultException e) {
 					log.exception("ActivitiesResource:getActivities:NonUniqueResultException3", "two or more users have same key", e);
 	    		} finally {
@@ -845,7 +845,6 @@ public class ActivitiesResource extends ServerResource {
 		} catch (NonUniqueResultException e) {
 			log.exception("ActivitiesResource:getActivities:NonUniqueResultException2", "two or more teams have same team id", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			e.printStackTrace();
 		} finally {
 		}
 		

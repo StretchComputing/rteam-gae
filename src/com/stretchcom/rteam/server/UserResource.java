@@ -57,6 +57,8 @@ public class UserResource extends ServerResource {
   
     @Override  
     protected void doInit() throws ResourceException {  
+    	log.info("API requested with URL: " + this.getReference().toString());
+    	
         this.emailAddress = (String)getRequest().getAttributes().get("emailAddress");
         if(this.emailAddress != null) {
             this.emailAddress = Reference.decode(this.emailAddress);
@@ -351,7 +353,6 @@ public class UserResource extends ServerResource {
 			jsonReturn.put("apiStatus", apiStatus);
 		} catch (JSONException e) {
 			log.exception("UserResource:remove:JSONException", "error creating JSON return object", e);
-			e.printStackTrace();
 		}
         return new JsonRepresentation(jsonReturn);
     }
@@ -720,7 +721,6 @@ public class UserResource extends ServerResource {
 		} catch (NoResultException e) {
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
 			log.exception("UserResource:udateUser:NoResultException", "user not found", e);
-			e.printStackTrace();
 		} finally {
 		    if (em.getTransaction().isActive()) {
 		        em.getTransaction().rollback();
