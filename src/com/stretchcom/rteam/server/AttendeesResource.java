@@ -112,7 +112,7 @@ public class AttendeesResource extends ServerResource {
     		} 
     		
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			
 			String teamIdStr = null;
 			if(json.has("teamId")) {

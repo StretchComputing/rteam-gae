@@ -540,7 +540,7 @@ public class TeamResource extends ServerResource {
     			}
     	
     			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-    			JSONObject json = jsonRep.toJsonObject();
+    			JSONObject json = jsonRep.getJsonObject();
     			log.debug("received json object = " + json.toString());
     			
     			// if new field is empty, original value is not updated.

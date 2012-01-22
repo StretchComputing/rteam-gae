@@ -66,7 +66,7 @@ public class TeamsResource extends ServerResource {
 
 			team = new Team();
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 
 			if (json.has("teamName")) {
 				team.setTeamName(json.getString("teamName"));

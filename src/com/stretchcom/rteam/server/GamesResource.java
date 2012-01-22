@@ -146,7 +146,7 @@ public class GamesResource extends ServerResource {
 			}
 
     		JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			log.debug("received json object = " + json.toString());
 			
 			String timeZoneStr = null;

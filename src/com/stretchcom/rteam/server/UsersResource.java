@@ -62,7 +62,7 @@ public class UsersResource extends ServerResource {
         try {
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
 			log.debug("jsonRep = " + jsonRep.toString());
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			
 			Boolean alreadyMember = null;
 			if(json.has("alreadyMember")) {
@@ -296,7 +296,7 @@ public class UsersResource extends ServerResource {
 		
         try {
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			log.debug("received json object = " + json.toString());
 			
 			if(json.has("secret")) {

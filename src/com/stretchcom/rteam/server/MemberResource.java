@@ -647,7 +647,7 @@ public class MemberResource extends ServerResource {
 			}
 
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			log.debug("received json object = " + json.toString());
 			
 			// record the changes as we go along so notification message can show details of the updated

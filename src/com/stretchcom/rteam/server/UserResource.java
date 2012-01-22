@@ -373,7 +373,7 @@ public class UserResource extends ServerResource {
 		em.getTransaction().begin();
         try {
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			log.debug("received json object = " + json.toString());
 			
 			if(json.has("isPasswordReset")) {

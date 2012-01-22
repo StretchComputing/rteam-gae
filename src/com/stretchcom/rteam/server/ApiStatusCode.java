@@ -34,6 +34,7 @@ public class ApiStatusCode {
 	public static final String USER_NOT_CREATOR_NOR_NETWORK_AUTHENTICATED_COORDINATOR = "227";
 	public static final String PHONE_NUMBER_CAN_NOT_BE_UPDATED = "228";
 	public static final String GUARDIAN_PHONE_NUMBER_CAN_NOT_BE_UPDATED = "229";
+	public static final String USER_NOT_POSTER = "230";
 
 	public static final String FIRST_AND_LAST_NAMES_REQUIRED = "300";
 	public static final String EMAIL_ADDRESS_REQUIRED = "301";
@@ -63,6 +64,8 @@ public class ApiStatusCode {
 	public static final String MEMBER_ID_REQUIRED = "326";
 	public static final String FIRST_NAME_OR_LAST_NAME_OR_EMAIL_ADDRESS_OR_PHONE_NUMBER_REQUIRED = "327";
 	public static final String EVENT_ID_AND_EVENT_TYPE_REQUIRED = "328";
+	public static final String VOTE_STATUS_UPDATE_OR_PHOTO_REQUIRED = "329";
+	public static final String TEAM_ID_AND_ACTIVITY_ID_REQUIRED = "330";
 	
 	public static final String LATITIUDE_AND_LONGITUDE_MUST_BE_SPECIFIED_TOGETHER = "400";
 	public static final String TIME_ZONE_AND_DATES_MUST_BE_SPECIFIED_TOGETHER = "401";
@@ -123,6 +126,7 @@ public class ApiStatusCode {
 	public static final String INVALID_GUARDIAN_KEY_PARAMETER = "545";
 	public static final String INVALID_MOBILE_CARRIER_CODE_PARAMETER = "546";
 	public static final String INVALID_CONFIRMATION_CODE_PARAMETER = "547";
+	public static final String INVALID_ACTIVITY_ID_PARAMETER = "548";
 	
 	public static final String USER_NOT_FOUND = "600";
 	public static final String MEMBER_NOT_FOUND = "601";

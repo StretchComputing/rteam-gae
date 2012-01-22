@@ -53,9 +53,6 @@ public class ActivitiesResource extends ServerResource {
 	private static final Integer DEFAULT_MAX_COUNT  = 45;
 	private static final Integer MAX_MAX_COUNT  = 200;
 	
-	private static final Integer THUMB_NAIL_SHORT_SIDE  = 60;
-	private static final Integer THUMB_NAIL_LONG_SIDE  = 80;
-	
 	private static final Long ONE_MINUTE_IN_MILLI_SECONDS = 60000L;
 	
 	String teamId;
@@ -142,28 +139,23 @@ public class ActivitiesResource extends ServerResource {
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				log.error("ActivitiesResource:createActivity:currentUser", "error converting json representation into a JSON object");
+				return Utility.apiError(null);
     		}
     		//::BUSINESSRULE:: user must be network authenticated to send a message
     		else if(!currentUser.getIsNetworkAuthenticated()) {
-    			apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
+    			return Utility.apiError(ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
     		}
     		// teamId is required if this is 'Create a new activity' API
     		else if(this.userVote == null) {
         		if(this.teamId == null || this.teamId.length() == 0) {
-    				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
+        			return Utility.apiError(ApiStatusCode.TEAM_ID_REQUIRED);
         		} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
-    				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-    				log.debug(apiStatus);
+        			return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
             	}
     		}
-    		
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
-			}
 			
     		JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 
 			//////////////////////////////////////////
     		// 'Get Status of Activities for User' API
@@ -199,22 +191,42 @@ public class ActivitiesResource extends ServerResource {
 			if(json.has("video")) {
 				videoBase64 = json.getString("video");
 			}
+
+			String parentActivityId = null;
+			if(json.has("parentActivityId")) {
+				parentActivityId = json.getString("parentActivityId");
+			}
 			
 			// Enforce Rules
 			if((statusUpdate == null || statusUpdate.length() == 0) && (photoBase64 == null || photoBase64.length() == 0)) {
-				apiStatus = ApiStatusCode.STATUS_UPDATE_OR_PHOTO_REQUIRED;
-				log.debug("required statusUpdate or photo field required");
+				return Utility.apiError(ApiStatusCode.STATUS_UPDATE_OR_PHOTO_REQUIRED);
 			} else if(statusUpdate != null && statusUpdate.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT){
-				apiStatus = ApiStatusCode.INVALID_STATUS_UPDATE_MAX_SIZE_EXCEEDED;
+				return Utility.apiError(ApiStatusCode.INVALID_STATUS_UPDATE_MAX_SIZE_EXCEEDED);
 			} else if(videoBase64 != null && photoBase64 == null) {
-				apiStatus = ApiStatusCode.VIDEO_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER;
+				return Utility.apiError(ApiStatusCode.VIDEO_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER);
 			} else if(photoBase64 != null && isPortrait == null) {
-				apiStatus = ApiStatusCode.IS_PORTRAIT_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER;
+				return Utility.apiError(ApiStatusCode.IS_PORTRAIT_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER);
 			}
-    		
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
+			
+			Activity parentActivity = null;
+			if(parentActivityId != null) {
+				try {
+					parentActivity = (Activity)em.createNamedQuery("Activity.getByKey")
+							.setParameter("key", KeyFactory.stringToKey(parentActivityId))
+							.getSingleResult();
+					log.debug("parent activity retrieved successfully");
+				
+					if(parentActivity.getParentActivityId() != null) {
+						// parent activity is itself a reply -- not allowed!
+						return Utility.apiError(ApiStatusCode.INVALID_ACTIVITY_ID_PARAMETER);
+					}
+				} catch (NoResultException e) {
+					return Utility.apiError(ApiStatusCode.ACTIVITY_NOT_FOUND);
+				} catch (NonUniqueResultException e) {
+					log.exception("ActivityResource:createActivity:NonUniqueResultException", "", e);
+		        	this.setStatus(Status.SERVER_ERROR_INTERNAL);
+		        	return Utility.apiError(null);
+				}
 			}
 			
 			if(statusUpdate == null) {statusUpdate = "";}
@@ -233,6 +245,11 @@ public class ActivitiesResource extends ServerResource {
 			newActivity.setTeamId(this.teamId);
 			newActivity.setTeamName(team.getTeamName());
 			newActivity.setContributor(currentUser.getFullName());
+			newActivity.setUserId(KeyFactory.keyToString(currentUser.getKey()));
+			newActivity.setParentActivityId(parentActivityId);
+			
+			
+			//*** I AM HERE -- need to know if twitter support replies before proceeding;
 			
 			// cacheId held in team is the last used.
 			Long cacheId = team.getNewestCacheId() + 1;
@@ -276,8 +293,8 @@ public class ActivitiesResource extends ServerResource {
 					ImagesService imagesService = ImagesServiceFactory.getImagesService();
 					Image oldImage = ImagesServiceFactory.makeImage(rawPhoto);
 					
-					int tnWidth = isPortrait == true ? THUMB_NAIL_SHORT_SIDE : THUMB_NAIL_LONG_SIDE;
-					int tnHeight = isPortrait == true ? THUMB_NAIL_LONG_SIDE : THUMB_NAIL_SHORT_SIDE;
+					int tnWidth = isPortrait == true ? Activity.THUMB_NAIL_SHORT_SIDE : Activity.THUMB_NAIL_LONG_SIDE;
+					int tnHeight = isPortrait == true ? Activity.THUMB_NAIL_LONG_SIDE : Activity.THUMB_NAIL_SHORT_SIDE;
 					Transform resize = ImagesServiceFactory.makeResize(tnWidth, tnHeight);
 					Image newImage = imagesService.applyTransform(resize, oldImage);
 					String thumbNailBase64 = Base64.encodeBase64String(newImage.getImageData());
@@ -355,31 +372,26 @@ public class ActivitiesResource extends ServerResource {
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				log.error("ActivitiesResource:getActivities:currentUser", "error converting json representation into a JSON object");
+				return Utility.apiError(null);
+
     		}
     		//::BUSINESSRULE:: user must be network authenticated to get activities
     		else if(!currentUser.getIsNetworkAuthenticated()) {
-    			apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
+				return Utility.apiError(ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
     		}
     		//::BUSINESSRULE:: user must be a member of the team, if teamId was specified
     		else if(this.teamId != null && !currentUser.isUserMemberOfTeam(this.teamId)) {
-				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.debug(apiStatus);
+				return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
         	}
     		// timeZone check 
     		else if(this.timeZoneStr == null || this.timeZoneStr.length() == 0) {
-    			log.debug("getActivities(): timeZone null or zero length");
- 	        	apiStatus = ApiStatusCode.TIME_ZONE_REQUIRED;
+				return Utility.apiError(ApiStatusCode.TIME_ZONE_REQUIRED);
     		} else {
     			tz = GMT.getTimeZone(this.timeZoneStr);
     			if(tz == null) {
-            		apiStatus = ApiStatusCode.INVALID_TIME_ZONE_PARAMETER;
+    				return Utility.apiError(ApiStatusCode.INVALID_TIME_ZONE_PARAMETER);
     			}
     		}
-	
-    		if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
-			}
 			
     		//////////////////////////////////////
 			// verify and default input parameters
@@ -391,7 +403,7 @@ public class ActivitiesResource extends ServerResource {
 				} else if(refreshFirstStr.equalsIgnoreCase("false")) {
 					refreshFirst = false;
 				} else {
-					apiStatus = ApiStatusCode.INVALID_REFRESH_FIRST_PARAMETER;
+    				return Utility.apiError(ApiStatusCode.INVALID_REFRESH_FIRST_PARAMETER);
 				}
 			}
 			
@@ -403,7 +415,7 @@ public class ActivitiesResource extends ServerResource {
 					} else if(newOnlyStr.equalsIgnoreCase("false")) {
 						newOnly = false;
 					} else {
-						apiStatus = ApiStatusCode.INVALID_NEW_ONLY_PARAMETER;
+	    				return Utility.apiError(ApiStatusCode.INVALID_NEW_ONLY_PARAMETER);
 					}
 				}
 			}
@@ -414,7 +426,7 @@ public class ActivitiesResource extends ServerResource {
 					maxCount = new Integer(maxCountStr);
 					if(maxCount > MAX_MAX_COUNT) maxCount = MAX_MAX_COUNT;
 				} catch (NumberFormatException e) {
-					apiStatus = ApiStatusCode.INVALID_MAX_COUNT_PARAMETER;
+    				return Utility.apiError(ApiStatusCode.INVALID_MAX_COUNT_PARAMETER);
 				}
 			}
 			
@@ -431,7 +443,7 @@ public class ActivitiesResource extends ServerResource {
 				if(apiStatus.equals(ApiStatusCode.SUCCESS) && mostCurrentDateStr != null) {
 					mostCurrentDate = GMT.convertToGmtDate(mostCurrentDateStr, false, tz);
 					if(mostCurrentDate == null) {
-						apiStatus = ApiStatusCode.INVALID_MOST_CURRENT_DATE_PARAMETER;
+	    				return Utility.apiError(ApiStatusCode.INVALID_MOST_CURRENT_DATE_PARAMETER);
 					}
 				}
 				
@@ -439,53 +451,40 @@ public class ActivitiesResource extends ServerResource {
 					try {
 						totalNumberOfDays = new Integer(this.totalNumberOfDaysStr);
 					} catch (NumberFormatException e) {
-						apiStatus = ApiStatusCode.INVALID_TOTAL_NUMBER_OF_DAYS_PARAMETER;
+	    				return Utility.apiError(ApiStatusCode.INVALID_TOTAL_NUMBER_OF_DAYS_PARAMETER);
 					}
 				}
 				
 				//::BUSINESSRULE:: if newOnly=true, then refreshFirst must also be true
-				if(apiStatus.equals(ApiStatusCode.SUCCESS)) {
-					if(newOnly && !refreshFirst) {
-						apiStatus = ApiStatusCode.REFRESH_FIRST_AND_NEW_ONLY_MUST_BE_SPECIFIED_TOGETHER;
-					}
+				if(newOnly && !refreshFirst) {
+    				return Utility.apiError(ApiStatusCode.REFRESH_FIRST_AND_NEW_ONLY_MUST_BE_SPECIFIED_TOGETHER);
 				}
 			
 				//::BUSINESSRULE:: if newOnly=false, date interval must be specified
-				if(apiStatus.equals(ApiStatusCode.SUCCESS)) {
-					if(!newOnly && (mostCurrentDate == null || totalNumberOfDays == null)) {
-						apiStatus = ApiStatusCode.DATE_INTERVAL_REQUIRED;
-					}
+				if(!newOnly && (mostCurrentDate == null || totalNumberOfDays == null)) {
+    				return Utility.apiError(ApiStatusCode.DATE_INTERVAL_REQUIRED);
 				}
 
 				//::BUSINESSRULE:: newOnly=true is mutually exclusive with date interval
-				if(apiStatus.equals(ApiStatusCode.SUCCESS)) {
-					if(newOnly && (mostCurrentDate != null || totalNumberOfDays != null)) {
-						apiStatus = ApiStatusCode.NEW_ONLY_AND_DATE_INTERVAL_MUTUALLY_EXCLUSIVE;
-					}
+				if(newOnly && (mostCurrentDate != null || totalNumberOfDays != null)) {
+    				return Utility.apiError(ApiStatusCode.NEW_ONLY_AND_DATE_INTERVAL_MUTUALLY_EXCLUSIVE);
 				}
 			} else {
 				///////////////////////////////////////////////////////////////////////
 				// Get Activity for a Single, Specified Team: Parameters and Validation
 				///////////////////////////////////////////////////////////////////////
-				if(apiStatus.equals(ApiStatusCode.SUCCESS) && maxCacheIdStr != null) {
+				if(maxCacheIdStr != null) {
 					try {
 						maxCacheId = new Long(maxCacheIdStr);
 					} catch (NumberFormatException e) {
-						apiStatus = ApiStatusCode.INVALID_MAX_CACHE_ID_PARAMETER;
+	    				return Utility.apiError(ApiStatusCode.INVALID_MAX_CACHE_ID_PARAMETER);
 					}
 				}
 				
 				//::BUSINESSRULE:: refreshFirst=true is mutually exclusive with maxCacheId
-				if(apiStatus.equals(ApiStatusCode.SUCCESS)) {
-					if(refreshFirst && maxCacheId != null) {
-						apiStatus = ApiStatusCode.REFRESH_FIRST_AND_MAX_CACHE_ID_MUTUALLY_EXCLUSIVE;
-					}
+				if(refreshFirst && maxCacheId != null) {
+    				return Utility.apiError(ApiStatusCode.REFRESH_FIRST_AND_MAX_CACHE_ID_MUTUALLY_EXCLUSIVE);
 				}
-			}
-			
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
 			}
 			
 			List<Team> teams = new ArrayList<Team>();
@@ -522,10 +521,10 @@ public class ActivitiesResource extends ServerResource {
  					log.debug("team retrieved = " + team.getTeamName());
  					teams.add(team);
  				} catch (NoResultException e) {
- 					apiStatus = ApiStatusCode.TEAM_NOT_FOUND;
- 					log.debug("invalid team id");
+    				return Utility.apiError(ApiStatusCode.TEAM_NOT_FOUND);
  				} catch (NonUniqueResultException e) {
 					log.exception("ActivitiesResource:getActivities:NonUniqueResultException", "two teams have the same key", e);
+    				return Utility.apiError(null);
  				}
 			}
     		
@@ -562,13 +561,8 @@ public class ActivitiesResource extends ServerResource {
 						Long newestTwitterId = userTeam.getNewestTwitterId();
 						List<Activity> twitterActivities = TwitterClient.getTeamActivities(userTeam, newestTwitterId);
 						if(twitterActivities == null) {
-							apiStatus = ApiStatusCode.TWITTER_ERROR;
+		    				return Utility.apiError(ApiStatusCode.TWITTER_ERROR);
 						} 
-						
-						if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-							jsonReturn.put("apiStatus", apiStatus);
-							return new JsonRepresentation(jsonReturn);
-						}
 						
 						// because twitterActivities doesn't have the cacheId set, this will get sorted by twitterId
 						Collections.sort(twitterActivities);
@@ -704,6 +698,7 @@ public class ActivitiesResource extends ServerResource {
 						} catch(Exception e) {
 							log.exception("ActivitiesResource:getActivities:Exception3", "Failed in getting Activity from cache", e);
 							this.setStatus(Status.SERVER_ERROR_INTERNAL);
+		    				return Utility.apiError(null);
 						} finally {
 							em3.close();
 						}
@@ -830,6 +825,13 @@ public class ActivitiesResource extends ServerResource {
 				// just set poster to the team name for legacy posting that were done before the poster started being returned
 				String poster = a.getContributor() == null ? a.getTeamName() : a.getContributor();
 				jsonActivityObj.put("poster", poster);
+				
+				Boolean isCurrentUser = true;
+				String userId = a.getUserId();
+				if(userId == null || !KeyFactory.keyToString(currentUser.getKey()).equals(userId)) {
+					isCurrentUser = false;
+				}
+				jsonActivityObj.put("isCurrentUser", isCurrentUser);
 				
 				jsonActivitiesArray.put(jsonActivityObj);
 			}

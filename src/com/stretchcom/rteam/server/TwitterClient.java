@@ -1,21 +1,7 @@
 package com.stretchcom.rteam.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import twitter4j.Paging;
 import twitter4j.Status;
@@ -132,6 +118,39 @@ public class TwitterClient {
 			log.debug("updateStatus() twitter exception = " + e.getMessage());
 		} catch (Exception e) {
 			log.debug("updateStatus() exception = " + e.getMessage());
+		}
+		return returnValue;
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static Status destroyStatus(Long theStatusId, String theTwitterAccessToken, String theTwitterAccessTokenSecret) {
+		Status returnValue = null;
+		try {
+			Twitter twitter = new TwitterFactory().getInstance();
+			twitter.setOAuthConsumer(CONSUMER_KEY, CONSUMER_SECRET);
+			twitter.setOAuthAccessToken(theTwitterAccessToken, theTwitterAccessTokenSecret);
+			returnValue = twitter.destroyStatus(theStatusId);
+			log.debug("destroy status sent to Twitter. Returned status = " + returnValue.getText());
+		} catch (TwitterException e) {
+			log.debug("destroyStatus() twitter exception = " + e.getMessage());
+		} catch (Exception e) {
+			log.debug("destroyStatus() exception = " + e.getMessage());
+		}
+		return returnValue;
+	}
+	
+	// Twitter doesn't allow tweets to edited, so just delete and re-tweek :-)
+	@SuppressWarnings("deprecation")
+	public static Status modifyStatus(Long theStatusId, String theNewStatus, String theTwitterAccessToken, String theTwitterAccessTokenSecret) {
+		Status returnValue = destroyStatus(theStatusId, theTwitterAccessToken, theTwitterAccessTokenSecret);
+		if(returnValue == null) {
+			log.debug("modifyStatus(): destroyStatus failed");
+			return null;
+		}
+		returnValue = updateStatus(theNewStatus, theTwitterAccessToken, theTwitterAccessTokenSecret);
+		if(returnValue == null) {
+			log.debug("modifyStatus(): updateStatus failed");
+			return null;
 		}
 		return returnValue;
 	}

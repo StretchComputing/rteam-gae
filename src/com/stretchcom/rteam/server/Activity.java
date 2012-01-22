@@ -55,12 +55,16 @@ public class Activity implements Comparable<Activity> {
 	//private static final Logger log = Logger.getLogger(Activity.class.getName());
 	private static RskyboxClient log = new RskyboxClient();
 	
+	public static final Integer THUMB_NAIL_SHORT_SIDE  = 60;
+	public static final Integer THUMB_NAIL_LONG_SIDE  = 80;
+	
 	private Long twitterId;
 	private Long cacheId;    // rTeam cache ID that is always SEQUENTIAL
 	private String text;
     private String teamId;          
     private String teamName;
 	private Date createdGmtDate;
+	private Date updatedGmtDate;
 	private Long numberOfLikeVotes;
 	private Long numberOfDislikeVotes;
 	private Text photoBase64;
@@ -69,6 +73,8 @@ public class Activity implements Comparable<Activity> {
 	private String eventId;
 	private String eventType;
 	private String eventDetailsId; // not sure I want to keep this -- maybe too much overhead to set this
+	private String userId; // user ID of the poster (if it was a user and not an auto post)
+	private String parentActivityId;  // if present, activity is a 'reply'.
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -180,6 +186,14 @@ public class Activity implements Comparable<Activity> {
 		}
 	}
 	
+	public Date getUpdatedGmtDate() {
+		return updatedGmtDate;
+	}
+
+	public void setUpdatedGmtDate(Date updatedGmtDate) {
+		this.updatedGmtDate = updatedGmtDate;
+	}
+
 	public Long getNumberOfLikeVotes() {
 		if(this.numberOfLikeVotes == null) {
 			return 0L;
@@ -235,11 +249,19 @@ public class Activity implements Comparable<Activity> {
 	}
 
 	public void setThumbNailBase64(byte[] thumbNailBase64) {
-		this.thumbNailBase64 = new Text(new String(thumbNailBase64));
+		if(thumbNailBase64 == null) {
+			this.thumbNailBase64 = null;
+		} else {
+			this.thumbNailBase64 = new Text(new String(thumbNailBase64));
+		}
 	}
 
 	public void setThumbNailBase64(String thumbNailBase64) {
-		this.thumbNailBase64 = new Text(thumbNailBase64);
+		if(thumbNailBase64 == null) {
+			this.thumbNailBase64 = null;
+		} else {
+			this.thumbNailBase64 = new Text(thumbNailBase64);
+		}
 	}
 
 	public String getPhotoBase64() {
@@ -247,7 +269,11 @@ public class Activity implements Comparable<Activity> {
 	}
 
 	public void setPhotoBase64(String photo) {
-		this.photoBase64 = new Text(photo);
+		if(photo == null) {
+			this.photoBase64 = null;
+		} else {
+			this.photoBase64 = new Text(photo);
+		}
 	}
 
 	public String getVideoBase64() {
@@ -255,7 +281,11 @@ public class Activity implements Comparable<Activity> {
 	}
 
 	public void setVideoBase64(String videoBase64) {
-		this.videoBase64 = new Text(videoBase64);
+		if(videoBase64 == null) {
+			this.videoBase64 = null;
+		} else {
+			this.videoBase64 = new Text(videoBase64);
+		}
 	}
 	
 	public String getEventType() {
@@ -280,6 +310,22 @@ public class Activity implements Comparable<Activity> {
 
 	public void setEventDetailsId(String eventDetailsId) {
 		this.eventDetailsId = eventDetailsId;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+
+	public String getParentActivityId() {
+		return parentActivityId;
+	}
+
+	public void setParentActivityId(String parentActivityId) {
+		this.parentActivityId = parentActivityId;
 	}
 	
 	// returns activity ID of an activity associated with event that has a photo. If more than one, photo chosen randomly.

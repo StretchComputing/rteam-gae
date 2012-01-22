@@ -206,7 +206,7 @@ public class MessageThreadsResource extends ServerResource {
     		
 			messageThread = new MessageThread();
     		JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			
 			String eventIdStr = null;
 			if(json.has("eventId")) {
@@ -1015,7 +1015,7 @@ public class MessageThreadsResource extends ServerResource {
 			}
 
 			JsonRepresentation jsonRep = new JsonRepresentation(entity);
-			JSONObject json = jsonRep.toJsonObject();
+			JSONObject json = jsonRep.getJsonObject();
 			log.debug("received json object = " + json.toString());
 			
 			//////////////////////////////////

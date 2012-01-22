@@ -523,7 +523,7 @@ public class GameResource extends ServerResource {
 	    		log.debug("game retrieved = " + game.getDescription());
 
 				JsonRepresentation jsonRep = new JsonRepresentation(entity);
-				JSONObject json = jsonRep.toJsonObject();
+				JSONObject json = jsonRep.getJsonObject();
 				log.debug("received json object = " + json.toString());
 				
 				List<String> notificationInfo = new ArrayList<String>();
