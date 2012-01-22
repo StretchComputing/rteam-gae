@@ -2479,7 +2479,7 @@ public class PubHub {
 				theTeam.updateNewestCacheId(cacheId);
 
 				if(theTeam.getUseTwitter()) {
-					twitterStatus = TwitterClient.updateStatus(postMsg, theTeam.getTwitterAccessToken(), theTeam.getTwitterAccessTokenSecret());
+					twitterStatus = TwitterClient.updateStatus(postMsg, null, theTeam.getTwitterAccessToken(), theTeam.getTwitterAccessTokenSecret());
 					
 					// if Twitter update failed, log error, but continue because activity post will be stored by rTeam
 					if(twitterStatus == null) {

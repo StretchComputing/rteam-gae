@@ -105,14 +105,19 @@ public class TwitterClient {
 	}
 	
 	@SuppressWarnings("deprecation")
-	public static Status updateStatus(String theNewStatus, String theTwitterAccessToken, String theTwitterAccessTokenSecret) {
+	public static Status updateStatus(String theNewStatus, Long theParentStatusId, String theTwitterAccessToken, String theTwitterAccessTokenSecret) {
 		Status returnValue = null;
 		try {
 			// TODO ensure Twitter 140 char count not exceeded
 			Twitter twitter = new TwitterFactory().getInstance();
 			twitter.setOAuthConsumer(CONSUMER_KEY, CONSUMER_SECRET);
 			twitter.setOAuthAccessToken(theTwitterAccessToken, theTwitterAccessTokenSecret);
-			returnValue = twitter.updateStatus(theNewStatus);
+			
+			if(theParentStatusId != null) {
+				returnValue = twitter.updateStatus(theNewStatus, theParentStatusId);
+			} else {
+				returnValue = twitter.updateStatus(theNewStatus);
+			}
 			log.debug("updated status sent to Twitter = " + returnValue.getText() + ". Status ID = " + returnValue.getId());
 		} catch (TwitterException e) {
 			log.debug("updateStatus() twitter exception = " + e.getMessage());
@@ -141,13 +146,13 @@ public class TwitterClient {
 	
 	// Twitter doesn't allow tweets to edited, so just delete and re-tweek :-)
 	@SuppressWarnings("deprecation")
-	public static Status modifyStatus(Long theStatusId, String theNewStatus, String theTwitterAccessToken, String theTwitterAccessTokenSecret) {
+	public static Status modifyStatus(Long theStatusId, Long theParentStatusId, String theNewStatus, String theTwitterAccessToken, String theTwitterAccessTokenSecret) {
 		Status returnValue = destroyStatus(theStatusId, theTwitterAccessToken, theTwitterAccessTokenSecret);
 		if(returnValue == null) {
 			log.debug("modifyStatus(): destroyStatus failed");
 			return null;
 		}
-		returnValue = updateStatus(theNewStatus, theTwitterAccessToken, theTwitterAccessTokenSecret);
+		returnValue = updateStatus(theNewStatus, theParentStatusId, theTwitterAccessToken, theTwitterAccessTokenSecret);
 		if(returnValue == null) {
 			log.debug("modifyStatus(): updateStatus failed");
 			return null;

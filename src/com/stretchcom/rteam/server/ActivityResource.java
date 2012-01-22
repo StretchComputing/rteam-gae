@@ -134,11 +134,19 @@ public class ActivityResource extends ServerResource {
 			}
 
 			Activity activity = null;
+			Activity parentActivity = null;
 			try {
 				activity = (Activity)em.createNamedQuery("Activity.getByKey")
 					.setParameter("key", KeyFactory.stringToKey(this.activityId))
 					.getSingleResult();
 				log.debug("activity retrieved successfully. LIKE count = " + activity.getNumberOfLikeVotes() + " DISLIKE count = " + activity.getNumberOfDislikeVotes());
+				
+				if(activity.getParentActivityId() != null) {
+					parentActivity = (Activity)em.createNamedQuery("Activity.getByKey")
+							.setParameter("key", KeyFactory.stringToKey(activity.getParentActivityId()))
+							.getSingleResult();
+						log.debug("parent activity retrieved successfully");
+				}
 			} catch (NoResultException e) {
 				return Utility.apiError(ApiStatusCode.ACTIVITY_NOT_FOUND);
 			} catch (NonUniqueResultException e) {
@@ -186,7 +194,10 @@ public class ActivityResource extends ServerResource {
 					return Utility.apiError(apiStatus);
 				}
 			} else if(statusUpdate != null || photoBase64 != null) {
-				if(statusUpdate != null && statusUpdate.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT){
+				String posterUserId = activity.getUserId();
+				if(posterUserId == null || !posterUserId.equals(KeyFactory.keyToString(currentUser.getKey()))) {
+					return Utility.apiError(ApiStatusCode.USER_NOT_POSTER);
+				} else if(statusUpdate != null && statusUpdate.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT){
 					return Utility.apiError(ApiStatusCode.INVALID_STATUS_UPDATE_MAX_SIZE_EXCEEDED);
 				} else if(videoBase64 != null && photoBase64 == null) {
 					return Utility.apiError(ApiStatusCode.VIDEO_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER);
@@ -203,8 +214,12 @@ public class ActivityResource extends ServerResource {
 			}
 			
          	// if status was modified AND team is using Twitter, then delete Twitter status
-        	if(statusUpdate != null && activity.getTwitterId() != null) {
-            	twitter4j.Status twitterStatus = TwitterClient.modifyStatus(activity.getTwitterId(), statusUpdate, team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
+        	if(statusUpdate != null && team.getUseTwitter()) {
+        		Long parentTwitterId = null;
+        		if(parentActivity != null) {
+        			parentTwitterId = parentActivity.getTwitterId();
+        		}
+            	twitter4j.Status twitterStatus = TwitterClient.modifyStatus(activity.getTwitterId(), parentTwitterId, statusUpdate, team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
     			// if Twitter modify failed, log error, but continue because activity post will be stored by rTeam
     			if(twitterStatus == null) {
     				log.error("ActivityResource:updateActivity:twitterStatus", "Twitter modify failed, but continuing on ...");
@@ -342,16 +357,20 @@ public class ActivityResource extends ServerResource {
 				.getSingleResult();
     		log.debug("team retrieved = " + team.getTeamName());
 
-    		// TODO only Poster of Activity can delete
-        	
 			Activity activity = null;
 			activity = (Activity)em.createNamedQuery("Activity.getByKey")
 					.setParameter("key", KeyFactory.stringToKey(this.activityId))
 					.getSingleResult();
 			log.debug("activity retrieved successfully");
 			
-         	// if tied into Twitter, then delete Twitter status
-        	if(activity.getTwitterId() != null) {
+			// Rule: only Poster can delete an activity
+			String posterUserId = activity.getUserId();
+			if(posterUserId == null || !posterUserId.equals(KeyFactory.keyToString(currentUser.getKey()))) {
+				return Utility.apiError(ApiStatusCode.USER_NOT_POSTER);
+			}
+			
+         	// if team uses Twitter, then delete Twitter status
+        	if(team.getUseTwitter()) {
             	twitter4j.Status twitterStatus = TwitterClient.destroyStatus(activity.getTwitterId(), team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
     			// if Twitter update failed, log error, but continue because activity post will be stored by rTeam
     			if(twitterStatus == null) {

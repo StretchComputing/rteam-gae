@@ -122,8 +122,10 @@ public class SynchActivityWithTwitterTaskServlet extends HttpServlet {
 					if(statusUpdate.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT) {
 						statusUpdate = statusUpdate.substring(0, TwitterClient.MAX_TWITTER_CHARACTER_COUNT - 2) + "..";
 					}
-
-					twitterStatus = TwitterClient.updateStatus(statusUpdate, team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
+					
+					// TODO some of the activities may be replies -- post them as replies in Twitter too. To make this work, probably need
+					//      two loops. One to process all the parent activities first and then the reply activities.
+					twitterStatus = TwitterClient.updateStatus(statusUpdate, null, team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
 					
 					// if Twitter update failed just log and continue on
 					if(twitterStatus == null) {

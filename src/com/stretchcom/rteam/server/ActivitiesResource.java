@@ -248,9 +248,6 @@ public class ActivitiesResource extends ServerResource {
 			newActivity.setUserId(KeyFactory.keyToString(currentUser.getKey()));
 			newActivity.setParentActivityId(parentActivityId);
 			
-			
-			//*** I AM HERE -- need to know if twitter support replies before proceeding;
-			
 			// cacheId held in team is the last used.
 			Long cacheId = team.getNewestCacheId() + 1;
 			newActivity.setCacheId(cacheId);
@@ -272,7 +269,11 @@ public class ActivitiesResource extends ServerResource {
 					statusUpdate = statusUpdate.substring(0, TwitterClient.MAX_TWITTER_CHARACTER_COUNT - 2) + "..";
 				}
 
-				twitterStatus = TwitterClient.updateStatus(statusUpdate, team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
+				Long parentTwitterId = null;
+				if(parentActivity != null) {
+					parentTwitterId = parentActivity.getTwitterId();
+				}
+				twitterStatus = TwitterClient.updateStatus(statusUpdate, parentTwitterId, team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
 				
 				// if Twitter update failed, log error, but continue because activity post will be stored by rTeam
 				if(twitterStatus == null) {
