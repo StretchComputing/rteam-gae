@@ -3,30 +3,23 @@ package com.stretchcom.rteam.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.TimeZone;
-import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
-import javax.persistence.Query;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Form;
-import org.restlet.data.MediaType;
 import org.restlet.data.Parameter;
 import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
-import org.restlet.representation.StringRepresentation;
 import org.restlet.representation.Variant;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;

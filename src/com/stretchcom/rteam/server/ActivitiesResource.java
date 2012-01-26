@@ -5,28 +5,24 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
-import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
-import javax.persistence.Query;
 
+import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Form;
-import org.restlet.data.MediaType;
 import org.restlet.data.Parameter;
 import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
-import org.restlet.representation.StringRepresentation;
 import org.restlet.representation.Variant;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
@@ -39,7 +35,6 @@ import com.google.appengine.api.images.Image;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.Transform;
-import org.apache.commons.codec.binary.Base64;
 
  
 /** 
@@ -64,6 +59,9 @@ public class ActivitiesResource extends ServerResource {
 	String mostCurrentDateStr;
 	String totalNumberOfDaysStr;
 	String userVote;
+	String includeDetailsStr;
+	String detailsStr;
+	String activityIdsStr;
   
     @Override  
     protected void doInit() throws ResourceException {
@@ -82,6 +80,13 @@ public class ActivitiesResource extends ServerResource {
         if(this.timeZoneStr != null) {
             this.timeZoneStr = Reference.decode(this.timeZoneStr);
             log.debug("ActivitiesResource:doInit() - decoded timeZone = " + this.timeZoneStr);
+        }
+        
+        this.detailsStr = (String)getRequest().getAttributes().get("details"); 
+        log.debug("ActivitiesResource:doInit() - details = " + this.detailsStr);
+        if(this.detailsStr != null) {
+            this.detailsStr = Reference.decode(this.detailsStr);
+            log.debug("ActivitiesResource:doInit() - decoded details = " + this.detailsStr);
         }
         
         this.userVote = (String)getRequest().getAttributes().get("userVote"); 
@@ -118,6 +123,14 @@ public class ActivitiesResource extends ServerResource {
 				this.totalNumberOfDaysStr = (String)parameter.getValue();
 				this.totalNumberOfDaysStr = Reference.decode(this.totalNumberOfDaysStr);
 				log.debug("ActivitiesResource:doInit() - decoded totalNumberOfDaysStr = " + this.totalNumberOfDaysStr);
+			} else if(parameter.getName().equals("includeDetails")) {
+				this.includeDetailsStr = (String)parameter.getValue();
+				this.includeDetailsStr = Reference.decode(this.includeDetailsStr);
+				log.debug("ActivitiesResource:doInit() - decoded includeDetails = " + this.includeDetailsStr);
+			} else if(parameter.getName().equals("activityIds")) {
+				this.activityIdsStr = (String)parameter.getValue();
+				this.activityIdsStr = Reference.decode(this.activityIdsStr);
+				log.debug("ActivitiesResource:doInit() - decoded activityIdsStr = " + this.activityIdsStr);
 			}
 		}
     }  
@@ -247,6 +260,7 @@ public class ActivitiesResource extends ServerResource {
 			newActivity.setContributor(currentUser.getFullName());
 			newActivity.setUserId(KeyFactory.keyToString(currentUser.getKey()));
 			newActivity.setParentActivityId(parentActivityId);
+			if(parentActivityId != null) newActivity.setIsReply(true);
 			
 			// cacheId held in team is the last used.
 			Long cacheId = team.getNewestCacheId() + 1;
@@ -356,7 +370,8 @@ public class ActivitiesResource extends ServerResource {
     //                      has new activity.
 
     // Handles 'Get activities for a team' API  
-    // Handles 'Get activities for all teams' API  
+    // Handles 'Get activities for all teams' API
+    // Handles 'Get activities details' API
     @Get  
     public JsonRepresentation getActivities(Variant variant) {
     	log.debug("getActivities(@Get) entered ..... ");
@@ -392,6 +407,11 @@ public class ActivitiesResource extends ServerResource {
     			if(tz == null) {
     				return Utility.apiError(ApiStatusCode.INVALID_TIME_ZONE_PARAMETER);
     			}
+    		}
+    		
+    		// handle 'Get activities details' API
+    		if(this.activityIdsStr != null) {
+    			return handleActivitiesDetailsApi(tz, currentUser);
     		}
 			
     		//////////////////////////////////////
@@ -802,6 +822,7 @@ public class ActivitiesResource extends ServerResource {
 			
 			// Package requested activities into JSON
 			JSONArray jsonActivitiesArray = new JSONArray();
+			Boolean includeDetails = Utility.s2b(this.includeDetailsStr, true); // default value is true
 			for(Activity a : allTeamsRequestedActivities) {
 				JSONObject jsonActivityObj = new JSONObject();
 				jsonActivityObj.put("activityId", KeyFactory.keyToString(a.getKey()));
@@ -816,7 +837,7 @@ public class ActivitiesResource extends ServerResource {
 				jsonActivityObj.put("numberOfLikeVotes", a.getNumberOfLikeVotes());
 				jsonActivityObj.put("numberOfDislikeVotes", a.getNumberOfDislikeVotes());
 				if(a.getThumbNailBase64() != null) {
-					jsonActivityObj.put("thumbNail",a.getThumbNailBase64());
+					if(includeDetails) {jsonActivityObj.put("thumbNail",a.getThumbNailBase64());}
 					Boolean isVideo = a.getVideoBase64() == null ? false : true;
 					jsonActivityObj.put("isVideo", isVideo);
 				}
@@ -920,5 +941,73 @@ public class ActivitiesResource extends ServerResource {
 			log.exception("ActivitiesResource:getStatusOfActivitiesForUser:JSONException2", "error converting json representation into a JSON object", e);
 		}
     	return;
+    }
+    
+    private JsonRepresentation handleActivitiesDetailsApi(TimeZone tz, User theCurrentUser)  throws JSONException {
+    	EntityManager em = EMF.get().createEntityManager();
+    	JSONObject jsonReturn = new JSONObject();
+    	List<String> activityIds = parseActivityIds();
+    	
+    	try {
+    		JSONArray jsonActivitiesArray = new JSONArray();
+    		for(String aId : activityIds) {
+    			log.info("processing activityId = " + aId);
+    			Activity activity = Activity.getActivity(aId, em);
+    			List<Activity> replies = Activity.getReplies(aId, em);
+    			
+    			JSONObject jsonActivityObj = new JSONObject();
+    			jsonActivityObj.put("activityId", aId);
+    			jsonActivityObj.put("thumbNail", activity.getThumbNailBase64());
+    			
+    			JSONArray jsonRepliesArray = new JSONArray();
+    			for(Activity reply : replies) {
+    				JSONObject jsonReplyObj = new JSONObject();
+    				
+    				jsonReplyObj.put("createdDate", GMT.convertToLocalDate(reply.getCreatedGmtDate(), tz));
+    				jsonReplyObj.put("teamId", reply.getTeamId());
+    				jsonReplyObj.put("teamName", reply.getTeamName());
+    				jsonReplyObj.put("cacheId", reply.getCacheId());
+    				jsonReplyObj.put("numberOfLikeVotes", reply.getNumberOfLikeVotes());
+    				jsonReplyObj.put("numberOfDislikeVotes", reply.getNumberOfDislikeVotes());
+    				if(reply.getThumbNailBase64() != null) {
+    					jsonReplyObj.put("thumbNail",reply.getThumbNailBase64());
+    					Boolean isVideo = reply.getVideoBase64() == null ? false : true;
+    					jsonReplyObj.put("isVideo", isVideo);
+    				}
+    				Boolean useTwitterRet = reply.getTwitterId() == null ? false : true;
+    				jsonReplyObj.put("useTwitter", useTwitterRet);
+    				
+    				// just set poster to the team name for legacy posting that were done before the poster started being returned
+    				String poster = reply.getContributor() == null ? reply.getTeamName() : reply.getContributor();
+    				jsonReplyObj.put("poster", poster);
+    				
+    				Boolean isCurrentUser = true;
+    				String userId = reply.getUserId();
+    				if(userId == null || !KeyFactory.keyToString(theCurrentUser.getKey()).equals(userId)) {
+    					isCurrentUser = false;
+    				}
+    				jsonReplyObj.put("isCurrentUser", isCurrentUser);
+    				jsonRepliesArray.put(jsonReplyObj);
+    			}
+    			jsonActivityObj.put("replies", jsonRepliesArray);
+    			jsonActivitiesArray.put(jsonActivityObj);
+    		}
+    		jsonReturn.put("activities", jsonActivitiesArray);
+        	jsonReturn.put("apiStatus", ApiStatusCode.SUCCESS);
+    	} finally {
+		    em.close();
+		}
+    	
+    	return new JsonRepresentation(jsonReturn);
+    }
+    
+    private List<String> parseActivityIds() {
+    	List<String> activityIds = new ArrayList<String>();
+    	log.info("parsing activityIds = " + this.activityIdsStr);
+		StringTokenizer st = new StringTokenizer(this.activityIdsStr, ",");
+		while (st.hasMoreTokens()) {
+			activityIds.add(st.nextToken());
+		}
+		return activityIds;
     }
 }  

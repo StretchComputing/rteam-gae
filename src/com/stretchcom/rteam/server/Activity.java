@@ -16,6 +16,8 @@ import javax.persistence.NamedQuery;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 
+import org.restlet.data.Status;
+
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Text;
@@ -23,8 +25,18 @@ import com.google.appengine.api.datastore.Text;
 @Entity
 @NamedQueries({
     @NamedQuery(
+    		name="Activity.getByUpperAndLowerCreatedDates",
+    		query="SELECT a FROM Activity a" + " WHERE " +
+    				"a.createdGmtDate <= :mostCurrentDate" + " AND " +
+    				 "a.createdGmtDate >= :leastCurrentDate"
+    ),
+    @NamedQuery(
     		name="Activity.getByKey",
     		query="SELECT a FROM Activity a WHERE a.key = :key"
+    ),
+    @NamedQuery(
+    		name="Activity.getByParentActivityId",
+    		query="SELECT a FROM Activity a WHERE a.parentActivityId = :parentActivityId"
     ),
     @NamedQuery(
     		name="Activity.getByTeamId",
@@ -38,13 +50,15 @@ import com.google.appengine.api.datastore.Text;
     		name="Activity.getByTeamIdAndUpperAndLowerCacheIds",
     		query="SELECT a FROM Activity a WHERE a.teamId = :teamId" + " AND " +
     				"a.cacheId < :upperCacheId" + " AND " +
-    				"a.cacheId >= :lowerCacheId ORDER BY a.cacheId DESC"
+    				"a.cacheId >= :lowerCacheId ORDER BY a.cacheId DESC" + " AND " +
+    				"a.isReply = FALSE"
     ),
     @NamedQuery(
     		name="Activity.getByTeamIdAndUpperAndLowerCreatedDates",
     		query="SELECT a FROM Activity a WHERE a.teamId = :teamId" + " AND " + 
     				"a.createdGmtDate <= :mostCurrentDate"  + " AND " +
-    				"a.createdGmtDate >= :leastCurrentDate ORDER BY a.createdGmtDate DESC"
+    				"a.createdGmtDate >= :leastCurrentDate ORDER BY a.createdGmtDate DESC" + " AND " +
+    				"a.isReply = FALSE"
     ),
     @NamedQuery(
     		name="Activity.getByEventIdAndEventTypeWithPhoto",
@@ -75,6 +89,7 @@ public class Activity implements Comparable<Activity> {
 	private String eventDetailsId; // not sure I want to keep this -- maybe too much overhead to set this
 	private String userId; // user ID of the poster (if it was a user and not an auto post)
 	private String parentActivityId;  // if present, activity is a 'reply'.
+	private Boolean isReply = false;
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -327,6 +342,14 @@ public class Activity implements Comparable<Activity> {
 	public void setParentActivityId(String parentActivityId) {
 		this.parentActivityId = parentActivityId;
 	}
+
+	public Boolean getIsReply() {
+		return isReply;
+	}
+
+	public void setIsReply(Boolean isReply) {
+		this.isReply = isReply;
+	}
 	
 	// returns activity ID of an activity associated with event that has a photo. If more than one, photo chosen randomly.
 	// returns null if no activity associated with event or no activity that is associated with the event has a photo
@@ -353,5 +376,31 @@ public class Activity implements Comparable<Activity> {
 		}
 
     	return activityIdWithPhoto;
+	}
+	
+	public static Activity getActivity(String theActivityId, EntityManager theEm) {
+    	Activity activity = null;
+    	try {
+			activity = (Activity)theEm.createNamedQuery("Activity.getByKey")
+				.setParameter("key", KeyFactory.stringToKey(theActivityId))
+				.getSingleResult();
+    	} catch (NoResultException e) {
+			log.exception("Activity:getActivity:NoResultException", "activity not found", e);
+		} catch (NonUniqueResultException e) {
+			log.exception("Activity:getActivity:NonUniqueResultException", "two or more activities have same key", e);
+		}
+    	return activity;
+	}
+	
+	public static List<Activity> getReplies(String theActivityId, EntityManager theEm) {
+		List<Activity> replies = null;
+    	try {
+    		replies = (List<Activity>)theEm.createNamedQuery("Activity.getByParentActivityId")
+				.setParameter("parentActivityId", theActivityId)
+				.getResultList();
+    	} catch (Exception e) {
+			log.exception("Activity:getReplies:Exception", "", e);
+		}
+    	return replies;
 	}
 }

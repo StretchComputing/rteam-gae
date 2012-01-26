@@ -3,6 +3,7 @@ package com.stretchcom.rteam.server;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -19,6 +20,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.google.appengine.api.datastore.KeyFactory;
 
 public class MigrationTaskServlet extends HttpServlet {
 	//private static final Logger log = Logger.getLogger(MigrationTaskServlet.class.getName());
@@ -72,7 +75,11 @@ public class MigrationTaskServlet extends HttpServlet {
 	    		normalizeGuardianLists();
 	    	} else if(migrationName.equalsIgnoreCase("defaultMemberAccessPreferencesTask")) {
 	    		defaultMemberAccessPreferences();
+	    	} else if(migrationName.equalsIgnoreCase("setActivityIsReplyTask")) {
+	    		setActivityIsReply();
 	    	}
+	    	
+	    	
 		    
 			// Return status depends on how many times this been attempted. If max retry count reached, return HTTP 200 so
 		    // retries attempt stop.
@@ -298,6 +305,39 @@ public class MigrationTaskServlet extends HttpServlet {
     		log.exception("MigrationTaskServlet:defaultMemberAccessPreferences:Exception", "", e);
     	} finally {
 		    emMemberships.close();
+		}
+    }
+    
+
+    private void setActivityIsReply() {
+    	final int TIME_INTERVAL = 10; // days
+		EntityManager emActivities = EMF.get().createEntityManager();
+		try {
+			Date upperDate = new Date();
+			Date lowerDate = GMT.subtractDaysFromDate(upperDate, TIME_INTERVAL);
+			Date earliestDate = GMT.subtractDaysFromDate(upperDate, 730); // go back two years
+			
+			int activityCount = 0;
+			while(upperDate.after(earliestDate)) {
+				List<Activity> activities = (List<Activity>)emActivities.createNamedQuery("Activity.getByUpperAndLowerCreatedDates")
+						.setParameter("mostCurrentDate", upperDate)
+						.setParameter("leastCurrentDate", lowerDate)
+						.getResultList();
+				log.debug("total number of activities between " + GMT.dateToString(lowerDate) + " and " +  GMT.dateToString(upperDate) + " = " + activities.size());
+				
+				for(Activity a : activities) {
+					a.setIsReply(false);
+					activityCount++;
+				}
+				// go back 10 days at a time
+				upperDate = GMT.subtractDaysFromDate(upperDate, TIME_INTERVAL);
+				lowerDate = GMT.subtractDaysFromDate(lowerDate, TIME_INTERVAL);
+			}
+			log.debug("total number of activities processed = " + activityCount);
+    	} catch (Exception e) {
+    		log.exception("MigrationTaskServlet:setActivityIsReplyException", "", e);
+    	} finally {
+		    emActivities.close();
 		}
     }
 }

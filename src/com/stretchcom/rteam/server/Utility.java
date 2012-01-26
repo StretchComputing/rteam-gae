@@ -241,4 +241,14 @@ public class Utility {
 		if(theRequest == null) {return null;}
 		return (User)theRequest.getAttributes().get(RteamApplication.CURRENT_USER);
 	}
+	
+	// if theBooleanStr is "true" ignoring case, return true
+	// if theBooleanStr is "false" ignoring case, return false
+	// for all other situations, return theDefaultValue
+	public static Boolean s2b(String theBooleanStr, Boolean theDefaultValue) {
+		if(theBooleanStr == null) {return theDefaultValue;}
+		if(theBooleanStr.equalsIgnoreCase("true")) {return true;}
+		if(theBooleanStr.equalsIgnoreCase("false")) {return false;}
+		return theDefaultValue;
+	}
 }

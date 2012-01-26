@@ -83,6 +83,7 @@ public class RteamApplication extends Application {
         router.attach("/team/{teamId}/activities/{timeZone}", ActivitiesResource.class);
         router.attach("/activities/status/{userVote}", ActivitiesResource.class);
         router.attach("/activities/{timeZone}", ActivitiesResource.class);
+        router.attach("/activities/{details}/{timeZone}", ActivitiesResource.class);
         router.attach("/team/{teamId}/activity/{activityId}", ActivityResource.class);
         router.attach("/team/{teamId}/activity/{activityId}/{media}", ActivityResource.class);
         router.attach("/mobileCarriers", MobileCarriersResource.class);

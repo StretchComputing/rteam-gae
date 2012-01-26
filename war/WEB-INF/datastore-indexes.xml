@@ -40,6 +40,15 @@
         <property name="status" direction="asc"/>
     </datastore-index>
     
+    <!--  fixes Mike Barker's problem -->
+    <datastore-index kind="Recipient" ancestor="false" source="auto">
+        <property name="eventId" direction="asc"/>
+        <property name="isGame" direction="asc"/>
+        <property name="userId" direction="asc"/>
+        <property name="messageLinkOnly" direction="asc"/>
+        <property name="status" direction="asc"/>
+    </datastore-index>
+
 	<datastore-index kind="Recipient" ancestor="false" source="auto">
         <property name="messageLinkOnly" direction="asc"/>
         <property name="toEmailAddress" direction="asc"/>
