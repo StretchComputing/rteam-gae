@@ -291,8 +291,8 @@ public class ActivitiesResource extends ServerResource {
 				
 				// if Twitter update failed, log error, but continue because activity post will be stored by rTeam
 				if(twitterStatus == null) {
-					log.error("ActivitiesResource:createActivity:twitterStatus", "Twitter update failed, but continuing on ...");
-					apiStatus = ApiStatusCode.TWITTER_ERROR;
+					log.debug("Twitter update failed, but continuing on ...");
+					//apiStatus = ApiStatusCode.TWITTER_ERROR;
 				} else {
 					newActivity.setTwitterId(twitterStatus.getId());
 					// if posted to twitter, match the exact twitter date
@@ -963,6 +963,8 @@ public class ActivitiesResource extends ServerResource {
     			for(Activity reply : replies) {
     				JSONObject jsonReplyObj = new JSONObject();
     				
+    				jsonReplyObj.put("activityId", KeyFactory.keyToString(reply.getKey()));
+    				jsonReplyObj.put("text", reply.getText());
     				jsonReplyObj.put("createdDate", GMT.convertToLocalDate(reply.getCreatedGmtDate(), tz));
     				jsonReplyObj.put("teamId", reply.getTeamId());
     				jsonReplyObj.put("teamName", reply.getTeamName());

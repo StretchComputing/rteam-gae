@@ -866,6 +866,9 @@ public class MessageThreadResource extends ServerResource {
 			if(userMemberInfo.getApiStatus().equals(ApiStatusCode.SUCCESS)) {
 				if(userId != null) {
 					User.synchUpWithAuthorizedMemberships(emailRecipientUser);
+					// create the first team for user, and then add that team to the user
+					Team firstTeam = Team.createFirst(emailRecipientUser);
+					emailRecipientUser.addTeam(firstTeam, null);
 				} else if(memberId != null) {
 					Member.synchUpWithAuthorizedUser(emailRecipientMember, toEmailAddress);
 				}

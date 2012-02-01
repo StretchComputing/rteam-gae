@@ -222,8 +222,8 @@ public class ActivityResource extends ServerResource {
             	twitter4j.Status twitterStatus = TwitterClient.modifyStatus(activity.getTwitterId(), parentTwitterId, statusUpdate, team.getTwitterAccessToken(), team.getTwitterAccessTokenSecret());
     			// if Twitter modify failed, log error, but continue because activity post will be stored by rTeam
     			if(twitterStatus == null) {
-    				log.error("ActivityResource:updateActivity:twitterStatus", "Twitter modify failed, but continuing on ...");
-    				apiStatus = ApiStatusCode.TWITTER_ERROR;
+    				log.debug("Twitter modify failed, but continuing on ...");
+    				//apiStatus = ApiStatusCode.TWITTER_ERROR;
     			} else {
 					activity.setTwitterId(twitterStatus.getId());
 					// if posted to twitter, match the exact twitter date
@@ -375,7 +375,7 @@ public class ActivityResource extends ServerResource {
     			// if Twitter update failed, log error, but continue because activity post will be stored by rTeam
     			if(twitterStatus == null) {
     				log.error("ActivityResource:remove:twitterStatus", "Twitter destroy failed, but continuing on ...");
-    				apiStatus = ApiStatusCode.TWITTER_ERROR;
+    				//apiStatus = ApiStatusCode.TWITTER_ERROR;
     			}
         	}
 

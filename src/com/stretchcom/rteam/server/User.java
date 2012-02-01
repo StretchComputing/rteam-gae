@@ -21,6 +21,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.CascadeType;
 import javax.persistence.Transient;
 
+import org.restlet.data.Status;
+import org.restlet.resource.ServerResource;
+
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Text;
@@ -1084,4 +1087,30 @@ public class User {
 		}
     }
 
+    public void addTeam(Team theTeam, ServerResource theResource) {
+		log.debug("adding Team to user team list");
+		EntityManager emUser = EMF.get().createEntityManager();
+		emUser.getTransaction().begin();
+		try {
+			User currentUser = (User) emUser.createNamedQuery("User.getByKey")
+					.setParameter("key", this.getKey())
+					.getSingleResult();
+			List<Key> teams = currentUser.getTeams();
+			log.debug("number of teams for user " + currentUser.getLastName() + " = " + teams.size());
+			log.debug("about to add team to user: team key = " + theTeam.getKey());
+			currentUser.addTeam(theTeam);
+			emUser.getTransaction().commit();
+		} catch (NoResultException e) {
+			log.exception("User:addTeamToUser:NoResultException", "user not found", e);
+			if(theResource != null) theResource.setStatus(Status.SERVER_ERROR_INTERNAL);
+		} catch (NonUniqueResultException e) {
+			log.exception("User:addTeamToUser:NonUniqueResultException", "should never happen - two or more users have same key", e);
+			if(theResource != null) theResource.setStatus(Status.SERVER_ERROR_INTERNAL);
+		} finally {
+			if (emUser.getTransaction().isActive()) {
+				emUser.getTransaction().rollback();
+			}
+			emUser.close();
+		}
+    }
 }

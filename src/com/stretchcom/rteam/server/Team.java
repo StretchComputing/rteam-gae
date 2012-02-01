@@ -56,6 +56,9 @@ public class Team {
 	public static final Integer THUMB_NAIL_LONG_SIDE  = 82;  // size optimized for retina display
 	public static final Integer THUMB_NAIL_SHORT_SIDE  = 62; // size optimized for retina display
 	
+	public static final String FIRST_TEAM_NAME = "Team 1";
+	public static final String FIRST_TEAM_DESCRIPTION = "auto created first team";
+	
 	private String teamName;
 	private String description;
 	private String leagueName;
@@ -80,7 +83,7 @@ public class Team {
 	private Long newestTwitterId;  // hold the twitter ID of the newest tweet that is cached by rTeam
 	private Long newestCacheId;
 	private Boolean isCacheStale = false;  // deprecated - not used anymore
-	private Boolean useTwitter;
+	private Boolean useTwitter = false;
 	private Date lastTwitterRefresh;  // used throttle how often Twitter is polled for 'direct Twitter Tweets'
 
 	private String oneUseToken; // passed to twitter as query parameter of callback URL.
@@ -511,5 +514,84 @@ public class Team {
 		}
 		return true;
 	}
+	
+	public void initPageUrl() {
+		this.pageUrl = createBaseTeamUrl();
+	}
+	
+	public String getCompletePageUrl() {
+		StringBuffer sb = new StringBuffer();
+		sb.append(RteamApplication.BASE_URL_WITH_SLASH);
+		sb.append("teamPage/");
+		sb.append(this.pageUrl);
+		return sb.toString();
+	}
+	
+	private String createBaseTeamUrl() {
+		String teamCity = this.getCity();
+		if (teamCity == null || teamCity.length() == 0) {teamCity = "zion";}
+		teamCity = Utility.removeAllWhiteSpace(teamCity);
 
+		String teamName = this.getTeamName();
+		if (teamName == null || teamName.length() == 0) {teamName = "team";}
+		teamName = Utility.removeAllWhiteSpace(teamName);
+
+		return teamCity + teamName;
+	}
+	
+	public static Team createFirst(User theUser) {
+		Team firstTeam = null;
+    	EntityManager emTeam = EMF.get().createEntityManager();
+		try {
+			firstTeam = new Team();
+			firstTeam.setTeamName(Team.FIRST_TEAM_NAME);
+			firstTeam.setDescription(Team.FIRST_TEAM_DESCRIPTION);
+			firstTeam.initPageUrl();
+			firstTeam.addCreator(theUser);
+			emTeam.persist(firstTeam);
+		} finally {
+			emTeam.close();
+		}
+		return firstTeam;
+	}
+	
+	public void addCreator(User theCreatingUser) {
+		// ::BusinessRule:: everyone must be a member of the team, so add the user as the 'creator' member.
+		// automatically add user as first member of the newly created team. Member roles, etc can be manually updated later.
+		// ::MEMBER::USER::
+		Member member = new Member();
+		member.setEmailAddress(theCreatingUser.getEmailAddress());
+		member.setPhoneNumber(theCreatingUser.getPhoneNumber());  // may be NULL
+		member.setFirstName(theCreatingUser.getFirstName());
+		member.setLastName(theCreatingUser.getLastName());
+		member.setAutoArchiveDayCount(theCreatingUser.getAutoArchiveDayCount());
+		
+		// Verified that the following lines cause a NPE error if currentUser photo and thumb nail not set
+		if(theCreatingUser.getPhotoBase64() != null) member.setPhotoBase64(theCreatingUser.getPhotoBase64());
+		if(theCreatingUser.getThumbNailBase64() != null) member.setThumbNailBase64(theCreatingUser.getThumbNailBase64());
+
+		// if NA or confirmed, set userId and copy over NA and confirmation -- as appropriate
+		if(theCreatingUser.getIsNetworkAuthenticated() || theCreatingUser.getIsSmsConfirmed()) {
+			member.setUserId(KeyFactory.keyToString(theCreatingUser.getKey()));
+
+			// user can be both NA and SMS confirmed
+			if(theCreatingUser.getIsNetworkAuthenticated()) {
+				member.networkAuthenticateEmailAddress(theCreatingUser.getEmailAddress());
+			}
+			if(theCreatingUser.getIsSmsConfirmed()) {
+				// confirming confirms the individual and sets the SMS address.
+				member.smsConfirmPhoneNumber(theCreatingUser.getSmsEmailAddress());
+			}
+		}
+
+		member.setParticipantRole(Member.CREATOR_PARTICIPANT);
+		List<String> roles = new ArrayList<String>();
+		roles.add(Member.ORGANIZER_ROLE);
+		member.setRoles(roles);
+
+		// TODO replace with user specified Access Preferences
+		member.setDefaultAccessPreferences();
+
+		this.getMembers().add(member);
+	}
 }

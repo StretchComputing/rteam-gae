@@ -48,7 +48,6 @@ public class TeamsResource extends ServerResource {
 		log.debug("createTeam(@Post) entered ..... ");
 		EntityManager em = EMF.get().createEntityManager();
 
-		String apiStatus = ApiStatusCode.SUCCESS;
 		this.setStatus(Status.SUCCESS_CREATED);
 		
 		Team team = null;
@@ -59,7 +58,7 @@ public class TeamsResource extends ServerResource {
 			if (currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
 				log.error("TeamsResource:createTeam:currentUser", "user could not be retrieved from Request attributes!!");
-				return new JsonRepresentation(jsonReturn);
+				return Utility.apiError(null);
 			} else {
 				log.debug("currentUser = " + currentUser.getFullName());
 			}
@@ -142,103 +141,52 @@ public class TeamsResource extends ServerResource {
 			if (team.getTeamName() == null || team.getTeamName().length() == 0
 					|| team.getDescription() == null
 					|| team.getDescription().length() == 0) {
-				apiStatus = ApiStatusCode.TEAM_NAME_AND_DESCRIPTION_REQUIRED;
+				return Utility.apiError(ApiStatusCode.TEAM_NAME_AND_DESCRIPTION_REQUIRED);
 			}
 			// must be a valid state name/abbreviation, if present
 			else if (team.getState() != null && !StateMap.get().isValid(team.getState())) {
-				apiStatus = ApiStatusCode.INVALID_STATE_PARAMETER;
+				return Utility.apiError(ApiStatusCode.INVALID_STATE_PARAMETER);
 			}
 			// gender must be a valid option, if present
 			else if (team.getGender() != null && !team.isGenderValid(team.getGender())) {
-				apiStatus = ApiStatusCode.INVALID_GENDER_PARAMETER;
+				return Utility.apiError(ApiStatusCode.INVALID_GENDER_PARAMETER);
 			}
 			// longitude and latitude: if either is specified, both must be specified
 			else {
 				if ((latitudeStr == null && longitudeStr != null) || (latitudeStr != null && longitudeStr == null)) {
-					apiStatus = ApiStatusCode.LATITIUDE_AND_LONGITUDE_MUST_BE_SPECIFIED_TOGETHER;
+					return Utility.apiError(ApiStatusCode.LATITIUDE_AND_LONGITUDE_MUST_BE_SPECIFIED_TOGETHER);
 				} else {
 					if (latitudeStr != null) {
 						try {
 							latitude = new Double(latitudeStr);
 							team.setLatitude(latitude);
 						} catch (NumberFormatException e) {
-							apiStatus = ApiStatusCode.INVALID_LATITUDE_PARAMETER;
+							return Utility.apiError(ApiStatusCode.INVALID_LATITUDE_PARAMETER);
 						}
 					}
 
-					if (apiStatus.equals(ApiStatusCode.SUCCESS) && longitudeStr != null) {
+					if (longitudeStr != null) {
 						try {
 							longitude = new Double(longitudeStr);
 							team.setLongitude(longitude);
 						} catch (NumberFormatException e) {
-							apiStatus = ApiStatusCode.INVALID_LONGITUDE_PARAMETER;
+							return Utility.apiError(ApiStatusCode.INVALID_LONGITUDE_PARAMETER);
 						}
 					}
 				}
 			}
 			
 			//::BUSINESS_RULE:: must be NA to set up a Twitter account
-			if(apiStatus.equals(ApiStatusCode.SUCCESS) && team.getUseTwitter()) {
+			if(team.getUseTwitter()) {
 				if(!currentUser.getIsNetworkAuthenticated()) {
-					apiStatus = ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED;
-					log.debug("user must be network authenticated to connect to a Twitter account");
+					return Utility.apiError(ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
 				}
 			}
 
 			// ::TODO if latitude and longitude set, use reverse geocode to override and set the city and state
 			
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_CREATED)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
-			}
-
-			// save the base team page URL
-			// TODO make sure URL has only legal characters
-			String baseTeamPageUrl = createBaseTeamName(team);
-			// only the base team name is persisted - that is all that is
-			// needed to match via query later
-			team.setPageUrl(baseTeamPageUrl);
-
-			String teamPageUrl = RteamApplication.BASE_URL_WITH_SLASH + "teamPage/" + baseTeamPageUrl;
-
-			// ::BusinessRule:: everyone must be a member of the team, so add the user as the 'creator' member.
-			// automatically add user as first member of the newly created team. Member roles, etc can be manually updated later.
-			// ::MEMBER::USER::
-			Member member = new Member();
-			member.setEmailAddress(currentUser.getEmailAddress());
-			member.setPhoneNumber(currentUser.getPhoneNumber());  // may be NULL
-			member.setFirstName(currentUser.getFirstName());
-			member.setLastName(currentUser.getLastName());
-			member.setAutoArchiveDayCount(currentUser.getAutoArchiveDayCount());
-			
-			// Verified that the following lines cause a NPE error if currentUser photo and thumb nail not set
-			if(currentUser.getPhotoBase64() != null) member.setPhotoBase64(currentUser.getPhotoBase64());
-			if(currentUser.getThumbNailBase64() != null) member.setThumbNailBase64(currentUser.getThumbNailBase64());
-
-			// if NA or confirmed, set userId and copy over NA and confirmation -- as appropriate
-			if(currentUser.getIsNetworkAuthenticated() || currentUser.getIsSmsConfirmed()) {
-				member.setUserId(KeyFactory.keyToString(currentUser.getKey()));
-
-				// user can be both NA and SMS confirmed
-				if(currentUser.getIsNetworkAuthenticated()) {
-					member.networkAuthenticateEmailAddress(currentUser.getEmailAddress());
-				}
-				if(currentUser.getIsSmsConfirmed()) {
-					// confirming confirms the individual and sets the SMS address.
-					member.smsConfirmPhoneNumber(currentUser.getSmsEmailAddress());
-				}
-			}
-
-			member.setParticipantRole(Member.CREATOR_PARTICIPANT);
-			List<String> roles = new ArrayList<String>();
-			roles.add(Member.ORGANIZER_ROLE);
-			member.setRoles(roles);
-			List<Member> members = team.getMembers();
-
-			// TODO replace with Access Preferences
-			member.setDefaultAccessPreferences();
-
-			members.add(member);
+			team.initPageUrl();
+			team.addCreator(currentUser);
 			
 			// if team using twitter, get necessary request tokens, etc.
 			Boolean twitterAuthorizationInitialized = false;
@@ -254,10 +202,8 @@ public class TeamsResource extends ServerResource {
 					team.setTwitterRequestToken(twitterRequestInfo.get(1));
 					team.setTwitterRequestTokenSecret(twitterRequestInfo.get(2));
 				} else {
-					// twitter call failed
-					// TODO ?create a separate twitter status so failing twitter doesn't fail the entire create Team API?
-					jsonReturn.put("apiStatus", ApiStatusCode.TWITTER_ERROR);
-					return new JsonRepresentation(jsonReturn);
+					// twitter call failed, but don't fail entire API, but do log an error so we know this is happening
+					log.error("TeamsResource:createTeam:twitter", "get request token failed");
 				}
 			}
 			
@@ -273,16 +219,18 @@ public class TeamsResource extends ServerResource {
 			this.getResponse().setLocationRef(baseUri + "/" + team.getTeamName());
 
 			jsonReturn.put("teamId", keyWebStr);
-			jsonReturn.put("teamPageUrl", teamPageUrl);
+			jsonReturn.put("teamPageUrl", team.getCompletePageUrl());
 			if(twitterAuthorizationInitialized) {
 				jsonReturn.put("twitterAuthorizationUrl", team.getTwitterAuthorizationUrl());
 			}
 		} catch (IOException e) {
 			log.exception("TeamsResource:createTeam:IOException", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+			return Utility.apiError(null);
 		} catch (JSONException e) {
 			log.exception("TeamsResource:createTeam:JSONException1", "", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+			return Utility.apiError(null);
 		} finally {
 			if (em.getTransaction().isActive()) {
 				em.getTransaction().rollback();
@@ -290,41 +238,9 @@ public class TeamsResource extends ServerResource {
 			em.close();
 		}
 
-		// update User in a separate transaction - User and Team are in the same
-		// Entity Group?
-		if (currentUser != null && this.getStatus().equals(Status.SUCCESS_CREATED)) {
-			log.debug("adding Team to user team list");
-			EntityManager em2 = EMF.get().createEntityManager();
-			em2.getTransaction().begin();
-			try {
-				currentUser = (User) em2.createNamedQuery("User.getByKey")
-						.setParameter("key", currentUser.getKey())
-						.getSingleResult();
-				List<Key> teams = currentUser.getTeams();
-				log.debug("number of teams for user " + currentUser.getLastName() + " = " + teams.size());
-				log.debug("about to add team to user: team key = " + team.getKey());
-				currentUser.addTeam(team);
-				em2.getTransaction().commit();
-			} catch (NoResultException e) {
-				log.exception("TeamsResource:createTeam:NoResultException", "user not found", e);
-				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			} catch (NonUniqueResultException e) {
-				log.exception("TeamsResource:createTeam:NonUniqueResultException", "should never happen - two or more users have same key", e);
-				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-			} finally {
-				if (em2.getTransaction().isActive()) {
-					em2.getTransaction().rollback();
-				}
-				em2.close();
-			}
-		}
-
-		try {
-			jsonReturn.put("apiStatus", apiStatus);
-		} catch (JSONException e) {
-			log.exception("TeamsResource:createTeam:JSONException2", "", e);
-		}
-		return new JsonRepresentation(jsonReturn);
+		currentUser.addTeam(team, this);
+		
+		return Utility.apiSuccess("Create New Team API");
 	}
 
 	// Handles 'Get list of teams' API
@@ -337,12 +253,11 @@ public class TeamsResource extends ServerResource {
 		String apiStatus = ApiStatusCode.SUCCESS;
 		this.setStatus(Status.SUCCESS_OK);
 		try {
-			User currentUser = (User) this.getRequest().getAttributes().get(
-					RteamApplication.CURRENT_USER);
+			User currentUser = (User) this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
 			if (currentUser == null) {
 				log.error("TeamsResource:getTeamList:currentUser", "user could not be retrieved from Request attributes!!");
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				return new JsonRepresentation(jsonReturn);
+				return Utility.apiError(null);
 			}
 
 			User user = (User) em.createNamedQuery("User.getByKey")
@@ -419,28 +334,6 @@ public class TeamsResource extends ServerResource {
 			}
 		}
 		return true;
-	}
-
-	private String createBaseTeamName(Team theTeam) {
-		String baseTeamName = "";
-		String teamCity = theTeam.getCity();
-		// ::TODO pick another default city
-		if (teamCity == null || teamCity.length() == 0) {
-			teamCity = "zion";
-		}
-
-		// remove all whitespace
-		teamCity = Utility.removeAllWhiteSpace(teamCity);
-
-		String teamDescription = theTeam.getDescription();
-		if (teamDescription == null || teamDescription.length() == 0) {
-			teamDescription = "team";
-		}
-
-		// remove all whitespace
-		teamDescription = Utility.removeAllWhiteSpace(teamDescription);
-
-		return teamCity + "/" + teamDescription;
 	}
 
 }

@@ -104,18 +104,12 @@ public class TeamResource extends ServerResource {
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
     			log.error("TeamResource:createGame:currentUser", "user could not be retrieved from Request attributes!!");
+				return Utility.apiError(null);
     		} else if(this.teamId == null || this.teamId.length() == 0) {
-        		log.debug("TeamResource:toJson() teamId null or zero length");
-				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
+    			return Utility.apiError(ApiStatusCode.TEAM_ID_REQUIRED);
         	} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
-				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.debug(apiStatus);
+        		return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
         	}
-			
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
-			}
     		
     		else {
     			Key teamKey = KeyFactory.stringToKey(this.teamId);
@@ -203,18 +197,12 @@ public class TeamResource extends ServerResource {
     		if(currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
     			log.error("TeamResource:createGame:currentUser", "user could not be retrieved from Request attributes!!");
+        		return Utility.apiError(null);
     		} else if(this.teamId == null || this.teamId.length() == 0) {
-        		log.debug("TeamResource:toJson() teamId null or zero length");
-				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
+        		return Utility.apiError(ApiStatusCode.TEAM_ID_REQUIRED);
         	} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
-				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-				log.debug(apiStatus);
+        		return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
         	}
-			
-			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-				jsonReturn.put("apiStatus", apiStatus);
-				return new JsonRepresentation(jsonReturn);
-			}
 	    	
 			Boolean wasMemberRemoved = false;
 			Key memberRemovedKey = null;
@@ -399,9 +387,7 @@ public class TeamResource extends ServerResource {
 			    }
 			    em2.close();
 			}
-		} catch (JSONException e) {
-			log.exception("TeamResource:remove:JSONException", "error converting json representation into a JSON object", e);
-			this.setStatus(Status.SERVER_ERROR_INTERNAL);
+		} finally {
 		}
 		
 		
@@ -486,6 +472,7 @@ public class TeamResource extends ServerResource {
     			if(currentUser == null) {
     				this.setStatus(Status.SERVER_ERROR_INTERNAL);
     				log.error("TeamResource:createGame:currentUser", "user could not be retrieved from Request attributes!!");
+            		return Utility.apiError(null);
     			}
     			// teamId is required
     			else if(this.teamId == null || this.teamId.length() == 0) {
@@ -494,14 +481,8 @@ public class TeamResource extends ServerResource {
     			}
     			// must be a member of the team
     			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
-    				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
-    				log.debug(apiStatus);
-            	}
-    			
-    			if(!apiStatus.equals(ApiStatusCode.SUCCESS) || !this.getStatus().equals(Status.SUCCESS_OK)) {
-    				jsonReturn.put("apiStatus", apiStatus);
-    				return new JsonRepresentation(jsonReturn);
-    			}
+            		return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
+           	}
     			
         		Team team = (Team)em.createNamedQuery("Team.getByKey")
     				.setParameter("key", KeyFactory.stringToKey(this.teamId))
@@ -533,10 +514,7 @@ public class TeamResource extends ServerResource {
     			}
     			
     			if(!isCoordinator) {
-    				apiStatus = ApiStatusCode.USER_NOT_A_COORDINATOR;
-    				jsonReturn.put("apiStatus", apiStatus);
-    				log.debug(apiStatus);
-    				return new JsonRepresentation(jsonReturn);
+            		return Utility.apiError(ApiStatusCode.USER_NOT_A_COORDINATOR);
     			}
     	
     			JsonRepresentation jsonRep = new JsonRepresentation(entity);
@@ -579,8 +557,7 @@ public class TeamResource extends ServerResource {
     				//::BUSINESS_RULE:: must be NA to set up a Twitter account
     				if(useTwitter && !currentUser.getIsNetworkAuthenticated()) {
 						log.debug("user must be network authenticated to connect to a Twitter account");
-						jsonReturn.put("apiStatus", ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
-						return new JsonRepresentation(jsonReturn);
+	            		return Utility.apiError(ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
     				}
     				
     				Boolean oldUseTwitter = team.getUseTwitter();
@@ -601,8 +578,7 @@ public class TeamResource extends ServerResource {
     					} else {
     						// twitter call failed
     						// TODO ?create a separate twitter status so failing twitter doesn't fail the entire create Team API?
-    						jsonReturn.put("apiStatus", ApiStatusCode.TWITTER_ERROR);
-    						return new JsonRepresentation(jsonReturn);
+    	            		return Utility.apiError(ApiStatusCode.TWITTER_ERROR);
     					}
     				}
     				// going from 'true' to 'false'
@@ -655,8 +631,7 @@ public class TeamResource extends ServerResource {
     			
     			if(json.has("photo")) {
 					if(isPortrait == null) {
-						jsonReturn.put("apiStatus", ApiStatusCode.IS_PORTRAIT_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER);
-						return new JsonRepresentation(jsonReturn);
+	            		return Utility.apiError(ApiStatusCode.IS_PORTRAIT_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER);
 					}
 					
     				String photoBase64 = json.getString("photo");

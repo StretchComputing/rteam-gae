@@ -135,14 +135,16 @@
         <property name="eventGmtStartDate" direction="asc"/>
     </datastore-index>
     
-    <!-- Used 2 times in query history -->
+    <!-- Used 1 time in query history -->
     <datastore-index kind="Activity" ancestor="false" source="auto">
+        <property name="isReply" direction="asc"/>
         <property name="teamId" direction="asc"/>
         <property name="createdGmtDate" direction="desc"/>
     </datastore-index>
     
     <!-- Used 1 time in query history -->
     <datastore-index kind="Activity" ancestor="false" source="auto">
+        <property name="isReply" direction="asc"/>
         <property name="teamId" direction="asc"/>
         <property name="cacheId" direction="desc"/>
     </datastore-index>

@@ -225,17 +225,27 @@ public class Utility {
 
 	// if theApiStatus is null, no JSON object is returned
     public static JsonRepresentation apiError(String theApiStatus){
+		log.debug("returning apiStatus = " + theApiStatus);
+    	return Utility.apiStatus(theApiStatus);
+	}
+    
+    public static JsonRepresentation apiSuccess(String apiDescription){
+    	String apiStatus = ApiStatusCode.SUCCESS;
+		log.info(apiDescription + " returning apiStatus = " + apiStatus);
+    	return Utility.apiStatus(apiStatus);
+    }
+    
+    public static JsonRepresentation apiStatus(String theApiStatus){
     	JSONObject json = new JSONObject();
     	try {
         	if(theApiStatus != null) {
-        		log.debug("returning apiStatus = " + theApiStatus);
     			json.put("apiStatus", theApiStatus);
         	}
 		} catch (JSONException e) {
-			log.exception("Utility:apiError:JSONException", "", e);
+			log.exception("Utility:apiStatuis:JSONException", "", e);
 		}
 		return new JsonRepresentation(json);
-	}
+    }  
     
 	public static User getCurrentUser(Request theRequest) {
 		if(theRequest == null) {return null;}

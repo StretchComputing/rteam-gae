@@ -50,15 +50,15 @@ import com.google.appengine.api.datastore.Text;
     		name="Activity.getByTeamIdAndUpperAndLowerCacheIds",
     		query="SELECT a FROM Activity a WHERE a.teamId = :teamId" + " AND " +
     				"a.cacheId < :upperCacheId" + " AND " +
-    				"a.cacheId >= :lowerCacheId ORDER BY a.cacheId DESC" + " AND " +
-    				"a.isReply = FALSE"
+    				"a.cacheId >= :lowerCacheId"  + " AND " +
+    				"a.isReply = FALSE ORDER BY a.cacheId DESC"
     ),
     @NamedQuery(
     		name="Activity.getByTeamIdAndUpperAndLowerCreatedDates",
     		query="SELECT a FROM Activity a WHERE a.teamId = :teamId" + " AND " + 
     				"a.createdGmtDate <= :mostCurrentDate"  + " AND " +
-    				"a.createdGmtDate >= :leastCurrentDate ORDER BY a.createdGmtDate DESC" + " AND " +
-    				"a.isReply = FALSE"
+    				"a.createdGmtDate >= :leastCurrentDate" + " AND " +
+    				"a.isReply = FALSE ORDER BY a.createdGmtDate DESC"
     ),
     @NamedQuery(
     		name="Activity.getByEventIdAndEventTypeWithPhoto",
