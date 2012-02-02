@@ -699,7 +699,7 @@ public class Language {
 		abbrMap.put("individuals", "indv");
 		abbrMap.put("insurance", "ins");
 		abbrMap.put("influenced", "infl");
-		abbrMap.put("infomation", "info");
+		abbrMap.put("information", "info");
 		abbrMap.put("initial", "init");
 		abbrMap.put("initiate", "init");
 		abbrMap.put("initiated", "init");
