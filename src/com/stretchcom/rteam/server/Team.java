@@ -40,6 +40,10 @@ import com.google.appengine.api.datastore.Text;
     		name="Team.getByOneUseTokenAndTokenStatus",
     		query="SELECT t FROM Team t WHERE t.oneUseToken = :oneUseToken AND t.oneUseTokenStatus = :oneUseTokenStatus"
     ),
+    @NamedQuery(
+    		name="Team.getPageUrl",
+    		query="SELECT t FROM Team t WHERE t.pageUrl = :pageUrl"
+    ),
 })
 public class Team {
 	//private static final Logger log = Logger.getLogger(Team.class.getName());
@@ -581,4 +585,22 @@ public class Team {
 
 		this.getMembers().add(member);
 	}
+    
+    public static String getTeamId(String thePageUrl) {
+		String teamId = null;
+    	EntityManager em = EMF.get().createEntityManager();
+		try {
+			Team team = (Team)em.createNamedQuery("Team.getPageUrl")
+				.setParameter("pageUrl", thePageUrl)
+				.getSingleResult();
+			teamId = KeyFactory.keyToString(team.getKey());
+		} catch (NoResultException e) {
+			log.exception("Team:getTeamId:NoResultException", "team not found using pageUrl = " + thePageUrl, e);
+		} catch (NonUniqueResultException e) {
+			log.exception("Team:getTeamId:NonUniqueResultException", "two teams have the same pageUrl", e);
+		} finally {
+			em.close();
+		}
+		return teamId;
+    }
 }
