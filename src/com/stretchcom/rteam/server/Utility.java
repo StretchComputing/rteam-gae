@@ -229,10 +229,15 @@ public class Utility {
     	return Utility.apiStatus(theApiStatus);
 	}
     
-    public static JsonRepresentation apiSuccess(String apiDescription){
+    public static JsonRepresentation apiSuccess(JSONObject theJson, String apiDescription){
     	String apiStatus = ApiStatusCode.SUCCESS;
+    	try {
+    		theJson.put("apiStatus", apiStatus);
+		} catch (JSONException e) {
+			log.exception("Utility:apiSuccess:JSONException", "", e);
+		}
 		log.info(apiDescription + " returning apiStatus = " + apiStatus);
-    	return Utility.apiStatus(apiStatus);
+		return new JsonRepresentation(theJson);
     }
     
     public static JsonRepresentation apiStatus(String theApiStatus){
@@ -242,7 +247,7 @@ public class Utility {
     			json.put("apiStatus", theApiStatus);
         	}
 		} catch (JSONException e) {
-			log.exception("Utility:apiStatuis:JSONException", "", e);
+			log.exception("Utility:apiStatus:JSONException", "", e);
 		}
 		return new JsonRepresentation(json);
     }  

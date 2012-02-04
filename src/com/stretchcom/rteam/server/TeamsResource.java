@@ -240,7 +240,7 @@ public class TeamsResource extends ServerResource {
 
 		currentUser.addTeam(team, this);
 		
-		return Utility.apiSuccess("Create New Team API");
+		return Utility.apiSuccess(jsonReturn, "Create New Team API");
 	}
 
 	// Handles 'Get list of teams' API

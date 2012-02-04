@@ -75,8 +75,7 @@ public class PhotoServlet extends HttpServlet {
 		return activityId;
 	}
 
-    // returns base64 decoded audio data of the specified feedback record if
-    // successful; null otherwise.
+    // returns base64 decoded photo associated with the specified activity if successful; null otherwise.
     private byte[] getPhoto(String theActivityId) {
         byte[] rawPhoto = null;
 
