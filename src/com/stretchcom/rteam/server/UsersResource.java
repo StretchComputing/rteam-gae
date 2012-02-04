@@ -206,16 +206,20 @@ public class UsersResource extends ServerResource {
 		    	PubHub.sendPhoneNumberConfirmation(user.getSmsEmailAddress(), user.getPhoneNumberConfirmationCode());
 		    }
 		    
-			// create the first team for user, and then add that team to the user
-		    log.debug("about to create first team");
-			Team firstTeam = Team.createFirst(user);
-			user.addTeam(firstTeam, null);
+			// if no prior memberships, create the first team for user, and then add that team to the user
+		    Team firstTeam = null;
+		    List<Member> confirmedMemberships = Member.getConfirmedMemberships(user.getEmailAddress(), user.getPhoneNumber());
+		    if(confirmedMemberships.size() == 0) {
+			    log.debug("new user has no confirmed memberships, about to create first team");
+				firstTeam = Team.createFirst(user);
+				user.addTeam(firstTeam, null);
+		    }
 		    
 			String baseUri = this.getRequest().getHostRef().getIdentifier();
 			this.getResponse().setLocationRef(baseUri + "/" + user.getEmailAddress());
 			
 			jsonReturn.put("token", token);
-			jsonReturn.put("teamId", KeyFactory.keyToString(firstTeam.getKey()));
+			if(firstTeam != null) jsonReturn.put("teamId", KeyFactory.keyToString(firstTeam.getKey()));
 			log.debug("jsonReturn = " + jsonReturn.toString());
 		} catch (IOException e) {
 			log.exception("UsersResource:createUser:IOException", "", e);

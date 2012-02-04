@@ -65,7 +65,7 @@ public class Team {
 	private String sport;
 	private String gender;
 	private String siteUrl;  // external team site like eteamz
-	private String pageUrl;  // rTeam team page. The base URL (i.e. http://rteamtest.appspot.com/teamPage/) is not stored
+	private String pageUrl;  // rTeam team page. The base URL (i.e. http://rteamtest.appspot.com/) is not stored
 	private Key teamLocation; // key to the Location entity holding the team location. Use 'key' and not 'locationId' because never sent to client
 	private Double latitude; // local copy of team location data maintained in Location entity.
 	private Double longitude; // local copy of team location data maintained in Location entity.
@@ -247,7 +247,7 @@ public class Team {
 		return pageUrl;
 	}
 
-	public void setPageUrl(String pageUrl) {
+	private void setPageUrl(String pageUrl) {
 		this.pageUrl = pageUrl;
 	}
 
@@ -516,27 +516,14 @@ public class Team {
 	}
 	
 	public void initPageUrl() {
-		this.pageUrl = createBaseTeamUrl();
+		this.pageUrl = UrlShort.reserveUniqueId();
 	}
 	
 	public String getCompletePageUrl() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(RteamApplication.BASE_URL_WITH_SLASH);
-		sb.append("teamPage/");
 		sb.append(this.pageUrl);
 		return sb.toString();
-	}
-	
-	private String createBaseTeamUrl() {
-		String teamCity = this.getCity();
-		if (teamCity == null || teamCity.length() == 0) {teamCity = "zion";}
-		teamCity = Utility.removeAllWhiteSpace(teamCity);
-
-		String teamName = this.getTeamName();
-		if (teamName == null || teamName.length() == 0) {teamName = "team";}
-		teamName = Utility.removeAllWhiteSpace(teamName);
-
-		return teamCity + teamName;
 	}
 	
 	public static Team createFirst(User theUser) {

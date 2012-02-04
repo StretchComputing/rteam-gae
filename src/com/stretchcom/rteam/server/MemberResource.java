@@ -50,6 +50,7 @@ public class MemberResource extends ServerResource {
     String teamId;
     String memberId;
     String emailAddress;
+    String phoneNumber;
     String oneUseToken;
     String decision;
     String includePhoto;
@@ -84,6 +85,11 @@ public class MemberResource extends ServerResource {
 				this.emailAddress = Reference.decode(this.emailAddress);
 				this.emailAddress = this.emailAddress.toLowerCase();
 				log.debug("UserResource:doInit() - decoded emailAddress = " + this.emailAddress);
+			} else if(parameter.getName().equals("phoneNumber"))  {
+				this.phoneNumber = (String)parameter.getValue();
+				this.phoneNumber = Reference.decode(this.phoneNumber);
+				this.phoneNumber = this.phoneNumber.toLowerCase();
+				log.debug("UserResource:doInit() - decoded phoneNumber = " + this.phoneNumber);
 			} else if(parameter.getName().equals("oneUseToken")) {
 				this.oneUseToken = (String)parameter.getValue();
 				this.oneUseToken = Reference.decode(this.oneUseToken);
@@ -119,9 +125,7 @@ public class MemberResource extends ServerResource {
     			// --------------------------------------------
         		
         		// Only return memberships that are NA.  User won't be able to bind to them later if there not NA.
-        		List<Member>  members= (List<Member> ) em.createNamedQuery("Member.getByNetworkAuthenticatedEmailAddress")
-							.setParameter("emailAddress", this.emailAddress)
-				 			.getResultList();
+        		List<Member>  members = Member.getConfirmedMemberships(this.emailAddress, this.phoneNumber);
         		
         		String firstName = "";
         		String lastName = "";

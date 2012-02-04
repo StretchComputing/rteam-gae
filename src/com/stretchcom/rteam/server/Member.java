@@ -2836,5 +2836,38 @@ public class Member {
 			// 'no match' is expected.
 		}
 	}
+    
+	// Returns all confirmed memberships.
+	// if theEmailAddress is not null, email address confirmed memberships are returned
+	// if thePhoneNumber is not null, sms confirmed memberships are returned
+	public static List<Member> getConfirmedMemberships(String theEmailAddress, String thePhoneNumber) {
+		EntityManager em = EMF.get().createEntityManager();
+		List<Member> smsConfirmedMemberships = null;
+		List<Member> emailAddressConfirmedMemberships = null;
+		List<Member> allConfirmedMemberships = new ArrayList<Member>();
+		
+		try {
+			if(thePhoneNumber != null) {
+				smsConfirmedMemberships = (List<Member>)em.createNamedQuery("Member.getBySmsConfirmedPhoneNumber")
+						.setParameter("phoneNumber", thePhoneNumber)
+						.getResultList();
+				allConfirmedMemberships.addAll(smsConfirmedMemberships);
+			}
+			if(theEmailAddress != null) {
+				emailAddressConfirmedMemberships = (List<Member>) em.createNamedQuery("Member.getByNetworkAuthenticatedEmailAddress")
+						.setParameter("emailAddress", theEmailAddress)
+			 			.getResultList();
+				allConfirmedMemberships.addAll(emailAddressConfirmedMemberships);
+			}
+		log.debug("number of memberships with phone number " + thePhoneNumber + " and email address " + theEmailAddress + " = " + allConfirmedMemberships.size());
+		} catch (Exception e) {
+    		log.exception("Member:getConfirmedMemberships:Exception", "", e);
+		} finally {
+			em.close();
+		}
+		
+		return allConfirmedMemberships;
+	}
+	
   
 }
