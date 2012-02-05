@@ -2180,6 +2180,8 @@ public class PubHub {
     	sb.append("=");
     	String scoreThem = theScoreThem == null ? "0" : theScoreThem.toString();
     	sb.append(scoreThem);
+    	sb.append(" Game highlights: ");
+    	sb.append(theTeam.getCompletePageUrl());
     	return sb.toString();
     }
 

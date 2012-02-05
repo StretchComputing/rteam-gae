@@ -559,7 +559,7 @@ public class Emailer {
         	sb.append("<div style='height:10px;'></div>");
     	}
     	
-    	buildStandardEmailSignature(sb, null, theTeam.getTwitterScreenName(), theOneUseToken);
+    	buildStandardEmailSignature(sb, null, theTeam.getTwitterScreenName(), theOneUseToken, theTeam);
     	return sb.toString();
     }
     
@@ -637,14 +637,18 @@ public class Emailer {
     }
     
     private static void buildStandardEmailSignature(StringBuffer sb, String theTwitterScreenName) {
-    	buildStandardEmailSignature(sb, null, theTwitterScreenName, null);
+    	buildStandardEmailSignature(sb, null, theTwitterScreenName, null, null);
     }
     
     private static void buildStandardEmailSignature(StringBuffer sb, String theSenderName, String theTwitterScreenName) {
-    	buildStandardEmailSignature(sb, theSenderName, theTwitterScreenName, null);
+    	buildStandardEmailSignature(sb, theSenderName, theTwitterScreenName, null, null);
+    }
+    
+    private static void buildStandardEmailSignature(StringBuffer sb, String theSenderName, String theTwitterScreenName, String theOneUseToken) {
+    	buildStandardEmailSignature(sb, theSenderName, theTwitterScreenName, theOneUseToken, null);
     }
    
-    private static void buildStandardEmailSignature(StringBuffer sb, String theSenderName, String theTwitterScreenName, String theOneUseToken) {
+    private static void buildStandardEmailSignature(StringBuffer sb, String theSenderName, String theTwitterScreenName, String theOneUseToken, Team theTeam) {
     	sb.append("<div style='margin-top:30px; font-size:12px;'>");
     	sb.append("Regards,");
     	sb.append("</div>");
@@ -669,7 +673,20 @@ public class Emailer {
     		sb.append("</a>");
     		sb.append("</span>");
     		sb.append("</div>");
+    	}
     	
+    	if(theTeam != null) {
+    		sb.append("<div style='margin-top:1px; font-size:12px;'>");
+    		sb.append("For Live scores and game highlights: ");
+    		sb.append("<span style='color:blue;'>");
+    		sb.append("<a href='");
+    		sb.append(theTeam.getCompletePageUrl());
+    		sb.append("'>");
+    		sb.append("Web Scoreboard");
+    		sb.append("</a>");
+    		sb.append("</span>");
+    		sb.append("</div>");
+    	} else {
     		sb.append("<div style='margin-top:1px; font-size:12px;'>");
     		sb.append("Visit us at: ");
     		sb.append("<span style='color:blue;'>");
@@ -681,17 +698,17 @@ public class Emailer {
     		sb.append("</a>");
     		sb.append("</span>");
     		sb.append("</div>");
-        	
-    		sb.append("<div style='margin-top:1px; font-size:8px;'>");
-    		sb.append("<span style='color:white;'>");
-    		if(theOneUseToken != null) {
-        		sb.append(RteamApplication.EMAIL_START_TOKEN_MARKER);
-        		sb.append(theOneUseToken);
-        		sb.append(RteamApplication.EMAIL_END_TOKEN_MARKER);
-    		}
-    		sb.append("</span>");
-    		sb.append("</div>");
     	}
+    	
+		sb.append("<div style='margin-top:1px; font-size:8px;'>");
+		sb.append("<span style='color:white;'>");
+		if(theOneUseToken != null) {
+    		sb.append(RteamApplication.EMAIL_START_TOKEN_MARKER);
+    		sb.append(theOneUseToken);
+    		sb.append(RteamApplication.EMAIL_END_TOKEN_MARKER);
+		}
+		sb.append("</span>");
+		sb.append("</div>");
     	
     	sb.append("</body>");
     	sb.append("</html>");

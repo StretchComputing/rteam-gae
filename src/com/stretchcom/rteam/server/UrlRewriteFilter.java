@@ -18,7 +18,7 @@ public class UrlRewriteFilter implements Filter {
     //private static final Logger log = Logger.getLogger(UrlRewriteFilter.class.getName());
 	private static RskyboxClient log = new RskyboxClient();
 	
-	private static final String SCOREBOARD_URL_PARTIAL = "/WEB-INF/scoreboard.html";
+	private static final String SCOREBOARD_URL_PARTIAL = "/WEB-INF/html5/team/";
 
     @Override
     public void destroy() {
