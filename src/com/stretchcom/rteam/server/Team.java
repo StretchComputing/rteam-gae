@@ -29,6 +29,10 @@ import com.google.appengine.api.datastore.Text;
 @Entity
 @NamedQueries({
     @NamedQuery(
+    		name="Team.getAll",
+    		query="SELECT t FROM Team t"
+    ),
+    @NamedQuery(
     		name="Team.getByKeys",
     		query="SELECT t FROM Team t WHERE t.key = :keys"
     ),
@@ -43,6 +47,10 @@ import com.google.appengine.api.datastore.Text;
     @NamedQuery(
     		name="Team.getPageUrl",
     		query="SELECT t FROM Team t WHERE t.pageUrl = :pageUrl"
+    ),
+    @NamedQuery(
+    		name="Team.getByTeamNameRange",
+    		query="SELECT t FROM Team t WHERE t.teamName >= :startInclusive AND t.teamName < :endExclusive"
     ),
 })
 public class Team {
@@ -251,7 +259,7 @@ public class Team {
 		return pageUrl;
 	}
 
-	private void setPageUrl(String pageUrl) {
+	public void setPageUrl(String pageUrl) {
 		this.pageUrl = pageUrl;
 	}
 

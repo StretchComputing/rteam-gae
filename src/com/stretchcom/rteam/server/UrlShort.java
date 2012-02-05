@@ -72,7 +72,7 @@ public class UrlShort {
 		    }
 		    em.close();
 		}
-    	log.debug("new UrlShort unique ID = " + reservedId);
+    	//log.debug("new UrlShort unique ID = " + reservedId);
     	return reservedId;
 	}
 	

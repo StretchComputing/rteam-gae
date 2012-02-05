@@ -16,6 +16,7 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
+import javax.persistence.NamedQuery;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -77,9 +78,9 @@ public class MigrationTaskServlet extends HttpServlet {
 	    		defaultMemberAccessPreferences();
 	    	} else if(migrationName.equalsIgnoreCase("setActivityIsReplyTask")) {
 	    		setActivityIsReply();
+	    	} else if(migrationName.equalsIgnoreCase("setTeamShortenedPageUrlTask")) {
+	    		setTeamShortenedPageUrl();
 	    	}
-	    	
-	    	
 		    
 			// Return status depends on how many times this been attempted. If max retry count reached, return HTTP 200 so
 		    // retries attempt stop.
@@ -308,7 +309,6 @@ public class MigrationTaskServlet extends HttpServlet {
 		}
     }
     
-
     private void setActivityIsReply() {
     	final int TIME_INTERVAL = 10; // days
 		EntityManager emActivities = EMF.get().createEntityManager();
@@ -338,6 +338,89 @@ public class MigrationTaskServlet extends HttpServlet {
     		log.exception("MigrationTaskServlet:setActivityIsReplyException", "", e);
     	} finally {
 		    emActivities.close();
+		}
+    }
+    
+// NOTE: following code did not work right. Not sure why, but with the way teams are retrieved, any teams with the same name were NOT updated!!!!!!!!!!!!!!!
+//    private void setTeamShortenedPageUrl() {
+//    	//////////////////////////////////////////////////////////////////////////
+//    	// Divide the teams into 63 chunks based on starting char of the team name
+//    	//////////////////////////////////////////////////////////////////////////
+//    	String keyChars = "!0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz}"; 
+//		EntityManager emTeams = EMF.get().createEntityManager();
+//		try {
+//			int teamCount = 0;
+//			int lowerIndex = 0;
+//			int upperIndex = 1;
+//			while(upperIndex < keyChars.length()) {
+//				List<Team> teams = (List<Team>)emTeams.createNamedQuery("Team.getByTeamNameRange")
+//						.setParameter("startInclusive", keyChars.charAt(lowerIndex))
+//						.setParameter("endExclusive", keyChars.charAt(upperIndex))
+//						.getResultList();
+//				log.debug("total number of teams between " + keyChars.charAt(lowerIndex) + " and " +  keyChars.charAt(upperIndex) + " = " + teams.size());
+//				
+//				for(Team t : teams) {
+//					//////////////////////////////////////////////////////////////////////////////
+//				    // NOTE: unlike the other migrations, this would NOT work without transactions
+//					//////////////////////////////////////////////////////////////////////////////
+//					emTeams.getTransaction().begin();
+//					//log.debug("processing team = " + t.getTeamName());
+//					t.setPageUrl(UrlShort.reserveUniqueId());
+//					//t.setPageUrl("");
+//					emTeams.getTransaction().commit();
+//					teamCount++;
+//				}
+//				
+//				// increment the indexes
+//				lowerIndex++;
+//				upperIndex++;
+//			}
+//			log.debug("total number of teams processed = " + teamCount);
+//    	} catch (Exception e) {
+//    		log.exception("MigrationTaskServlet:setTeamShortenedPageUrl", "", e);
+//    	} finally {
+//		    if (emTeams.getTransaction().isActive()) {
+//		    	emTeams.getTransaction().rollback();
+//		    }
+//		    emTeams.close();
+//		}
+//    }
+    
+    private void setTeamShortenedPageUrl() {
+    	// must reset the UrlShort entity too because the migration did not work the first time I ran it
+		EntityManager emUrlShort = EMF.get().createEntityManager();
+		try {
+			List<UrlShort> urlShorts = (List<UrlShort>)emUrlShort.createNamedQuery("UrlShort.getAll").getResultList();
+			log.debug("total number of UrlShorts retrieved " + urlShorts.size());
+			
+			for(UrlShort us : urlShorts) {
+				us.setUniqueId("0");
+			}
+			log.debug("total number of urlShorts processed = " + urlShorts.size());
+    	} catch (Exception e) {
+    		log.exception("MigrationTaskServlet:setTeamShortenedPageUrl", "", e);
+    	} finally {
+    		emUrlShort.close();
+		}
+    	
+		EntityManager emTeams = EMF.get().createEntityManager();
+		try {
+			int teamCount = 0;
+			List<Team> teams = (List<Team>)emTeams.createNamedQuery("Team.getAll").getResultList();
+			log.debug("total number of teams retrieved " + teams.size());
+			
+			for(Team t : teams) {
+				t.setPageUrl(UrlShort.reserveUniqueId());
+				teamCount++;
+			}
+			log.debug("total number of teams processed = " + teamCount);
+    	} catch (Exception e) {
+    		log.exception("MigrationTaskServlet:setTeamShortenedPageUrl", "", e);
+    	} finally {
+		    if (emTeams.getTransaction().isActive()) {
+		    	emTeams.getTransaction().rollback();
+		    }
+		    emTeams.close();
 		}
     }
 }
