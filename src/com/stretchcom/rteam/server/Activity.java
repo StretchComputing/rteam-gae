@@ -64,6 +64,12 @@ import com.google.appengine.api.datastore.Text;
     		name="Activity.getByEventIdAndEventTypeWithPhoto",
     		query="SELECT a FROM Activity a WHERE a.eventId = :eventId AND a.eventType = :eventType AND photoBase64 <> NULL"
     ),
+    @NamedQuery(
+    		name="Activity.getByEventIdAndEventType",
+    		query="SELECT a FROM Activity a WHERE a.eventId = :eventId" + " AND " +
+    		"a.eventType = :eventType" + " AND " +
+    		"a.isReply = FALSE"
+    ),
 })
 public class Activity implements Comparable<Activity> {
 	//private static final Logger log = Logger.getLogger(Activity.class.getName());

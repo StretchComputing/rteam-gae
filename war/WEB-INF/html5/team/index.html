@@ -1,7 +1,44 @@
+<!doctype html>
 <html>
-<head>
-</head>
-<body>
-<h1>First team page ever -- very cool ...</h1>
-</body>
+  <head>
+    <meta charset="utf-8">
+    <script> if (location.hostname === "www.rskybox.com") { location.href = "https://rskybox-stretchcom.appspot.com"; } </script>
+    <title>rSkybox</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="//ajax.aspnetcdn.com/ajax/jquery.mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.1.min.js"></script>
+    <script>
+      jQuery || document.write('<script src="\/js\/lib\/jquery-1.7.1.min.js"><\/script\>')
+    </script>
+    <script src="/js/lib/jquery.mobile.router.js"></script>
+    <script src="//ajax.aspnetcdn.com/ajax/jquery.mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
+    <script>
+      jQuery.mobile || document.write('<script src="\/js\/lib\/jquery.mobile-1.0.1.min.js"\><\/script\>')
+    </script>
+    <script src="/js/lib/underscore-min.js"></script>
+    <script src="/js/lib/backbone-min.js"></script>
+    <script src="/js/lib/cookie.js"></script>
+    <script src="/js/helpers/app.js"></script>
+    <script src="/js/models/base.js"></script>
+    <script src="/js/models/game.js"></script>
+    <script src="/js/views/games.js"></script>
+    <script src="/js/controllers/main.js"></script>
+  </head>
+  <body>
+  <h1>rScoreboard .... coming soon!!!!!!</h1>
+  
+    <script type="text/template" id="gameEmptyTemplate">
+      <p>
+        You don't have any games, yet.
+      </p>
+      <p>
+        Why don't you 'add' one?
+      </p>
+    </script>
+    <script type="text/template" id="gameListTemplate">
+      <a href="#game?id=<%= gameId %>"><%= startDate %> <%= location %>, <%= interval %><%= scoreUs %><%= scoreThem %></a>
+    </script>
+  
+  </body>
 </html>

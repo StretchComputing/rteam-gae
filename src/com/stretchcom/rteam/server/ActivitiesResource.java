@@ -62,6 +62,8 @@ public class ActivitiesResource extends ServerResource {
 	String includeDetailsStr;
 	String detailsStr;
 	String activityIdsStr;
+	String eventIdStr;
+	String eventTypeStr;
   
     @Override  
     protected void doInit() throws ResourceException {
@@ -131,6 +133,14 @@ public class ActivitiesResource extends ServerResource {
 				this.activityIdsStr = (String)parameter.getValue();
 				this.activityIdsStr = Reference.decode(this.activityIdsStr);
 				log.debug("ActivitiesResource:doInit() - decoded activityIdsStr = " + this.activityIdsStr);
+			} else if(parameter.getName().equals("eventId")) {
+				this.eventIdStr = (String)parameter.getValue();
+				this.eventIdStr = Reference.decode(this.eventIdStr);
+				log.debug("ActivitiesResource:doInit() - decoded eventIdStr = " + this.eventIdStr);
+			} else if(parameter.getName().equals("eventType")) {
+				this.eventTypeStr = (String)parameter.getValue();
+				this.eventTypeStr = Reference.decode(this.eventTypeStr);
+				log.debug("ActivitiesResource:doInit() - decoded eventTypeStr = " + this.eventTypeStr);
 			}
 		}
     }  
@@ -210,6 +220,16 @@ public class ActivitiesResource extends ServerResource {
 				parentActivityId = json.getString("parentActivityId");
 			}
 			
+			String eventIdStr = null;
+			if(json.has("eventId")) {
+				eventIdStr = json.getString("eventId");
+			}
+
+			String eventTypeStr = null;
+			if(json.has("eventType")) {
+				eventTypeStr = json.getString("eventType");
+			}
+			
 			// Enforce Rules
 			if((statusUpdate == null || statusUpdate.length() == 0) && (photoBase64 == null || photoBase64.length() == 0)) {
 				return Utility.apiError(ApiStatusCode.STATUS_UPDATE_OR_PHOTO_REQUIRED);
@@ -219,6 +239,14 @@ public class ActivitiesResource extends ServerResource {
 				return Utility.apiError(ApiStatusCode.VIDEO_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER);
 			} else if(photoBase64 != null && isPortrait == null) {
 				return Utility.apiError(ApiStatusCode.IS_PORTRAIT_AND_PHOTO_MUST_BE_SPECIFIED_TOGETHER);
+			} else if(eventIdStr != null) {
+				if(eventTypeStr == null) {
+					return Utility.apiError(ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_MUST_BE_SPECIFIED_TOGETHER);
+				}
+				List eventInfo = Practice.getEventInfo(eventIdStr, eventTypeStr);
+				if(eventInfo == null || eventInfo.size() == 0) {
+					return Utility.apiError(ApiStatusCode.EVENT_NOT_FOUND);
+				}
 			}
 			
 			Activity parentActivity = null;
@@ -261,6 +289,8 @@ public class ActivitiesResource extends ServerResource {
 			newActivity.setUserId(KeyFactory.keyToString(currentUser.getKey()));
 			newActivity.setParentActivityId(parentActivityId);
 			if(parentActivityId != null) newActivity.setIsReply(true);
+			newActivity.setEventId(eventIdStr);
+			newActivity.setEventType(eventTypeStr);
 			
 			// cacheId held in team is the last used.
 			Long cacheId = team.getNewestCacheId() + 1;
@@ -505,6 +535,15 @@ public class ActivitiesResource extends ServerResource {
 				//::BUSINESSRULE:: refreshFirst=true is mutually exclusive with maxCacheId
 				if(refreshFirst && maxCacheId != null) {
     				return Utility.apiError(ApiStatusCode.REFRESH_FIRST_AND_MAX_CACHE_ID_MUTUALLY_EXCLUSIVE);
+				} else if(eventIdStr != null) {
+					if(eventTypeStr == null) {
+						return Utility.apiError(ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_MUST_BE_SPECIFIED_TOGETHER);
+					}
+					
+					List eventInfo = Practice.getEventInfo(eventIdStr, eventTypeStr);
+					if(eventInfo == null || eventInfo.size() == 0) {
+						return Utility.apiError(ApiStatusCode.EVENT_NOT_FOUND);
+					}
 				}
 			}
 			
@@ -551,7 +590,7 @@ public class ActivitiesResource extends ServerResource {
     		
 			List<Activity> allTeamsRequestedActivities = new ArrayList<Activity>();
 			
-			// All teams support activity so all teams are processed
+			// 'teams' will either be one team if only getting activity for a single team or all the user's teams if that's what was requested
 			for(Team userTeam : teams) {
 				Boolean teamUsesTwitter = userTeam.getUseTwitter() != null && userTeam.getUseTwitter();
 				
@@ -691,29 +730,39 @@ public class ActivitiesResource extends ServerResource {
 									.setParameter("leastCurrentDate", GMT.setTimeToTheBeginningOfTheDay(leastCurrentDate))
 									.getResultList();
 							} else {
-								//////////////////////////////////
-								// get activities by cacheId range
-								//////////////////////////////////
-								Long upperCacheId = null; // non-inclusive, upper cache ID used in activity query
-								Long lowerCacheId = null; // 
-								if(maxCacheId != null) {
-									// typically used to request activities that are not the most recent
-									if(maxCacheId > cacheId + 1) {maxCacheId = cacheId + 1;}
-									upperCacheId = maxCacheId;
+								/////////////////////////////////////
+								// get activities for specified event
+								/////////////////////////////////////
+								if(this.eventIdStr != null) {
+									teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByEventIdAndEventType")
+											.setParameter("eventId", this.eventIdStr)
+											.setParameter("eventType", this.eventTypeStr)
+											.getResultList();
 								} else {
-									// the most recent activities are being requested
-									// make upper cache ID large enough so newest item in cache will be returned
-									upperCacheId = cacheId + 1; 
+									//////////////////////////////////
+									// get activities by cacheId range
+									//////////////////////////////////
+									Long upperCacheId = null; // non-inclusive, upper cache ID used in activity query
+									Long lowerCacheId = null; // 
+									if(maxCacheId != null) {
+										// typically used to request activities that are not the most recent
+										if(maxCacheId > cacheId + 1) {maxCacheId = cacheId + 1;}
+										upperCacheId = maxCacheId;
+									} else {
+										// the most recent activities are being requested
+										// make upper cache ID large enough so newest item in cache will be returned
+										upperCacheId = cacheId + 1; 
+									}
+									lowerCacheId = upperCacheId - maxCount;
+									// number of available activities might be less than maxCount
+									if(lowerCacheId < 0) {lowerCacheId = 0L;}
+									
+									teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCacheIds")
+										.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
+										.setParameter("upperCacheId", upperCacheId)
+										.setParameter("lowerCacheId", lowerCacheId)
+										.getResultList();
 								}
-								lowerCacheId = upperCacheId - maxCount;
-								// number of available activities might be less than maxCount
-								if(lowerCacheId < 0) {lowerCacheId = 0L;}
-								
-								teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCacheIds")
-									.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
-									.setParameter("upperCacheId", upperCacheId)
-									.setParameter("lowerCacheId", lowerCacheId)
-									.getResultList();
 							}
 							log.debug("number of teamRequestedActivities found = " + teamRequestedActivities.size());
 						} catch(Exception e) {
