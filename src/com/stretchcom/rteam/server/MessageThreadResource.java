@@ -515,8 +515,7 @@ public class MessageThreadResource extends ServerResource {
         			List<Recipient> recipients = messageThread.getRecipients();
         			outerLoop:for(Recipient r: recipients) {
         				for(Member m : memberships) {
-            				if(r.getToEmailAddress().equalsIgnoreCase(currentUser.getEmailAddress()) &&
-            						r.getMemberId().equals(KeyFactory.keyToString(m.getKey()))) {
+            				if(r.matchUser(currentUser) && r.getMemberId().equals(KeyFactory.keyToString(m.getKey()))) {
             					recipientOfThisUser = r;
             					break outerLoop;
             				}

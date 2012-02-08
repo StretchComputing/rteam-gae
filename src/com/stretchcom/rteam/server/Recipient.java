@@ -564,6 +564,15 @@ public class Recipient {
 	public void setParticipantRole(String participantRole) {
 		this.participantRole = participantRole;
 	}
+	
+	public Boolean matchUser(User theUser) {
+		// recipient can match a user either via email address or phone number. Recipient phone number stored in OneUseSmsToken.
+		if( (this.getToEmailAddress() != null && theUser.getEmailAddress() != null && this.getToEmailAddress().equalsIgnoreCase(theUser.getEmailAddress())) ||
+			(this.getOneUseSmsToken() != null && theUser.getPhoneNumber() != null && this.getOneUseSmsToken().equalsIgnoreCase(theUser.getPhoneNumber()))      ) {
+			return true;
+		}
+		return false;
+	}
 
 
 	////////////////////
