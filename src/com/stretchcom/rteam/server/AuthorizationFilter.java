@@ -67,6 +67,10 @@ public class AuthorizationFilter extends Filter{
 			// API 'Delete Member Confirmation' does not use token authorization
 			log.debug("validAuthentication(): API 'Delete Member Confirmation' does not use token authorization");
 			return true;
+		} else if( urlLower.contains("games") && urlLower.contains("team") && method.equals(Method.GET)) {
+			// API 'Get Games for a Team' does not use token authorization
+			log.debug("validAuthentication(): API 'Get Games for a Team' does not use token authorization at the moment");
+			return true;
 		} else if( urlLower.contains("messagethread?") && urlLower.contains("oneusetoken") && method.equals(Method.PUT)) {
 			// API 'MessageThread Confirmation' does not use token authorization
 			log.debug("validAuthentication(): API 'MessageThread Confirmation' does not use token authorization");

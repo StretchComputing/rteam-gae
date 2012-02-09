@@ -23,10 +23,11 @@
     <script src="/js/models/base.js"></script>
     <script src="/js/models/game.js"></script>
     <script src="/js/views/games.js"></script>
-    <script src="/js/controllers/main.js"></script>
+    <script src="/js/routers/main.js"></script>
   </head>
   <body>
-  <h1>rScoreboard .... coming soon!!!!!!</h1>
+  <h1 style="text_align:center;">rScoreboard</h1>
+  <div id="container"></div>
   
     <script type="text/template" id="gameEmptyTemplate">
       <p>
@@ -36,8 +37,9 @@
         Why don't you 'add' one?
       </p>
     </script>
+    
     <script type="text/template" id="gameListTemplate">
-      <a href="#game?id=<%= gameId %>"><%= startDate %> <%= location %>, <%= interval %><%= scoreUs %><%= scoreThem %></a>
+      <a href="#game?id=<%= gameId %>">Game: <% description %></a> Start Date: <%= startDate %> Location: <%= location %>, Interval: <%= interval %> Score Us: <%= scoreUs %> Score Them <%= scoreThem %>
     </script>
   
   </body>

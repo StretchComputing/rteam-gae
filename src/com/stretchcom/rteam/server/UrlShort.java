@@ -23,6 +23,9 @@ public class UrlShort {
 	//private static final Logger log = Logger.getLogger(Activity.class.getName());
 	private static RskyboxClient log = new RskyboxClient();
 	
+	// constants
+	public static final Integer MAX_ID_SIZE = 3;
+	
 	private String uniqueId;
 
 	@Id

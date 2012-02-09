@@ -45,7 +45,7 @@ import com.google.appengine.api.datastore.Text;
     		query="SELECT t FROM Team t WHERE t.oneUseToken = :oneUseToken AND t.oneUseTokenStatus = :oneUseTokenStatus"
     ),
     @NamedQuery(
-    		name="Team.getPageUrl",
+    		name="Team.getByPageUrl",
     		query="SELECT t FROM Team t WHERE t.pageUrl = :pageUrl"
     ),
     @NamedQuery(
@@ -140,6 +140,8 @@ public class Team {
     
     // returns the teammates of the calling user (i.e. all the members on the team less the caller)
     public List<Member> getTeamMates(User theCallingUser) {
+    	if(theCallingUser == null) {return this.members;}
+    	
     	List<Member> teamMates = new ArrayList<Member>();
     	for(Member tm : this.members) {
     		if(!(tm.getUserId() != null && tm.getUserId().equals(KeyFactory.keyToString(theCallingUser.getKey())))) {
@@ -598,7 +600,7 @@ public class Team {
 		String teamId = null;
     	EntityManager em = EMF.get().createEntityManager();
 		try {
-			Team team = (Team)em.createNamedQuery("Team.getPageUrl")
+			Team team = (Team)em.createNamedQuery("Team.getByPageUrl")
 				.setParameter("pageUrl", thePageUrl)
 				.getSingleResult();
 			teamId = KeyFactory.keyToString(team.getKey());

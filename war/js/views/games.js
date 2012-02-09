@@ -13,7 +13,7 @@ var rteam = (function(r, $) {
     },
 
     render: function() {
-      this.$el.html(this.template(this.model));
+      this.$el.html(this.template(this.model.toJSON()));
       return this;
     }
   });
@@ -38,8 +38,9 @@ var rteam = (function(r, $) {
       return this;
     },
 
-    addGame: function(app) {
-      this.$el.append(new r.GameView({ model: app }).render().el);
+    addGame: function(game) {
+      r.dump(game);
+      this.$el.append(new r.GameView({ model: game }).render().el);
     }
   });
 

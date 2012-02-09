@@ -98,7 +98,7 @@ public class GamesResource extends ServerResource {
 			else if(this.teamId == null || this.teamId.length() == 0) {
 				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
 				log.debug("invalid team ID");
-			} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
+			} else if(currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
 				log.debug(apiStatus);
         	}
@@ -111,8 +111,8 @@ public class GamesResource extends ServerResource {
     		// need to get membership of current user to check if user is a coordinator
 			///////////////////////////////////////////////////////////////////////////
 			Team team = (Team)em.createNamedQuery("Team.getByKey")
-				.setParameter("key", KeyFactory.stringToKey(this.teamId))
-				.getSingleResult();
+					.setParameter("key", KeyFactory.stringToKey(this.teamId))
+					.getSingleResult();
 			log.debug("team retrieved = " + team.getTeamName());
 			// need to access members before closing transaction since it's lazy init and used after tran closed
 			team.getMembers();
@@ -366,11 +366,17 @@ public class GamesResource extends ServerResource {
 		this.setStatus(Status.SUCCESS_OK);
 		try {
     		User currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
-     		TimeZone tz = GMT.getTimeZone(this.timeZoneStr);
-    		if(currentUser == null) {
+     		
+    		if(this.teamId != null && this.timeZoneStr == null) {
+    			// TODO -- have browser send timezone for user requesting rScoreboard
+    			this.timeZoneStr = "America/Chicago";
+    		}
+    		TimeZone tz = GMT.getTimeZone(this.timeZoneStr);
+    		
+    		if(this.teamId == null && currentUser == null) {
 				this.setStatus(Status.SERVER_ERROR_INTERNAL);
     			log.error("GamesResource:getGameList:currentUser", "user could not be retrieved from Request attributes!!");
-    		} else if(tz == null) {
+    		} else if(this.teamId == null && tz == null) {
     			apiStatus = ApiStatusCode.INVALID_TIME_ZONE_PARAMETER;
     		}
 			
@@ -392,7 +398,7 @@ public class GamesResource extends ServerResource {
     				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
     				log.debug("Team ID not provided and it is required");
     			} 
-    			else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
+    			else if(currentUser != null && !currentUser.isUserMemberOfTeam(this.teamId)) {
     				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
     				log.debug(apiStatus);
             	}
@@ -401,9 +407,19 @@ public class GamesResource extends ServerResource {
     				jsonReturn.put("apiStatus", apiStatus);
     				return new JsonRepresentation(jsonReturn);
     			}
+    			
+    			String teamId = null;
+    			if(this.teamId.length() <= UrlShort.MAX_ID_SIZE) {
+    				Team team = (Team)em.createNamedQuery("Team.getByPageUrl")
+    						.setParameter("pageUrl", this.teamId)
+    						.getSingleResult();
+    				teamId = KeyFactory.keyToString(team.getKey());
+    			} else {
+    				teamId = this.teamId;
+    			}
 
     			games = (List<Game>)em.createNamedQuery("Game.getByTeam")
-    						.setParameter("teamKey", KeyFactory.stringToKey(this.teamId))
+    						.setParameter("teamKey", KeyFactory.stringToKey(teamId))
     						.getResultList();
     			log.debug("getGameList(): number of games found = " + games.size());
 			} else {
@@ -450,18 +466,20 @@ public class GamesResource extends ServerResource {
         				// Need to determine what role this user plays on this team.  Since a user can be associated with
         				// multiple memberships (due to guardian), give precedence to coordinator, then member, then fan
         				String participantRole = null;
-        				for(Member m : t.getMembers()) {
-        					if(m.isUserParticipant(currentUser)) {
-        						if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
-        								(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
-        							participantRole = m.getParticipantRole();
-        						}
-        					}
+        				if(currentUser != null) {
+            				for(Member m : t.getMembers()) {
+            					if(m.isUserParticipant(currentUser)) {
+            						if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
+            								(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
+            							participantRole = m.getParticipantRole();
+            						}
+            					}
+            				}
         				}
         				
         				if(participantRole != null) {
         					jsonGameObj.put("participantRole", participantRole);
-        				} else {
+        				} else if(participantRole == null && currentUser != null){
         	    			log.error("GamesResource:getGameList:currentUser", "User's participant role could not be found on team = " + t.getTeamName());
         				}
     				} else {

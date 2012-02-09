@@ -6,7 +6,7 @@ var rteam = (function(r, $) {
   r.log.debug("teamId from URL = " + teamId);
   
   r.Game = r.BaseModel.extend({
-    apiUrl: '/team/<teamId>/games/',
+    apiUrl: '/team/<teamId>/games', // just a template to follow
     fields: {
       gameId: null,
       description: null,
@@ -20,6 +20,7 @@ var rteam = (function(r, $) {
     },
 
     initialize: function() {
+      this.apiUrl = "/team/" + r.getUrlEndSegment() + "/games"
       this.setUrl();
     },
   });
@@ -27,9 +28,10 @@ var rteam = (function(r, $) {
 
   r.Games = r.BaseCollection.extend({
     model: r.Game,
-    apiUrl: '/team/<teamId>/games/',
+    apiUrl: '/team/<teamId>/games/', // just a template, real Url set in initialize()
 
     initialize: function() {
+      this.apiUrl = "/team/" + r.getUrlEndSegment() + "/games"
       this.setUrl();
     },
 

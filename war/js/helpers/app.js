@@ -137,6 +137,13 @@ var rteam = (function(r, $) {
       return decodeURIComponent(results[1].replace(/\+/g, " "));
   }
   
+  // for URL: http://site.com/abc  abc is returned
+  r.getUrlEndSegment = function ()
+  {
+	 var segments = window.location.href.split("/");
+	 return segments[segments.length - 1];
+  }
+  
   // Build a query string from an object.
   //
   // props: the object containing the name/value pairs for the query string
