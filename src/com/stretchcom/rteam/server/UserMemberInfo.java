@@ -361,7 +361,10 @@ public class UserMemberInfo {
 	}
 	
 	public Boolean isAnyMessageAccessEnabled() {
-		if(this.hasRteamMessageAccessEnabled || this.hasSmsMessageAccessEnabled || this.hasSmsMessageAccessEnabled) {
+		// for backward compatibility, ensure boolean fields aren't null. Going forward, they should never be 
+		if( (this.hasRteamMessageAccessEnabled != null && this.hasRteamMessageAccessEnabled) || 
+			(this.hasEmailMessageAccessEnabled != null && this.hasEmailMessageAccessEnabled) || 
+			(this.hasSmsMessageAccessEnabled !=null && this.hasSmsMessageAccessEnabled)         ) {
 			return true;
 		}
 		return false;
