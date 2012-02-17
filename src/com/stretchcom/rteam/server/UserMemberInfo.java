@@ -287,7 +287,9 @@ public class UserMemberInfo {
 				////////////////////////////////////////////////////////////////////////////////
 				// merge the inputEntity into the outputEntity that's already in the output list
 				////////////////////////////////////////////////////////////////////////////////
-				if(in.getEmailAddress() == null && outMatch.getEmailAddress() != null) {
+				if(in.getEmailAddress() == null && outMatch.getEmailAddress() == null) {
+					// nothing to do when both are null
+				} else if(in.getEmailAddress() == null && outMatch.getEmailAddress() != null) {
 					// ok, nothing to do, output EA already set correctly
 				} else if(in.getEmailAddress() != null && outMatch.getEmailAddress() == null) {
 					outMatch.setEmailAddress(in.getEmailAddress());
@@ -305,7 +307,9 @@ public class UserMemberInfo {
 					log.error("UserMemberInfo:filterDuplicates:userIdBadMatch", "input userId = " + in.getUserId() + " not equal to output userId = " + outMatch.getUserId());
 				}
 
-				if(in.getPhoneNumber() == null && outMatch.getPhoneNumber() != null) {
+				if(in.getPhoneNumber() == null && outMatch.getPhoneNumber() == null) {
+					// nothing to do when both are null
+				} else if(in.getPhoneNumber() == null && outMatch.getPhoneNumber() != null) {
 					// ok, nothing to do, output PN already set correctly
 				} else if(in.getPhoneNumber() != null && outMatch.getPhoneNumber() == null) {
 					outMatch.setPhoneNumber(in.getPhoneNumber());
