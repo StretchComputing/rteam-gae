@@ -39,6 +39,11 @@ import com.google.appengine.api.datastore.Key;
     				"g.eventGmtStartDate >= :startDate" + " AND " +
     				"g.eventGmtStartDate <= :endDate"
     ),
+    @NamedQuery(
+    		name="Game.getByTeamAndStartDate",
+    		query="SELECT g FROM Game g WHERE g.teams = :teamKey" + " AND " +
+    				"g.eventGmtStartDate >= :startDate"
+    ),
 })
 public class Game implements Cloneable {
 	//private static final Logger log = Logger.getLogger(Game.class.getName());

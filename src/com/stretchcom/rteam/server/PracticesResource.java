@@ -49,6 +49,7 @@ public class PracticesResource extends ServerResource {
     String eventType;
     String happening;
     String multiple;
+    String whoIsComing;
     
     @Override  
     protected void doInit() throws ResourceException {  
@@ -87,6 +88,10 @@ public class PracticesResource extends ServerResource {
 				this.happening = (String)parameter.getValue();
 				this.happening = Reference.decode(this.happening);
 				log.debug("PracticeResource:doInit() - decoded happening = " + this.happening);
+			} else if(parameter.getName().equals("whoIsComing"))  {
+				this.whoIsComing = (String)parameter.getValue();
+				this.whoIsComing = Reference.decode(this.whoIsComing);
+				log.debug("PracticeResource:doInit() - decoded whoIsComing = " + this.whoIsComing);
 			}
 		}
     }  
@@ -462,8 +467,22 @@ public class PracticesResource extends ServerResource {
     				return new JsonRepresentation(jsonReturn);
     			}
 
-    			
-    			if(this.eventType.equals(Practice.ALL_EVENT_TYPE)) {
+    			if(this.whoIsComing != null) {
+        			Key teamKey = KeyFactory.stringToKey(this.teamId);
+	    			List<Date> todayDates = GMT.getTodayBeginAndEndDates(tz);
+	    			
+	    			// get all current and future practices
+	    			practices = (List<Practice>)em.createNamedQuery("Practice.getByTeamAndStartDate")
+						.setParameter("teamKey", teamKey)
+						.setParameter("startDate", todayDates.get(0))
+						.getResultList();
+	    			
+	    			// get all current and future games
+	    			games = (List<Game>)em.createNamedQuery("Game.getByTeamAndStartDate")
+						.setParameter("teamKey", teamKey)
+						.setParameter("startDate", todayDates.get(0))
+						.getResultList();
+    			} else if(this.eventType.equals(Practice.ALL_EVENT_TYPE)) {
         			practices = (List<Practice>)em.createNamedQuery("Practice.getByTeam")
 					.setParameter("teamKey", KeyFactory.stringToKey(this.teamId))
 					.getResultList();
@@ -574,17 +593,22 @@ public class PracticesResource extends ServerResource {
 			
     		if(this.happening != null) {
         		JSONArray jsonTodayArray = new JSONArray();
-        		buildPracticeJsonArray(teams, todayPractices, currentUser, tz, "eventId", jsonTodayArray, true);
-        		buildGameJsonArray(teams, todayGames, currentUser, tz, "eventId", jsonTodayArray, true);
+        		buildPracticeJsonArray(teams, todayPractices, currentUser, tz, "eventId", jsonTodayArray);
+        		buildGameJsonArray(teams, todayGames, currentUser, tz, "eventId", jsonTodayArray);
         		jsonReturn.put("today", jsonTodayArray);
         		
         		JSONArray jsonTomorrowArray = new JSONArray();
-        		buildPracticeJsonArray(teams, tomorrowPractices, currentUser, tz, "eventId", jsonTomorrowArray, true);
-        		buildGameJsonArray(teams, tomorrowGames, currentUser, tz, "eventId", jsonTomorrowArray, true);
+        		buildPracticeJsonArray(teams, tomorrowPractices, currentUser, tz, "eventId", jsonTomorrowArray);
+        		buildGameJsonArray(teams, tomorrowGames, currentUser, tz, "eventId", jsonTomorrowArray);
         		jsonReturn.put("tomorrow", jsonTomorrowArray);
+    		} else if(this.whoIsComing != null) {
+        		JSONArray jsonEventsArray = new JSONArray();
+        		buildPracticeJsonArray(teams, practices, currentUser, tz, "eventId", jsonEventsArray);
+        		buildGameJsonArray(teams, games, currentUser, tz, "eventId", jsonEventsArray);
+        		jsonReturn.put("events", jsonEventsArray);
     		} else {
         		JSONArray jsonArray = new JSONArray();
-        		buildPracticeJsonArray(teams, practices, currentUser, tz, "practiceId", jsonArray, false);
+        		buildPracticeJsonArray(teams, practices, currentUser, tz, "practiceId", jsonArray);
         		jsonReturn.put("practices", jsonArray);
     		}
 		} catch (JSONException e) {
@@ -608,7 +632,7 @@ public class PracticesResource extends ServerResource {
     }
     
     private void buildPracticeJsonArray(List<Team> theTeams, List<Practice> thePractices, User theUser, 
-    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray, Boolean theIsHappeningNow) throws JSONException {
+    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray) throws JSONException {
 		for(Practice p : thePractices) {
 			Team t = null;
 			Member currentUserMember = null;
@@ -655,16 +679,18 @@ public class PracticesResource extends ServerResource {
 			jsonPracticeObj.put("opponent", p.getOpponent());
 			jsonPracticeObj.put("isCanceled", p.getIsCanceled());
 			
-			if(theIsHappeningNow) {
+			if(this.whoIsComing != null || this.happening != null) {
 				String eventId = KeyFactory.keyToString(p.getKey());
-				// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
-				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.PRACTICE_EVENT_TYPE, t, currentUserMember);
-				jsonPracticeObj.put("attendees", jsonAttendeesArray);
-	    		
 	    		MessageThread whoIsComingMessageThread = MessageThread.getWhoIsComingMessageThread(eventId);		
 	    		if(whoIsComingMessageThread != null) {
 	    			jsonPracticeObj.put("messageThreadId", KeyFactory.keyToString(whoIsComingMessageThread.getKey()));
 	    		}
+				
+				if(this.happening != null) {
+					// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
+					JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.PRACTICE_EVENT_TYPE, t, currentUserMember);
+					jsonPracticeObj.put("attendees", jsonAttendeesArray);
+				}
 			}
 			
 			theJsonArray.put(jsonPracticeObj);
@@ -672,7 +698,7 @@ public class PracticesResource extends ServerResource {
     }
     
     private void buildGameJsonArray(List<Team> theTeams, List<Game> theGames, User theUser, 
-    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray, Boolean theIsHappeningNow) throws JSONException {
+    		TimeZone theTimeZone, String theEventIdName, JSONArray theJsonArray) throws JSONException {
 		for(Game g : theGames) {
 			Team t = null;
 			Member currentUserMember = null;
@@ -725,16 +751,18 @@ public class PracticesResource extends ServerResource {
         	Integer scoreThem = g.getScoreThem() == null ? 0 : g.getScoreThem();
         	jsonGameObj.put("scoreThem", scoreThem);
 			
-			if(theIsHappeningNow) {
+			if(this.whoIsComing != null || this.happening != null) {
 				String eventId = KeyFactory.keyToString(g.getKey());
-				// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
-				JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.GAME_EVENT_TYPE, t, currentUserMember);
-	    		jsonGameObj.put("attendees", jsonAttendeesArray);
-	    		
 	    		MessageThread whoIsComingMessageThread = MessageThread.getWhoIsComingMessageThread(eventId);		
 	    		if(whoIsComingMessageThread != null) {
 	    			jsonGameObj.put("messageThreadId", KeyFactory.keyToString(whoIsComingMessageThread.getKey()));
 	    		}
+	        	
+	        	if(this.happening != null) {
+					// happeningNow is only applicable for getting list of ALL teams, so team "t" should be defined above
+					JSONArray jsonAttendeesArray = buildAttendeeArray(eventId, Practice.GAME_EVENT_TYPE, t, currentUserMember);
+		    		jsonGameObj.put("attendees", jsonAttendeesArray);
+				}
 			}
 
 			theJsonArray.put(jsonGameObj);

@@ -48,6 +48,11 @@ import com.google.appengine.api.datastore.KeyFactory;
     				"p.eventGmtStartDate >= :startDate" + " AND " +
     				"p.eventGmtStartDate <= :endDate"
     ),
+    @NamedQuery(
+    		name="Practice.getByTeamAndStartDate",
+    		query="SELECT p FROM Practice p WHERE p.teams = :teamKey" + " AND " +
+    				"p.eventGmtStartDate >= :startDate"
+    ),
 })
 public class Practice implements Cloneable {
 	//private static final Logger log = Logger.getLogger(Practice.class.getName());

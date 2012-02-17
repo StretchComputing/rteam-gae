@@ -98,7 +98,7 @@ public class GamesResource extends ServerResource {
 			else if(this.teamId == null || this.teamId.length() == 0) {
 				apiStatus = ApiStatusCode.TEAM_ID_REQUIRED;
 				log.debug("invalid team ID");
-			} else if(currentUser.isUserMemberOfTeam(this.teamId)) {
+			} else if(!currentUser.isUserMemberOfTeam(this.teamId)) {
 				apiStatus = ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM;
 				log.debug(apiStatus);
         	}
