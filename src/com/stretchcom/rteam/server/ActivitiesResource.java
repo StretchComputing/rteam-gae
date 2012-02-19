@@ -230,6 +230,20 @@ public class ActivitiesResource extends ServerResource {
 				eventTypeStr = json.getString("eventType");
 			}
 			
+			// TODO: for Android and rScoreboard, default the time zone for now if not provided
+			// Time zone only used if eventId not provided
+			String timeZoneStr = "America/Chicago";
+			TimeZone tz = null;
+			if(eventIdStr == null) {
+				if(json.has("timeZone")) {
+	    			timeZoneStr = json.getString("timeZone");
+				}
+		    	tz = GMT.getTimeZone(timeZoneStr);
+				if(tz == null) {
+					return Utility.apiError(ApiStatusCode.INVALID_TIME_ZONE_PARAMETER);
+				}
+			}
+			
 			// Enforce Rules
 			if((statusUpdate == null || statusUpdate.length() == 0) && (photoBase64 == null || photoBase64.length() == 0)) {
 				return Utility.apiError(ApiStatusCode.STATUS_UPDATE_OR_PHOTO_REQUIRED);
@@ -289,8 +303,21 @@ public class ActivitiesResource extends ServerResource {
 			newActivity.setUserId(KeyFactory.keyToString(currentUser.getKey()));
 			newActivity.setParentActivityId(parentActivityId);
 			if(parentActivityId != null) newActivity.setIsReply(true);
-			newActivity.setEventId(eventIdStr);
-			newActivity.setEventType(eventTypeStr);
+			
+			// associate this activity with an event if appropriate
+			if(eventIdStr != null) {
+				newActivity.setEventId(eventIdStr);
+				newActivity.setEventType(eventTypeStr);
+			} else {
+				// see if today is GAMEDAY
+				// TODO eventually support other types of events beside Game
+				List<Game> todaysGames = Game.getTodaysGames(team, tz);
+				if(todaysGames.size() > 0) {
+					// for now, just associate with the first game in the list
+					newActivity.setEventId(KeyFactory.keyToString(todaysGames.get(0).getKey()));
+					newActivity.setEventType(Practice.GAME_EVENT_TYPE);
+				}
+			}
 			
 			// cacheId held in team is the last used.
 			Long cacheId = team.getNewestCacheId() + 1;

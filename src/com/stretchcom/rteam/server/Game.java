@@ -1,5 +1,6 @@
 package com.stretchcom.rteam.server;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -366,4 +367,24 @@ public class Game implements Cloneable {
 			em.close();
 		}
 	}
+	
+	public static List<Game> getTodaysGames(Team theTeam, TimeZone tz) {
+		EntityManager em = EMF.get().createEntityManager();
+		List<Game> games = new ArrayList<Game>();
+		try {
+			List<Date> todayDates = GMT.getTodayBeginAndEndDates(tz);
+			games = (List<Game>)em.createNamedQuery("Game.getByTeamAndStartDateRange")
+					.setParameter("teamKey", theTeam.getKey())
+					.setParameter("startDate", todayDates.get(0))
+					.setParameter("endDate", todayDates.get(1))
+					.getResultList();
+			log.debug("number of GAMEDAYs found for team " + theTeam.getTeamName() + " = " + games.size());
+		} catch (Exception e) {
+			log.exception("Game:updateAllLocations:Exceptoin",  "game could not be retrieved using team key", e);
+		} finally {
+			em.close();
+		}
+		return games;
+	}
+
 }
