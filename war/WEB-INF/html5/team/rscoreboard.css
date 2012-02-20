@@ -1,0 +1,159 @@
+/* used by the rTeam rScorebaord page */
+body {
+	background-color: #99CCFF;
+}
+
+#rteam-logo {
+	margin-left: 20px;
+}
+
+#rscoreboard-container {
+	margin-top: 15px;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	background-color: white;
+	width: 860px;
+	padding: 5px;
+	margin-left: auto;   /* for centering table */
+	margin-right: auto;  /* for centering table */
+}
+
+#rscorboard-tbl {
+	border-collapse: collapse;
+}
+
+#rscoreboard-tbl {
+	width: 850px;
+	margin-left: auto;   /* for centering table */
+	margin-right: auto;  /* for centering table */
+}
+
+td {
+	background-color: white;
+	padding: 0px;
+}
+
+td.col1 {
+	width: 50px;
+}
+
+td.col2 {
+	width: 150px;
+}
+
+td.col3 {
+	width: 225px;
+}
+
+td.col4 {
+	width: 225px;
+}
+
+td.col5 {
+	width: 150px;
+}
+
+td.col6 {
+	width: 50px;
+}
+
+tr.row1 {
+	height:50px;
+}
+
+tr.row2 {
+	height:300px;
+}
+
+tr.row3 {
+	height:150px;
+}
+
+#photo-container {
+	height: 98%;
+	width: 99%;
+	background-color: #006600;
+	display: inline-block;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+}
+
+#photo {
+	width: 210px;
+	height: 280px;
+	margin-left: auto;   
+	margin-right: auto;
+	margin-top: 7px;;
+}
+
+#score {
+	height: 99%;
+	width: 99%;
+	background-color: #006600;
+	display: inline-block;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	color: white;
+	font-size: 20px;
+}
+
+#fans {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	color: white;
+	font-size: 20px;
+}
+
+#activity {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	color: white;
+	font-size: 20px;
+}
+
+#misc {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	color: white;
+	font-size: 20px;
+}
+
+#team-name {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	text-align: center;
+}
+
+#rteam-logo {
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+#team-name-left {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+}
+
+#team-name-right {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+}
+
+#team-name-text {
+	color: white;
+	margin-top: 7px;
+	font-size: 28px;
+}
+
