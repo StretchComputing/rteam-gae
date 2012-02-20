@@ -372,7 +372,7 @@ public class Activity implements Comparable<Activity> {
 				// TODO for now, just pick the first one returned. Later make it random or use some other algorithm
 				activityIdWithPhoto = KeyFactory.keyToString(activitiesWithPhotos.get(0).getKey());
 			} else {
-				log.error("Activity:getActivityIdOfEventPhoto:removeMe", "REMOVE THE TEST CODE IN Activity.getActivityIdOfEventPhotof() THAT IS ALWAYS RETURNING AN ACTIVITY ID");
+				//log.error("Activity:getActivityIdOfEventPhoto:removeMe", "REMOVE THE TEST CODE IN Activity.getActivityIdOfEventPhotof() THAT IS ALWAYS RETURNING AN ACTIVITY ID");
 				return "aglydGVhbXRlc3RyEQsSCEFjdGl2aXR5GJfuvgEM";
 			}
     	} catch (Exception e) {

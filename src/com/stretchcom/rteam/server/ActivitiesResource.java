@@ -230,6 +230,11 @@ public class ActivitiesResource extends ServerResource {
 				eventTypeStr = json.getString("eventType");
 			}
 			
+			String gameDay = null;
+			if(json.has("gameDay")) {
+				gameDay = json.getString("gameDay");
+			}
+			
 			// TODO: for Android and rScoreboard, default the time zone for now if not provided
 			// Time zone only used if eventId not provided
 			String timeZoneStr = "America/Chicago";
@@ -305,13 +310,16 @@ public class ActivitiesResource extends ServerResource {
 			if(parentActivityId != null) newActivity.setIsReply(true);
 			
 			// associate this activity with an event if appropriate
+			List<Game> todaysGames = null;
+			Boolean gameDayChecked = false;
 			if(eventIdStr != null) {
 				newActivity.setEventId(eventIdStr);
 				newActivity.setEventType(eventTypeStr);
 			} else {
 				// see if today is GAMEDAY
 				// TODO eventually support other types of events beside Game
-				List<Game> todaysGames = Game.getTodaysGames(team, tz);
+				todaysGames = Game.getTodaysGames(team, tz);
+				gameDayChecked = true;
 				if(todaysGames.size() > 0) {
 					// for now, just associate with the first game in the list
 					newActivity.setEventId(KeyFactory.keyToString(todaysGames.get(0).getKey()));
@@ -381,6 +389,25 @@ public class ActivitiesResource extends ServerResource {
 				log.exception("ActivitiesResource:createActivity:Exception", "", e);
 			} finally {
 				emActivity.close();
+			}
+			
+			if(gameDay != null) {
+				// check if team has a game scheduled today
+				if(!gameDayChecked) {
+					todaysGames = Game.getTodaysGames(team, tz);
+				}
+				if(todaysGames.size() == 0) {
+					// need to create a game
+					log.debug("no GameDay game, so creating one ...");
+					Game newGameDayGame = Game.createGameDayGame(team, timeZoneStr);
+
+					//::BUSINESS_RULE:: coordinator must be network authenticated for a notification to be sent
+					if(currentUser.getIsNetworkAuthenticated()) {
+						List<Game> games = new ArrayList<Game>();
+						games.add(newGameDayGame);
+						PubHub.sendNewEventMessage(team.getMembers(), currentUser, team, games, null, MessageThread.PLAIN_TYPE);
+					}
+				}
 			}
 		} catch (IOException e) {
 			log.exception("ActivitiesResource:createActivity:IOException", "error extracting JSON object from Post", e);

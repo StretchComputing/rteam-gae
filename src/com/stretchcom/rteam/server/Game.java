@@ -19,6 +19,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Transient;
 
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 
 @Entity
 @NamedQueries({
@@ -386,5 +387,23 @@ public class Game implements Cloneable {
 		}
 		return games;
 	}
-
+	
+	public static Game createGameDayGame(Team theTeam, String theTimeZoneStr) {
+		Game gameDayGame = null;
+    	EntityManager emTeam = EMF.get().createEntityManager();
+		try {
+			gameDayGame = new Game();
+			gameDayGame.setEventGmtStartDate(new Date()); // game scheduled for right now
+			gameDayGame.setTimeZone(theTimeZoneStr);
+			
+			HashSet<Key> teams = new  HashSet<Key>();
+			teams.add(theTeam.getKey());
+			gameDayGame.setTeams(teams);
+			
+			emTeam.persist(gameDayGame);
+		} finally {
+			emTeam.close();
+		}
+		return gameDayGame;
+	}
 }

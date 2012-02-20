@@ -475,7 +475,7 @@ public class MessageThread {
 		} catch (NoResultException e) {
 			// NOT and error,there may not be a Who's Coming poll yet for this event
 		} catch (NonUniqueResultException e) {
-    		log.exception("MessageThread:getWhoIsComingMessageThread:NonUniqueResultException", "two who's coming polls for the same event", e);
+    		log.exception("MessageThread:getWhoIsComingMessageThread:NonUniqueResultException", "two who's coming polls for the same event ID = " + theEventId, e);
 		} finally {
     		em.close();
     	}

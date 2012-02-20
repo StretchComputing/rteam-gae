@@ -111,6 +111,8 @@ tr.row3 {
 	display: inline-block;
 	color: white;
 	font-size: 20px;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
 }
 
 #activity {
@@ -120,6 +122,8 @@ tr.row3 {
 	display: inline-block;
 	color: white;
 	font-size: 20px;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
 }
 
 #misc {
@@ -129,6 +133,8 @@ tr.row3 {
 	display: inline-block;
 	color: white;
 	font-size: 20px;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
 }
 
 #team-name {
