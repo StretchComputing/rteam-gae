@@ -395,6 +395,8 @@ public class Game implements Cloneable {
 			gameDayGame = new Game();
 			gameDayGame.setEventGmtStartDate(new Date()); // game scheduled for right now
 			gameDayGame.setTimeZone(theTimeZoneStr);
+			gameDayGame.setOpponent("Opponent TBD");
+			gameDayGame.setDescription("No description entered...");
 			
 			HashSet<Key> teams = new  HashSet<Key>();
 			teams.add(theTeam.getKey());
