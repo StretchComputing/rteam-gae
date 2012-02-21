@@ -298,7 +298,10 @@ public class UserMemberInfo {
 					log.error("UserMemberInfo:filterDuplicates:emailBadMatch", "input EA = " + in.getEmailAddress() + " not equal to output EA = " + outMatch.getEmailAddress());
 				}
 			
-				if(in.getUserId() == null && outMatch.getUserId() != null) {
+				if(in.getUserId() == null && outMatch.getUserId() == null) {
+					// nothing to do when both are null
+				}
+				else if(in.getUserId() == null && outMatch.getUserId() != null) {
 					// ok, nothing to do, output userId already set correctly
 				} else if(in.getUserId() != null && outMatch.getUserId() == null) {
 					outMatch.setUserId(in.getUserId());

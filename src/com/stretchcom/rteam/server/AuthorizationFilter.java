@@ -10,6 +10,7 @@ import javax.persistence.NonUniqueResultException;
 import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.ChallengeResponse;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
 import org.restlet.routing.Filter;
@@ -33,8 +34,6 @@ public class AuthorizationFilter extends Filter{
 	}
 	
 	private boolean validAuthentication(Request request) {
-		EntityManager em = EMF.get().createEntityManager();
-		
 		Map<String, Object> map = request.getAttributes();
 		Object obj = map.get("org.restlet.http.headers");
 		log.debug("obj = " + obj.toString());
@@ -70,6 +69,10 @@ public class AuthorizationFilter extends Filter{
 		} else if( urlLower.contains("games") && urlLower.contains("team") && method.equals(Method.GET)) {
 			// API 'Get Games for a Team' does not use token authorization
 			log.debug("validAuthentication(): API 'Get Games for a Team' does not use token authorization at the moment");
+			
+			// this API is called both from client phones (where there is a currentUser and from rScoreboard where there is no currentUser)
+			// So attempt to set the current user, but continue on even if it is not ...
+			attemptToSetCurrentUser(request, true);
 			return true;
 		} else if( urlLower.contains("messagethread?") && urlLower.contains("oneusetoken") && method.equals(Method.PUT)) {
 			// API 'MessageThread Confirmation' does not use token authorization
@@ -132,26 +135,49 @@ public class AuthorizationFilter extends Filter{
 			return false;
 		}
 		
-		String login = request.getChallengeResponse().getIdentifier();
-		String token = new String(request.getChallengeResponse().getSecret());
+		Boolean returnValue = attemptToSetCurrentUser(request, false);
+		log.debug("returning from validAuthentication()");
+		return returnValue;
+	}
+	
+	private Boolean attemptToSetCurrentUser(Request request, Boolean okIfTokenNotPresent) {
+		EntityManager em = EMF.get().createEntityManager();
+		Boolean wasUserFound = false;
+		
+		ChallengeResponse cr = request.getChallengeResponse();
+		if(cr == null && okIfTokenNotPresent) {
+			log.debug("***** token not present but it's okay ...");
+			return wasUserFound;
+		}
+		
+		String login = cr.getIdentifier();
+		String token = new String(cr.getSecret());
 		log.debug("login = " + login);
 		log.debug("token = " + token);
+		
+		if(okIfTokenNotPresent) {
+			if(token == null || token.trim().length() == 0) {
+				log.debug("***** token not present but it's okay ...");
+				return wasUserFound;
+			}
+		}
+		
 		try {
 			User user = (User)em.createNamedQuery("User.getByToken")
 				.setParameter("token", token)
 				.getSingleResult();
 			// store "current" user in request attributes so it can be used by Restlets downstream
 			request.getAttributes().put(RteamApplication.CURRENT_USER, user);
-			log.debug("validAuthentication(): token found, request has been authenticated");
+			wasUserFound = true;
+			log.debug("***** validAuthentication(): token found, request has been authenticated, currentUser has been initialized");
 		} catch (NoResultException e) {
 			log.info("token not found, request failed authentication");
-			return false;
 		} catch (NonUniqueResultException e) {
 			log.exception("AuthorizationFilter:validAuthentication:NonUniqueResultException", "two or more users have same token", e);
 		} catch (Exception e) {
 			log.debug("exception = " + e.getMessage() );
 		}
-		log.debug("returning from validAuthentication()");
-		return true;
+		
+		return wasUserFound;
 	}
 }
