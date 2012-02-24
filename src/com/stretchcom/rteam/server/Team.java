@@ -70,6 +70,7 @@ public class Team {
 	
 	public static final String FIRST_TEAM_NAME = "Team 1";
 	public static final String FIRST_TEAM_DESCRIPTION = "auto created first team";
+	public static final String FIRST_TEAM_SPORT = "select team sport";
 	
 	private String teamName;
 	private String description;
@@ -547,6 +548,7 @@ public class Team {
 			firstTeam = new Team();
 			firstTeam.setTeamName(Team.FIRST_TEAM_NAME);
 			firstTeam.setDescription(Team.FIRST_TEAM_DESCRIPTION);
+			firstTeam.setSport(Team.FIRST_TEAM_SPORT);
 			firstTeam.initPageUrl();
 			firstTeam.addCreator(theUser);
 			emTeam.persist(firstTeam);

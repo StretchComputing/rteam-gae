@@ -731,7 +731,7 @@ public class PracticesResource extends ServerResource {
 						log.error("PracticesResource:getPracticeList:teamForPractice", "User's partipant role could not be found on team = " + t.getTeamName());
 					}
 				} else {
-					log.error("PracticesResource:getPracticeList:teamForPractice", "User's partipant role could not be found on team = " + t.getTeamName());
+					log.error("PracticesResource:getPracticeList:teamForPractice", "Team associated with game in NOT in user team list");
 				}
 			}
 			jsonGameObj.put(theEventIdName, KeyFactory.keyToString(g.getKey()));

@@ -328,8 +328,7 @@ public class MessageThreadsResource extends ServerResource {
 						continue;
 					}
 						
-					// need to know associated member for loop below
-					umi.setMember(rm);
+					// tokens are set right here, whereas most umi fields are initialized from Member.getAuthorizedRecipients()
 					umi.setOneUseToken(TF.get());
 					umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
 					authorizedTeamRecipients.add(umi);
@@ -356,21 +355,11 @@ public class MessageThreadsResource extends ServerResource {
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			for(UserMemberInfo umi : authorizedTeamRecipients) {
 				Recipient recipient = new Recipient();
-				recipient.setType(messageThread.getType());
-				String memId = KeyFactory.keyToString(umi.getMember().getKey());
-				recipient.setMemberId(memId);
-				recipient.setMemberName(umi.getMember().getFullName());  // TODO setting to Primary member name - does it matter???
-				recipient.setSubject(messageThread.getSubject());
-				recipient.setMessage(messageThread.getMessage());
-				recipient.setTeamId(this.teamId);
-				recipient.setTeamName(team.getTeamName());
-				recipient.setMessageLinkOnly(false);
-				recipient.setParticipantRole(umi.getMember().getParticipantRole());
 				
-				recipient.setStatus(Recipient.SENT_STATUS);
-				// TODO Pending NA status is not activated right now since all email addresses in this loop are authenticated
-				//recipient.setStatus(Recipient.PENDING_NETWORK_AUTHENTICATION_STATUS);
-				
+				recipient.setMemberId(umi.getMemberId());
+				recipient.setMemberName(umi.getFullName());
+				recipient.setParticipantRole(umi.getParticipantRole());
+				recipient.setToEmailAddress(umi.getEmailAddress());
 				// recipient holds the user ID of the recipient member, not the sender. Could be NULL
 				recipient.setUserId(umi.getUserId());
 				
@@ -382,7 +371,27 @@ public class MessageThreadsResource extends ServerResource {
 				recipient.setOneUseSmsToken(umi.getOneUseSmsToken());
 				recipient.setOneUseTokenStatus(Recipient.NEW_TOKEN_STATUS);
 				
-				recipient.setToEmailAddress(umi.getEmailAddress());
+				// Following recipient fields are needed specifically for a re-send and follow-up messages. This data comes from
+				// Member and can become stale (i.e. may have been updated between original send and re-send), but re-sends do NOT
+				// try to keep up with changes to the membership -- at least not at this time.
+				recipient.setSmsEmailAddresss(umi.getSmsEmailAddress());
+				recipient.setToFirstName(umi.getFirstName());
+				recipient.setToLastName(umi.getLastName());
+				recipient.setHasRteamMessageAccessEnabled(umi.getHasRteamMessageAccessEnabled());
+				recipient.setHasEmailMessageAccessEnabled(umi.getHasEmailMessageAccessEnabled());
+				recipient.setHasSmsMessageAccessEnabled(umi.getHasSmsMessageAccessEnabled());
+				
+				recipient.setType(messageThread.getType());
+				recipient.setSubject(messageThread.getSubject());
+				recipient.setMessage(messageThread.getMessage());
+				recipient.setTeamId(this.teamId);
+				recipient.setTeamName(team.getTeamName());
+				recipient.setMessageLinkOnly(false);
+				
+				recipient.setStatus(Recipient.SENT_STATUS);
+				// TODO Pending NA status is not activated right now since all email addresses in this loop are authenticated
+				//recipient.setStatus(Recipient.PENDING_NETWORK_AUTHENTICATION_STATUS);
+				
 				recipient.setNumOfSends(1);
 				recipient.setIsGame(messageThread.getIsGame());
 				recipient.setEventId(messageThread.getEventId());

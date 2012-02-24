@@ -911,9 +911,11 @@ public class Member {
 		// process the primary membership
 		/////////////////////////////////
 		UserMemberInfo umiPrimary = new UserMemberInfo();
-		// memberId and Team are set in the UMI as a convenience, though they are the same for all participants in this membership
+		// memberId, team and participant role are set in the UMI as a convenience, though they are the same for all participants in this membership
 		umiPrimary.setMemberId(KeyFactory.keyToString(this.getKey()));
 		umiPrimary.setTeam(theTeam);
+		umiPrimary.setParticipantRole(this.participantRole);
+		
 		// only add in email address if NA
 		if(this.isEmailAddressNetworkAuthenticated(this.emailAddress)) {umiPrimary.setEmailAddress(this.emailAddress);}
 		// only add in phone number if confirmed
@@ -943,9 +945,11 @@ public class Member {
 		List<Guardian> guardians = this.getGuardians();
 		for(Guardian g : guardians) {
 			UserMemberInfo umiGuardian = new UserMemberInfo();
-			// memberId and Team are set in the UMI as a convenience, though they are the same for all participants in this membership
+			// memberId, team and participantRole are set in the UMI as a convenience, though they are the same for all participants in this membership
 			umiGuardian.setMemberId(KeyFactory.keyToString(this.getKey()));
 			umiGuardian.setTeam(theTeam);
+			umiGuardian.setParticipantRole(this.participantRole);
+
 			// only add in email address if NA
 			if(this.isEmailAddressNetworkAuthenticated(g.getEmailAddress())) {umiGuardian.setEmailAddress(g.getEmailAddress());}
 			// only add in phone number if confirmed
@@ -959,9 +963,9 @@ public class Member {
 			umiGuardian.setLastName(g.getLastName());
 			umiGuardian.setFullName(getDisplayName(g.getFirstName(), g.getLastName(), g.getEmailAddress(), g.getPhoneNumber()));
 			umiGuardian.setAutoArchiveDayCount(g.getAutoArchiveDayCount());
-			umiPrimary.setHasRteamMessageAccessEnabled(g.getHasRteamMessageAccessEnabled());
-			umiPrimary.setHasEmailMessageAccessEnabled(g.getHasEmailMessageAccessEnabled());
-			umiPrimary.setHasSmsMessageAccessEnabled(g.getHasSmsMessageAccessEnabled());
+			umiGuardian.setHasRteamMessageAccessEnabled(g.getHasRteamMessageAccessEnabled());
+			umiGuardian.setHasEmailMessageAccessEnabled(g.getHasEmailMessageAccessEnabled());
+			umiGuardian.setHasSmsMessageAccessEnabled(g.getHasSmsMessageAccessEnabled());
 			
 			// only add to participant list if NA or confirmed
 			if(umiGuardian.getEmailAddress() != null || umiGuardian.getPhoneNumber() != null) {

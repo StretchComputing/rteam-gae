@@ -275,6 +275,14 @@ public class Recipient {
 	private String toEmailAddress;
 	private Boolean messageLinkOnly; // true if recipient only exists for replying to message link (i.e should never be displayed in inbox)
 	private String participantRole;
+	
+	// member data held in recipient for easy re-send or follow-up messages
+	private String smsEmailAddresss;
+	private String toFirstName;
+	private String toLastName;
+	private Boolean hasRteamMessageAccessEnabled;
+	private Boolean hasEmailMessageAccessEnabled;
+	private Boolean hasSmsMessageAccessEnabled;	
 
 	@Transient
 	private Boolean belongToUser;  // a transient attribute used for building recipient list associated with a specific user
@@ -563,6 +571,54 @@ public class Recipient {
 
 	public void setParticipantRole(String participantRole) {
 		this.participantRole = participantRole;
+	}
+
+	public String getSmsEmailAddresss() {
+		return smsEmailAddresss;
+	}
+
+	public void setSmsEmailAddresss(String smsEmailAddresss) {
+		this.smsEmailAddresss = smsEmailAddresss;
+	}
+
+	public String getToFirstName() {
+		return toFirstName;
+	}
+
+	public void setToFirstName(String toFirstName) {
+		this.toFirstName = toFirstName;
+	}
+
+	public String getToLastName() {
+		return toLastName;
+	}
+
+	public void setToLastName(String toLastName) {
+		this.toLastName = toLastName;
+	}
+
+	public Boolean getHasRteamMessageAccessEnabled() {
+		return hasRteamMessageAccessEnabled;
+	}
+
+	public void setHasRteamMessageAccessEnabled(Boolean hasRteamMessageAccessEnabled) {
+		this.hasRteamMessageAccessEnabled = hasRteamMessageAccessEnabled;
+	}
+	
+	public Boolean getHasEmailMessageAccessEnabled() {
+		return hasEmailMessageAccessEnabled;
+	}
+
+	public void setHasEmailMessageAccessEnabled(Boolean hasEmailMessageAccessEnabled) {
+		this.hasEmailMessageAccessEnabled = hasEmailMessageAccessEnabled;
+	}
+	
+	public Boolean getHasSmsMessageAccessEnabled() {
+		return hasSmsMessageAccessEnabled;
+	}
+
+	public void setHasSmsMessageAccessEnabled(Boolean hasSmsMessageAccessEnabled) {
+		this.hasSmsMessageAccessEnabled = hasSmsMessageAccessEnabled;
 	}
 	
 	public Boolean matchUser(User theUser) {
@@ -1007,6 +1063,9 @@ public class Recipient {
 			log.exception("Recipient:updateWhoIsComingPollForMember:NonUniqueResultException", "two or more active polls found for same member and same event", e);
 			return;
 		} finally {
+		    if (emRecipient.getTransaction().isActive()) {
+		    	emRecipient.getTransaction().rollback();
+		    }
     		emRecipient.close();
     	}
     	

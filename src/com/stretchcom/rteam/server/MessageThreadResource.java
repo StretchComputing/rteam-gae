@@ -523,14 +523,15 @@ public class MessageThreadResource extends ServerResource {
         			}
         		}
     			
-    			List<String> memberIdsToBeNotified = new ArrayList<String>();
+    			List<Recipient> recipientsToBeNotified = new ArrayList<Recipient>();
     			String reply = "";
     			String followupMessage = "";
     			String reminderMessage = "";
     		    Boolean wasWhoIsComingReply = false;
     			if(json.has("sendReminder")) {
-    				// user sending reminder must be the originator of this message thread
-    				if(messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
+    				// user sending reminder must be the originator of this message thread with the exception of a Who's Coming Poll
+    				if(messageThread.getType().equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE) ||
+    				   messageThread.getSenderUserId().equals(KeyFactory.keyToString(currentUser.getKey()))) {
     					
     					JSONArray recipientsJsonArray = json.getJSONArray("sendReminder");
     					int numOfJsonRecipients = recipientsJsonArray.length();
@@ -547,7 +548,7 @@ public class MessageThreadResource extends ServerResource {
     								if(recipientsJsonArray.getString(i).equals(r.getMemberId())) {
     									// will only be notified if they have NOT yet replied to the poll/confirm message
     									if(r.isPendingReply()) {
-        									memberIdsToBeNotified.add(r.getMemberId());
+        									recipientsToBeNotified.add(r);
         									memberToBeNotified = true;
     									}
     									break;
@@ -557,7 +558,7 @@ public class MessageThreadResource extends ServerResource {
     						} else {
     							// No members provided, so build memberIds list to include ALL recipients in messageThread that have NOT yet replied
     							if(r.isPendingReply()) {
-        							memberIdsToBeNotified.add(r.getMemberId());
+        							recipientsToBeNotified.add(r);
         							memberToBeNotified = true;
     							}
     						}
@@ -617,7 +618,7 @@ public class MessageThreadResource extends ServerResource {
     						r.setFollowupMessage(followupMessage);
     						r.setStatus(MessageThread.FINALIZED_STATUS);
     						r.setWasViewed(false);
-    						memberIdsToBeNotified.add(r.getMemberId());
+    						recipientsToBeNotified.add(r);
     					}
     				}
     			} else if(json.has("status")) {
@@ -664,57 +665,46 @@ public class MessageThreadResource extends ServerResource {
 							recipientOfThisUser.getTeamId(), recipientOfThisUser.getEventGmtStartDate(), eventName, reply);
     			}
     			
-    			// send followup message to recipients if appropriate
+    			// send follow-up message to recipients if appropriate
     			// TODO right now, iPhone returning "none" when user does not enter followup message
     			if(reminderMessage.length() > 0 || (followupMessage.length() > 0 && !followupMessage.equalsIgnoreCase("none")) ) {
-    				// convert memberIds to keys
-    				Set<Key> memberKeys = new HashSet<Key>();
-    				for(String mId : memberIdsToBeNotified) {
-    					memberKeys.add(KeyFactory.stringToKey(mId));
+    				List<UserMemberInfo> authorizedTeamRecipients = new ArrayList<UserMemberInfo>();
+    				for(Recipient rtbn : recipientsToBeNotified) {
+    					// filter out current user
+    					if( (rtbn.getToEmailAddress() != null && rtbn.getToEmailAddress() .equalsIgnoreCase(currentUser.getEmailAddress())) ||
+    						 (rtbn.getOneUseSmsToken() != null && currentUser.getPhoneNumber() != null && rtbn.getOneUseSmsToken().equals(currentUser.getPhoneNumber()))  ) {
+    						continue;
+    					}
+    					
+    					// recipient has everything need (by design) to build the UserMemberInfos needed for PubHub
+    					UserMemberInfo umi = new UserMemberInfo();
+    					umi.setMemberId(rtbn.getMemberId());
+    					umi.setFullName(rtbn.getMemberName());
+    					umi.setParticipantRole(rtbn.getParticipantRole());
+    					umi.setEmailAddress(rtbn.getToEmailAddress());
+    					umi.setPhoneNumber(rtbn.getOneUseSmsToken());
+    					umi.setUserId(rtbn.getUserId());
+    					umi.setOneUseToken(rtbn.getOneUseToken());
+    					umi.setOneUseSmsToken(rtbn.getOneUseSmsToken());
+    					umi.setSmsEmailAddress(rtbn.getSmsEmailAddresss());
+    					umi.setFirstName(rtbn.getToFirstName());
+    					umi.setLastName(rtbn.getToLastName());
+    					umi.setHasRteamMessageAccessEnabled(rtbn.getHasRteamMessageAccessEnabled());
+    					umi.setHasEmailMessageAccessEnabled(rtbn.getHasEmailMessageAccessEnabled());
+    					umi.setHasSmsMessageAccessEnabled(rtbn.getHasSmsMessageAccessEnabled());
+    					authorizedTeamRecipients.add(umi);
     				}
     				
-    				try {
-    		    		List<Member> members = null;
-    		    		if(memberKeys.size() > 0) {
-    		    			members = (List<Member>)em.createQuery("select from " + Member.class.getName() + " where key = :keys")
-    		    	    		.setParameter("keys", memberKeys)
-    		    	    		.getResultList();
-    		    			
-    		    			List<UserMemberInfo> authorizedTeamRecipients = new ArrayList<UserMemberInfo>();
-    		    			////////////////////////////////
-    		    			// Build Raw Team Recipient List
-    		    			////////////////////////////////
-    		    			for(Member m : members) {
-    		    				List<UserMemberInfo> authorizedMembershipRecipients = m.getAuthorizedRecipients(m.getTeam());
-    		    				for(UserMemberInfo umi : authorizedMembershipRecipients) {
-    		    					// filter out current user
-    		    					if( (umi.getEmailAddress() != null && umi.getEmailAddress().equalsIgnoreCase(currentUser.getEmailAddress())) ||
-    		    						 (umi.getPhoneNumber() != null && currentUser.getPhoneNumber() != null && umi.getPhoneNumber().equals(currentUser.getPhoneNumber()))  ) {
-    		    						continue;
-    		    					}
-    		    						
-    		    					// need to know associated member for loop below
-    		    					umi.setMember(m);
-    		    					umi.setOneUseToken(TF.get());
-    		    					umi.setOneUseSmsToken(umi.getPhoneNumber()); // could be null
-    		    					authorizedTeamRecipients.add(umi);
-    		    				}
-    		    			} 
-        		    		
-		    				///////////////////////////////////////////////////////////////////////////////////////
-		    				// Filter Team Recipient List
-		    				//      All entities in returned list have unique: emailAddress, userId and phoneNumber
-		    				///////////////////////////////////////////////////////////////////////////////////////
-		    				authorizedTeamRecipients = UserMemberInfo.filterDuplicates(authorizedTeamRecipients);
+    				///////////////////////////////////////////////////////////////////////////////////////
+    				// Filter Team Recipient List
+    				//      All entities in returned list have unique: emailAddress, userId and phoneNumber
+    				///////////////////////////////////////////////////////////////////////////////////////
+    				authorizedTeamRecipients = UserMemberInfo.filterDuplicates(authorizedTeamRecipients);
 
-		    				if(reminderMessage.length() > 0) {
-			    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), reminderMessage, messageThread, team, false, currentUser.getFullName());
-		    				} else {
-			    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), followupMessage, messageThread, team, true, currentUser.getFullName());
-		    				}
-    		    		}
-    				} catch (Exception e) {
-            			log.exception("MessageThreadResource:updateMessageThread:Exception", "", e);
+    				if(reminderMessage.length() > 0) {
+	    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), reminderMessage, messageThread, team, false, currentUser.getFullName());
+    				} else {
+	    				PubHub.sendMessageThreadToMembers(authorizedTeamRecipients, messageThread.getSubject(), followupMessage, messageThread, team, true, currentUser.getFullName());
     				}
     			}
         	}
