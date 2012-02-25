@@ -14,7 +14,8 @@ import org.restlet.routing.Router;
 public class RteamApplication extends Application {  
 	public static final String CURRENT_USER = "rTeam.currentUser";
 	//::TODO make URL HTTPS?
-	public static final String BASE_URL_WITH_SLASH = "http://v2-3.latest.rteamtest.appspot.com/";
+	//public static final String BASE_URL_WITH_SLASH = "http://v2-3.latest.rteamtest.appspot.com/";
+	public static final String BASE_URL_WITH_SLASH = "http://rteamtest.appspot.com/";
 	//public static final String BASE_URL_WITH_SLASH = "http://localhost:8888/";
 	public static final String RTEAM_USER_ID = "rteamuserid"; // User ID in Message Threads created for automated email notifications
 	public static final String GWT_HOST_PAGE = "Rteam.html";

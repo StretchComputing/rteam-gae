@@ -247,19 +247,21 @@ public class MessageThreadsResource extends ServerResource {
 			
 			// out parameters for 'handleJson' methods below
 			List<String> memberIds = new ArrayList<String>();
-			Boolean coordinatorsOnly = new Boolean(false);
-			Boolean includeFans = new Boolean(true);
+			List<Boolean> coordsAndFans = new ArrayList<Boolean>();
 			if(type != null && type.equalsIgnoreCase(MessageThread.WHO_IS_COMING_TYPE)) {
 				////////////////////////////////////////////////////////////////////////////////////////////////////////
 				// for who's coming message, only eventId and eventType are used -- all other fields are "predetermined"
 				////////////////////////////////////////////////////////////////////////////////////////////////////////
-				apiStatus = buildWhoIsComingMessageThreadApi(messageThread, localEventDateStr, coordinatorsOnly, includeFans);
+				apiStatus = buildWhoIsComingMessageThreadApi(messageThread, localEventDateStr, coordsAndFans);
 			} else {
-				apiStatus = handleJsonForCreateMessageThreadApi(json, type, messageThread, memberIds, coordinatorsOnly, includeFans);
+				apiStatus = handleJsonForCreateMessageThreadApi(json, type, messageThread, memberIds, coordsAndFans);
 			}
 			if(!apiStatus.equals(ApiStatusCode.SUCCESS)) {
 				return Utility.apiError(apiStatus);
 			}
+			
+			Boolean coordinatorsOnly = coordsAndFans.get(0);
+			Boolean includeFans = coordsAndFans.get(1);
 			
 			String senderMemberId = "";
 			Date gmtStartDate = new Date();
@@ -286,11 +288,13 @@ public class MessageThreadsResource extends ServerResource {
 					}
 				} else if(coordinatorsOnly) {
 					if(m.isCoordinator()) {
+						log.debug("member " + m.getFullName() + " included because he/she is a coordinator");
 						recipientMembers.add(m);
 					}
 				} else {
 					// may or may not include fans depending on parameter
 					if(includeFans || !m.isFan()) {
+						log.debug("member " + m.getFullName() + " included in MessageThread. includeFans = " + includeFans.toString());
 						recipientMembers.add(m);
 					}
 				}
@@ -1387,10 +1391,9 @@ public class MessageThreadsResource extends ServerResource {
     // theJson: JSON object with input to API
     // theMessageThread: out parameter to hold data extracted from the input JSON object
     // theMemberIds: out parameter to store member IDs extracted from the input JSON object
-    // theCoordinatorsOnly: out parameter
-    // theIncludeFans: out parameter
+    // theCoordsAndFans: out parameter
     private String handleJsonForCreateMessageThreadApi(JSONObject theJson, String theType, MessageThread theMessageThread, List<String> theMemberIds,
-    		Boolean theCoordinatorsOnly, Boolean theIncludeFans)  throws JSONException {
+    		List<Boolean> theCoordsAndFans)  throws JSONException {
     	String subject = null;
     	if(theJson.has("subject")) {
     		subject = theJson.getString("subject");
@@ -1424,11 +1427,12 @@ public class MessageThreadsResource extends ServerResource {
 		}
 		
 		// defaults to 'false' if not specified
-		theCoordinatorsOnly = false;
+		Boolean theCoordinatorsOnly = false;
 		if(theJson.has("coordinatorsOnly")) {
 			theCoordinatorsOnly = theJson.getBoolean("coordinatorsOnly");
 			log.debug("json coordinatorsOnly = " + theCoordinatorsOnly.toString());
 		}
+		theCoordsAndFans.add(theCoordinatorsOnly);
 		
 		// defaults to 'false' if not specified
 		theMessageThread.setIsAlert(false);
@@ -1442,7 +1446,7 @@ public class MessageThreadsResource extends ServerResource {
 		}
 		
 		// defaults to 'true' if not specified
-		theIncludeFans = true;
+		Boolean theIncludeFans = true;
 		String includeFansStr = null;
 		if(theJson.has("includeFans")) {
 			includeFansStr = theJson.getString("includeFans");
@@ -1451,6 +1455,7 @@ public class MessageThreadsResource extends ServerResource {
 		if(includeFansStr != null && !includeFansStr.equalsIgnoreCase("true")) {
 			theIncludeFans = false;
 		}
+		theCoordsAndFans.add(theIncludeFans);
 		
 		// defaults to 'true' if not specified
 		theMessageThread.setIsPublic(true);
@@ -1482,9 +1487,8 @@ public class MessageThreadsResource extends ServerResource {
     // theJson: JSON object with input to API
     // theMessageThread: out parameter to hold data extracted from the input JSON object and values set by this method
     // theMemberIds: out parameter to store member IDs extracted from the input JSON object
-    // theCoordinatorsOnly: out parameter
-    // theIncludeFans: out parameter
-    private String buildWhoIsComingMessageThreadApi(MessageThread theMessageThread, String theLocalEventDateStr, Boolean theCoordinatorsOnly, Boolean theIncludeFans)  throws JSONException {
+    // theCoordsAndFans: out parameter
+    private String buildWhoIsComingMessageThreadApi(MessageThread theMessageThread, String theLocalEventDateStr, List<Boolean> theCoordsAndFans)  throws JSONException {
 		if(theMessageThread.getEventId() == null && theMessageThread.getIsGame() == null) {
 			return ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_REQUIRED;
 		}
@@ -1503,7 +1507,7 @@ public class MessageThreadsResource extends ServerResource {
 		theMessageThread.setPollChoices(pollChoices);
 		
 		// who's coming is not just for coordinators
-		theCoordinatorsOnly = false;
+		theCoordsAndFans.add(false);
 		
 		// who's coming is always an alert
 		theMessageThread.setIsAlert(true);
@@ -1512,7 +1516,7 @@ public class MessageThreadsResource extends ServerResource {
 		theMessageThread.setIsPublic(true);
 		
 		// who's coming never includes fans
-		theIncludeFans = false;
+		theCoordsAndFans.add(false);
     	
     	return ApiStatusCode.SUCCESS;
     }
