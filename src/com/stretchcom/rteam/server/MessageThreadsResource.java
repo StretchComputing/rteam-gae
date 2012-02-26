@@ -329,6 +329,7 @@ public class MessageThreadsResource extends ServerResource {
 					// filter out current user
 					if( (umi.getEmailAddress() != null && umi.getEmailAddress().equalsIgnoreCase(currentUser.getEmailAddress())) ||
 						 (umi.getPhoneNumber() != null && currentUser.getPhoneNumber() != null && umi.getPhoneNumber().equals(currentUser.getPhoneNumber()))  ) {
+						log.debug("" + umi.getFullName() + " filtered out because info matched current user");
 						continue;
 					}
 						
@@ -362,6 +363,7 @@ public class MessageThreadsResource extends ServerResource {
 				
 				recipient.setMemberId(umi.getMemberId());
 				recipient.setMemberName(umi.getFullName());
+				log.debug(""+ umi.getFullName() + " added as a recipient");
 				recipient.setParticipantRole(umi.getParticipantRole());
 				recipient.setToEmailAddress(umi.getEmailAddress());
 				// recipient holds the user ID of the recipient member, not the sender. Could be NULL

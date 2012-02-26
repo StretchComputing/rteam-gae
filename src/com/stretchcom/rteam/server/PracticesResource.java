@@ -797,7 +797,7 @@ public class PracticesResource extends ServerResource {
     		// now, for all team members without attendance
     		for(Member m : theTeam.getMembers()) {
     			String memberId = KeyFactory.keyToString(m.getKey());
-    			if(!memberIdsWithAttendance.contains(memberId)) {
+    			if(!memberIdsWithAttendance.contains(memberId) && !m.isFan()) {
     				isCurrentUser = false;
         			JSONObject jsonAttendeeObj = new JSONObject();
     				jsonAttendeeObj.put("memberId", memberId);

@@ -45,8 +45,12 @@ public class UrlRewriteFilter implements Filter {
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             String uri = httpRequest.getRequestURI();
+            
             log.debug("Url Rewrite filter. Before URI: " + uri);
-            if(!uri.toLowerCase().startsWith("/sms") && uri.length() <= 4) {
+            if(uri.equals("/")) {
+            	// this is someone just going to the website, so ignore
+            }
+            else if(!uri.toLowerCase().startsWith("/sms") && uri.length() <= 4) {
             	// strip the leading slash
             	uri = uri.substring(1);
             	String teamId = Team.getTeamId(uri);
