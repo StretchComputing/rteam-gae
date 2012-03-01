@@ -208,6 +208,7 @@ public class Attendee {
 					.setParameter("memberId", theMemberId)
 					.getSingleResult();
 			} catch(NoResultException e) {
+				log.debug("creating a new attendee");
 				attendee = new Attendee();
 				attendee.setEventId(theEventIdStr);
 				attendee.setEventType(theEventType);
@@ -217,6 +218,7 @@ public class Attendee {
 				attendee.setEventName(theEventName);
 			}
 			
+			log.debug("updateing pre-game attendance for game ID = " + theEventIdStr + " with the reply = " + theReply);
 			attendee.setPreGameStatus(theReply);
 			
 			em.persist(attendee);

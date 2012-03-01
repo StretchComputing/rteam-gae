@@ -255,9 +255,9 @@ public class MessageThreadResource extends ServerResource {
 		User currentUser = null;
         try {
         	if(this.oneUseToken != null) {
-    			// --------------------------------------------------
-    			// This is the 'Message thread response' API call
-    			// --------------------------------------------------
+    			// -------------------------------------------------------
+    			// This is the 'Message thread response' API call (for GWT)
+    			// --------------------------------------------------------
         		//::EVENT::
         		log.debug("this is 'Message thread response' API handling");
         		

@@ -1,0 +1,16 @@
+2012-02-26 12:13:10.315 com.stretchcom.rteam.server.RskyboxClient log: extracted phone number = 6302156979
+D 2012-02-26 12:13:10.315 com.stretchcom.rteam.server.RskyboxClient log: handleSmsResponse() entered, theToken = 6302156979
+D 2012-02-26 12:13:10.356 com.stretchcom.rteam.server.RskyboxClient log: processing rTeam SMS message = Yes
+D 2012-02-26 12:13:10.356 com.stretchcom.rteam.server.RskyboxClient log: processing recipient with status=sent
+D 2012-02-26 12:13:10.363 com.stretchcom.rteam.server.RskyboxClient log: senderUserId = aglydGVhbXRlc3RyDQsSBFVzZXIYmNOYAQw
+D 2012-02-26 12:13:10.363 com.stretchcom.rteam.server.RskyboxClient log: teamId = aglydGVhbXRlc3RyDQsSBFRlYW0YytG4AQw
+D 2012-02-26 12:13:10.386 com.stretchcom.rteam.server.RskyboxClient log: team retrieved = JustJoes
+D 2012-02-26 12:13:10.432 com.stretchcom.rteam.server.RskyboxClient log: no reply sent since sender of original message no longer a member of this team
+D 2012-02-26 12:13:10.432 com.stretchcom.rteam.server.RskyboxClient log: processing recipient with status=sent
+D 2012-02-26 12:13:10.437 com.stretchcom.rteam.server.RskyboxClient log: attempting to match poll repsonse = Yes
+D 2012-02-26 12:13:10.437 com.stretchcom.rteam.server.RskyboxClient log: checking poll choice = yes
+D 2012-02-26 12:13:10.446 com.stretchcom.rteam.server.RskyboxClient log: who's coming reply = Yes
+D 2012-02-26 12:13:10.457 com.stretchcom.rteam.server.RskyboxClient log: creating a new attendee
+D 2012-02-26 12:13:10.457 com.stretchcom.rteam.server.RskyboxClient log: updateing pre-game attendance for game ID = aglydGVhbXRlc3RyDQsSBEdhbWUY15vCAQw with the reply = Yes
+D 2012-02-26 12:13:10.479 com.stretchcom.rteam.server.RskyboxClient log: recipients with token 6302156979: # outstanding polls = 1 matching polls = 1
+D 2012-02-26 12:13:10.479 com.stretchcom.rteam.server.RskyboxClient log: number of recipients with token 6302156979 confirmed via SMS = 0

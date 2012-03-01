@@ -3,18 +3,11 @@ package com.stretchcom.rteam.client;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dev.cfg.Styles;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTMLTable;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class MessageThreadPollResponse extends Composite {
@@ -29,16 +22,11 @@ public class MessageThreadPollResponse extends Composite {
 	@UiField
 	SpanElement numOfMembers;
 
-	@UiField
-	SpanElement debugMessage;
-
 	public MessageThreadPollResponse() {
 		initWidget(uiBinder.createAndBindUi(this));
 	}
 	
 	public void setNumOfMembers(String theNumOfMembers) { numOfMembers.setInnerText(theNumOfMembers); }
-	
-	public void setDebugMessage(String theDebugMessage) { debugMessage.setInnerText(theDebugMessage); }
 	
 	public void setMembersTable(List<Member> theMembers) {
 		int numOfRows = theMembers.size() + 1; // first row is column names
@@ -49,7 +37,7 @@ public class MessageThreadPollResponse extends Composite {
 		membersGrid.setHTML(0, 0, "Member Name");
 		membersGrid.setHTML(0, 1, "Reply");
 		membersGrid.setHTML(0, 2, "Reply Date");
-		membersGrid.getRowFormatter().setStyleName(0, "columnHeader");
+		membersGrid.getRowFormatter().setStyleName(0, "gridColumnHeader");
 		
         for (int rowNumber=1, memIndex=0; rowNumber < numOfRows; ++rowNumber, ++memIndex) {
         	String memberNameHtml = theMembers.get(memIndex).getMemberFullName() == null ? "" : theMembers.get(memIndex).getMemberFullName();
@@ -65,9 +53,9 @@ public class MessageThreadPollResponse extends Composite {
         for (int i=1; i < membersGrid.getRowCount(); i++) {
             for (int j=0; j < membersGrid.getCellCount(i); j++) {
                 if ((j % 2) == 0) {
-                	membersGrid.getCellFormatter().setStyleName(i, j, "tableCell-even");
+                	membersGrid.getCellFormatter().setStyleName(i, j, "gridCell");
                 } else {
-                	membersGrid.getCellFormatter().setStyleName(i, j, "tableCell-odd");
+                	membersGrid.getCellFormatter().setStyleName(i, j, "gridCell");
                 }
             }
         }        

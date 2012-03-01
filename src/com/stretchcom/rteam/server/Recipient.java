@@ -752,7 +752,7 @@ public class Recipient {
 								
 								// update pre-event attendee status or create attendee if it doesn't exist yet for this event/member combination
 								Attendee.updatePreGameAttendance(r.getEventId(), eventType, r.getMemberId(),
-										r.getTeamId(), r.getEventGmtStartDate(), eventName, theSmsResponse);
+										r.getTeamId(), r.getEventGmtStartDate(), eventName, matchingPollChoice);
 							}
 	        			}
 	    			} else if(messageThread.isConfirm()) {

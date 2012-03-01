@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style src="rteam.css" />
-	
+
 	<g:HTMLPanel styleName="{style.panel}">
 		<div style="height:15px;"></div>
 		<div class="{style.welcome}" >
@@ -11,10 +11,5 @@
 		
 		<div class="{style.userInfo}">Poll Results For <span ui:field="numOfMembers" /> Member(s)</div>
 		<g:Grid ui:field="membersGrid" />
-	
-		<div style="margin-top:25px;">
-			<div>Debug Message</div>
-			<span ui:field="debugMessage" />
-		</div>
 	</g:HTMLPanel> 
 </ui:UiBinder> 

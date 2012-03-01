@@ -399,7 +399,6 @@ public class Rteam implements EntryPoint {
 	                        
 	            			String numOfMembers = "" + members.size();
 	            			messageThreadPollResponse.setNumOfMembers(numOfMembers);
-	            			messageThreadPollResponse.setDebugMessage("debug OFF");
 	            			//messageThreadPollResponse.setDebugMessage(dBuffer.toString());
 	            			messageThreadPollResponse.setMembersTable(members);
 	                    } else {

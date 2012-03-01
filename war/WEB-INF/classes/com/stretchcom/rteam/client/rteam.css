@@ -100,3 +100,21 @@ body {
 	background: #CCDDFF;
 	color: #339;
 }
+
+.gridColumnHeader {
+	font-size: 13px;
+	font-weight: normal;
+	padding: 8px;
+	background: #BBCCFF;
+	border-top: 4px solid #aabcfe;
+	border-bottom: 1px solid #fff;
+	color: #003399;
+}
+
+.gridCell {
+	padding: 8px;
+	background: #e8edff;
+	border-bottom: 1px solid #fff;
+	color: #666699;
+	border-top: 1px solid transparent;
+}
