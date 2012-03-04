@@ -71,7 +71,7 @@ tr.row2 {
 }
 
 tr.row3 {
-	height:150px;
+	height:125px;
 }
 
 #photo-container {
@@ -110,9 +110,13 @@ tr.row3 {
 	background-color: #006600;
 	display: inline-block;
 	color: white;
-	font-size: 20px;
+	font-size: 14px;
 	border-radius: 8px;
 	-moz-border-radius: 8px;
+}
+
+#fansLabel {
+	margin-left: 5px;
 }
 
 #activity {
@@ -121,9 +125,13 @@ tr.row3 {
 	background-color: #006600;
 	display: inline-block;
 	color: white;
-	font-size: 20px;
+	font-size: 14px;
 	border-radius: 8px;
 	-moz-border-radius: 8px;
+}
+
+#activityLabel {
+	margin-left: 5px;
 }
 
 #misc {
@@ -132,9 +140,13 @@ tr.row3 {
 	background-color: #006600;
 	display: inline-block;
 	color: white;
-	font-size: 20px;
+	font-size: 14px;
 	border-radius: 8px;
 	-moz-border-radius: 8px;
+}
+
+#miscLabel {
+	margin-left: 5px;
 }
 
 #team-name {
@@ -192,7 +204,25 @@ tr.row3 {
 	color: white;
 	margin-top: 7px;
 	font-size: 20px;
-	margin-left: 40px;
+	margin-left: 90px;
+}
+#game-date-day {
+	font-size: 22px;
+	margin-left: 5px;
+}
+#game-date-month {
+	margin-left: 5px;
+}
+#game-date-date {
+	margin-left: 10px;
+}
+#game-date-hour {
+	font-size: 22px;
+	margin-left: 25px;
+}
+#game-date-ampm {
+	font-size: 15px;
+	margin-left: 5px;
 }
 
 #score-label-area {
@@ -301,4 +331,62 @@ tr.row3 {
 	margin-left: 0px;
 }
 
+div.dataTables_length {
+    background-color: black;
+    color: red;
+}
 
+div.dataTables_info {
+    display: none;
+}
+
+#gameActivityHead {
+	display: none;
+}
+
+#gameActivity {
+	border-collapse: collapse;
+	color: black;
+	height: 100%;
+	width: 100%;
+	margin-top: 5px;
+	margin-bottom: 1px;
+	clear: both;
+}
+
+#gameActivity td,
+#gameActivity th {
+    padding: 3px;
+    border: 1px solid #000;
+}
+
+#gameActivity thead th {
+    text-align: center;
+    background: #66a9bd;
+}
+
+#gameActivity tbody td {
+    text-align: left;
+    background: #d5eaf0;
+}
+         
+#gameActivity tbody tr.odd td { 
+    background: #bcd9e1;
+}
+
+#activityPoster {
+	font-size: 13px;
+	font-weight: bold;
+}
+
+#activityDate {
+	font-size: 12px;
+	color: #2F4F4F;
+	margin-top: 1px;
+}
+
+#activityText {
+	font-size: 12px;
+	margin-top: 2px;
+	margin-left: 5px;
+}

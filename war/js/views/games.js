@@ -35,7 +35,7 @@ var rteam = (function(r, $) {
         var recentGame = this.getMostRecentRelevantGame(this.collection);
         if(recentGame) {
         	this.displayGameInfo(recentGame, this.collection.teamName);
-        	this.displayActivityInfo(recentGame);
+        	this.getActivityInfo(recentGame);
         }
       }
       //this.$el.selectmenu('refresh');
@@ -47,7 +47,7 @@ var rteam = (function(r, $) {
       this.$el.append(new r.GameView({ model: game }).render().el);
     },
     
-    displayActivityInfo: function(game) {
+    getActivityInfo: function(game) {
         var activitiesView = new r.ActivitiesView({
             collection: new r.Activities(game.get('gameId'))
          });
@@ -60,8 +60,7 @@ var rteam = (function(r, $) {
 	  $('#team-opponent-vs').html("vs");
 	  var opponentName = game.get('opponent');
   	  $('#opponent-name-text').html(opponentName);
-	  
-  	  $('#game-date-value').html(game.get('startDate'));
+  	  $('#game-date-value').html(rteam.formatDateFormal(game.get('startDate')));
   	  $('#us-score-value').html(game.get('scoreUs'));
   	  $('#them-score-value').html(game.get('scoreThem'));
   	  var interval = game.get('interval');

@@ -11,6 +11,7 @@ var rteam = (function(r, $) {
     	activityId: null,
     	text: null,
     	createdDate: null,
+    	formatedCreatedDate: null,
     	cacheId: null,
     	numberOfLikeVotes: null,
     	numberOfDislikeVotes: null,

@@ -196,6 +196,39 @@ var rteam = (function(r, $) {
 	  //console.log("***** date from string to date to string = " + date.toString());
 	  return date;
   };
+  
+  // only supports format: YYYY-MM-DD hh:mm
+  r.formatDate = function(theDateStr) {
+	  var hourFormat = ["12 am", "1 am", "2 am", "3 am", "4 am", "5 am", "6 am", "7 am", "8 am", "9 am", "10 am", "11 am", 
+	                    "12 pm", "1 pm", "2 pm", "3 pm", "4 pm", "5 pm", "6 pm", "7 pm", "8 pm", "9 pm", "10 pm", "11 pm"];
+	  var dateObj = r.convertStringToDate(theDateStr);
+	  var date = dateObj.getDate();
+	  var month = dateObj.getMonth() + 1;
+	  var year = dateObj.getYear();
+	  var hours = dateObj.getHours();
+	  return month.toString() + "/" + date + " " + hourFormat[hours];
+  }
+  
+  // only supports format: YYYY-MM-DD hh:mm
+  r.formatDateFormal = function(theDateStr) {
+	  var hourFormat = ["12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", 
+	                    "12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
+	  var monthFormat = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+	  var dayFormat = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+	  var dateObj = r.convertStringToDate(theDateStr);
+	  var day = dateObj.getDay();
+	  var date = dateObj.getDate();
+	  var month = dateObj.getMonth();
+	  var year = dateObj.getYear();
+	  var hours = dateObj.getHours();
+	  var ampm = hours < 11 ? "AM" : "PM";
+	  var output = "<span id='game-date-day'>" + dayFormat[day] + ", " +  "</span>" +
+	  			   "<span id='game-date-month'>" + monthFormat[month] + "</span>" +
+	  			   "<span id='game-date-date'>" + date + "</span>" +
+	  			   "<span id='game-date-hour'>" + hourFormat[hours] + "</span>" +
+	  			   "<span id='game-date-ampm'>" + ampm + "</span>";
+	  return output;
+  }
 
   return r;
 }(rteam || {}, jQuery));

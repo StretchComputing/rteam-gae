@@ -27,6 +27,8 @@ $(function() {
     var r_scoreboard = new rteam.scoreboard;
     Backbone.history.start();
     console.log("Backbone history started ...");
+    rteam.init(); 
+    rteam.activityTable.fnDraw();
   }
 );
 

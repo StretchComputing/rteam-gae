@@ -19,7 +19,9 @@
     <script src="/js/lib/underscore-min.js"></script>
     <script src="/js/lib/backbone-min.js"></script>
     <script src="/js/lib/cookie.js"></script>
+	<script src="/js/lib/jquery.dataTables.js"></script>
     <script src="/js/helpers/app.js"></script>
+    <script src="/js/helpers/dataTableInit.js"></script>
     <script src="/js/models/base.js"></script>
     <script src="/js/models/game.js"></script>
     <script src="/js/models/activity.js"></script>
@@ -82,13 +84,30 @@
        </tr>
       <tr class="row3">
         <td colspan="2">
-          <div id="fans">fans</div>
+          <div id="fans">
+          <div id="fansLabel">
+          	fans
+          </div>
+          </div>
         </td>
         <td colspan="2">
-          <div id="activity">activity feed</div>
+			<div id="activity">
+				<div id="activityLabel">Activity</div>
+				<table id="gameActivity">
+				    <thead id="gameActivityHead">
+				        <tr><th>Column 1</th></tr>
+				    </thead>
+				    <tbody id="gameActivity-body">
+				    </tbody>
+				</table> 
+			</div>
         </td>
         <td colspan="2">
-          <div id="misc">Go rTeam!</div>
+          <div id="misc">
+          <div  id="miscLabel">
+          	Go rTeam!
+          </div>
+          </div>
         </td>
        </tr>
     </table>
@@ -106,6 +125,12 @@
     
     <script type="text/template" id="gameListTemplate">
       <a href="#game?id=<%= gameId %>">Game: <% description %></a> Start Date: <%= startDate %> Location: <%= location %>, Interval: <%= interval %> Score Us: <%= scoreUs %> Score Them <%= scoreThem %>
+    </script>
+    
+    <script type="text/template" id="activityTemplate">
+		<div id="activityPoster"><%= poster %></div>
+		<div id="activityDate"><%= rteam.formatDate(createdDate) %></div>
+		<div id="activityText"><%= text %></div>
     </script>
   
   </body>
