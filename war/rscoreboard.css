@@ -165,9 +165,34 @@ tr.row3 {
 }
 
 #team-name-text {
+	display: inline-block;
 	color: white;
 	margin-top: 7px;
-	font-size: 28px;
+	font-size: 35px;
+}
+
+#opponent-name-text {
+	display: inline-block;
+	color: white;
+	margin-top: 7px;
+	font-size: 35px;
+}
+
+#team-opponent-vs {
+	display: inline-block;
+	color: white;
+	margin-top: 7px;
+	font-size: 15px;
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
+#game-date {
+	display: inline-block;
+	color: white;
+	margin-top: 7px;
+	font-size: 20px;
+	margin-left: 40px;
 }
 
 #score-label-area {
@@ -187,7 +212,7 @@ tr.row3 {
 	margin-left: auto;
 	margin-right: auto;
 	text-align: bottom;
-	font-size: 30px;
+	font-size: 35px;
 }
 
 #score-value-area {

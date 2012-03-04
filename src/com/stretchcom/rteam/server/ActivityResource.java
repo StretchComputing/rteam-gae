@@ -517,6 +517,7 @@ public class ActivityResource extends ServerResource {
 			if(videoBase64.length() == 0) {videoBase64 = null;}
 			activity.setVideoBase64(videoBase64);
 		}
+		activity.updateMediaCount();
 		
     	return ApiStatusCode.SUCCESS;
     }

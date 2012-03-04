@@ -62,7 +62,7 @@ import com.google.appengine.api.datastore.Text;
     ),
     @NamedQuery(
     		name="Activity.getByEventIdAndEventTypeWithPhoto",
-    		query="SELECT a FROM Activity a WHERE a.eventId = :eventId AND a.eventType = :eventType AND photoBase64 <> NULL"
+    		query="SELECT a FROM Activity a WHERE a.eventId = :eventId AND a.eventType = :eventType AND mediaCount > 0"
     ),
     @NamedQuery(
     		name="Activity.getByEventIdAndEventType",
@@ -90,6 +90,7 @@ public class Activity implements Comparable<Activity> {
 	private Text photoBase64;
 	private Text thumbNailBase64;
 	private Text videoBase64;
+	private Long mediaCount = 0L;
 	private String eventId;
 	private String eventType;
 	private String eventDetailsId; // not sure I want to keep this -- maybe too much overhead to set this
@@ -309,6 +310,14 @@ public class Activity implements Comparable<Activity> {
 		}
 	}
 	
+	public Long getMediaCount() {
+		return mediaCount;
+	}
+
+	public void setMediaCount(Long mediaCount) {
+		this.mediaCount = mediaCount;
+	}
+
 	public String getEventType() {
 		return eventType;
 	}
@@ -368,6 +377,7 @@ public class Activity implements Comparable<Activity> {
 				.setParameter("eventId", theEventId)
 				.setParameter("eventType", theEventType)
 				.getResultList();
+    		log.debug("getActivityIdOfEventPhoto(): " + activitiesWithPhotos.size() + " photos found for event ID = " + theEventId + " for eventType = " + theEventType);
 			if(activitiesWithPhotos.size() > 0) {
 				// TODO for now, just pick the first one returned. Later make it random or use some other algorithm
 				activityIdWithPhoto = KeyFactory.keyToString(activitiesWithPhotos.get(0).getKey());
@@ -408,5 +418,11 @@ public class Activity implements Comparable<Activity> {
 			log.exception("Activity:getReplies:Exception", "", e);
 		}
     	return replies;
+	}
+	
+	// now, can only have one photo or one video
+	public void updateMediaCount() {
+		if(this.photoBase64 == null && this.videoBase64 == null) {mediaCount = 0L;}
+		mediaCount = 1L;
 	}
 }

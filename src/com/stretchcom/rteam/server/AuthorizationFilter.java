@@ -74,6 +74,14 @@ public class AuthorizationFilter extends Filter{
 			// So attempt to set the current user, but continue on even if it is not ...
 			attemptToSetCurrentUser(request, true);
 			return true;
+		} else if( urlLower.contains("activities") && urlLower.contains("team") && method.equals(Method.GET)) {
+			// API 'Get Activities for a Team' does not use token authorization
+			log.debug("validAuthentication(): API 'Get Activities for a Team' does not use token authorization at the moment");
+			
+			// this API is called both from client phones (where there is a currentUser and from rScoreboard where there is no currentUser)
+			// So attempt to set the current user, but continue on even if it is not ...
+			attemptToSetCurrentUser(request, true);
+			return true;
 		} else if( urlLower.contains("messagethread?") && urlLower.contains("oneusetoken") && method.equals(Method.PUT)) {
 			// API 'MessageThread Confirmation' does not use token authorization
 			log.debug("validAuthentication(): API 'MessageThread Confirmation' does not use token authorization");

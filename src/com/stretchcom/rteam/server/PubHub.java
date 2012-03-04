@@ -2072,6 +2072,8 @@ public class PubHub {
 		authorizedTeamRecipients = UserMemberInfo.filterDuplicates(authorizedTeamRecipients);
 		
 		List<UserMemberInfo> authorizedUserRecipients = new ArrayList<UserMemberInfo>();
+		Boolean activityPhotoRetrieved = false;
+		String activityId = null;
 		for(UserMemberInfo umi : authorizedTeamRecipients) {
 			umi.setOneUseToken(TF.get());
 			String userId = umi.getUserId();
@@ -2086,7 +2088,10 @@ public class PubHub {
 		    	///////////////////////////////////////////////////
 		    	// #2 Message(s) Sent: send email
 		    	///////////////////////////////////////////////////
-				String activityId = Activity.getActivityIdOfEventPhoto(KeyFactory.keyToString(theGame.getKey()), Practice.GAME_EVENT_TYPE);
+				if(!activityPhotoRetrieved) {
+					activityId = Activity.getActivityIdOfEventPhoto(KeyFactory.keyToString(theGame.getKey()), Practice.GAME_EVENT_TYPE);
+					activityPhotoRetrieved = true;
+				}
 				String photoUrl = null;
 				if(activityId != null) {photoUrl = RteamApplication.BASE_URL_WITH_SLASH + "photo/" + activityId;}
 	    		String emailBody = Emailer.getGameSummaryEmailBody(umi.getFullName(), theTeam, umi.getOneUseToken(), theGame, photoUrl);

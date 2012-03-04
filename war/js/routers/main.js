@@ -10,7 +10,7 @@ var rteam = (function(r, $) {
               this.gamesView = new r.GamesView({
                 el: $('#container'),
                 collection: new r.Games()
-              });
+             });
               this.gamesView.collection.fetch();
             },
 

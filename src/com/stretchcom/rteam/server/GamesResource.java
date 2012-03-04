@@ -387,6 +387,7 @@ public class GamesResource extends ServerResource {
 
 			List<Game> games = null;
     		List<Team> teams = null;
+    		Team team = null;
     		if(this.teamId != null) {
     			// --------------------------------------------------------------
 				// This is the 'Get game list for a specified team' API call
@@ -408,18 +409,18 @@ public class GamesResource extends ServerResource {
     				return new JsonRepresentation(jsonReturn);
     			}
     			
-    			String teamId = null;
+    			String tempTeamId = null;
     			if(this.teamId.length() <= UrlShort.MAX_ID_SIZE) {
-    				Team team = (Team)em.createNamedQuery("Team.getByPageUrl")
+    				team = (Team)em.createNamedQuery("Team.getByPageUrl")
     						.setParameter("pageUrl", this.teamId)
     						.getSingleResult();
-    				teamId = KeyFactory.keyToString(team.getKey());
+    				tempTeamId = KeyFactory.keyToString(team.getKey());
     			} else {
-    				teamId = this.teamId;
+    				tempTeamId = this.teamId;
     			}
 
     			games = (List<Game>)em.createNamedQuery("Game.getByTeam")
-    						.setParameter("teamKey", KeyFactory.stringToKey(teamId))
+    						.setParameter("teamKey", KeyFactory.stringToKey(tempTeamId))
     						.getResultList();
     			log.debug("getGameList(): number of games found = " + games.size());
 			} else {
@@ -507,6 +508,8 @@ public class GamesResource extends ServerResource {
 				jsonArray.put(jsonGameObj);
 			}
 			jsonReturn.put("games", jsonArray);
+			// team name only returned is shortened URL request for a specific team
+			if(team != null) jsonReturn.put("teamName", team.getTeamName());
 		} catch (JSONException e) {
 			log.exception("GamesResource:getGameList:JSONException", "could not find team associated with the game", e);
 		} catch (NoResultException e) {

@@ -177,6 +177,25 @@ var rteam = (function(r, $) {
     return (/^[a-z0-9!#$%&'*+\/=?\^_`{|}~\-]+(?:\.[a-z0-9!#$%&'*+\/=?\^_`{|}~\-]+)*@(?:[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?$/).test(emailAddress);
   };
 
+  
+  // only supports format: YYYY-MM-DD hh:mm
+  r.convertStringToDate = function(theDateStr) {
+	  //console.log("convertStringToDate(): theDateStr = " + theDateStr);
+	  if(!theDateStr) return null;
+	  
+	  var reggie = /(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/;
+	  var dateArray = reggie.exec(theDateStr);
+	  //console.log("dataArray = " + dateArray.toString());
+	  var date = new Date(
+	      (+dateArray[1]),
+	      (+dateArray[2])-1, // Careful, month starts at 0!
+	      (+dateArray[3]),
+	      (+dateArray[4]),
+	      (+dateArray[5])
+	  );	  
+	  //console.log("***** date from string to date to string = " + date.toString());
+	  return date;
+  };
 
   return r;
 }(rteam || {}, jQuery));
@@ -223,4 +242,5 @@ var rteam = (function(r, $) {
     rteam.log.debug('ajaxComplete: ' + settings.url);
     hidePageLoadingMessage();
   });
+  
 })();

@@ -381,6 +381,7 @@ public class ActivitiesResource extends ServerResource {
 					newActivity.setThumbNailBase64(thumbNailBase64);
 					newActivity.setPhotoBase64(photoBase64);
 					if(videoBase64 != null) newActivity.setVideoBase64(videoBase64);
+					newActivity.updateMediaCount();
 				}
 				
 				emActivity.persist(newActivity);
@@ -469,18 +470,18 @@ public class ActivitiesResource extends ServerResource {
 		boolean isGetActivitiesForAllTeamsApi = this.teamId == null;
         try {
     		currentUser = (User)this.getRequest().getAttributes().get(RteamApplication.CURRENT_USER);
-    		if(currentUser == null) {
-				this.setStatus(Status.SERVER_ERROR_INTERNAL);
-				log.error("ActivitiesResource:getActivities:currentUser", "error converting json representation into a JSON object");
-				return Utility.apiError(null);
 
+    		if(this.teamId != null && currentUser == null) {
+    			// TODO -- have browser send timezone for user requesting rScoreboard
+    			this.timeZoneStr = "America/Chicago";
     		}
+    		
     		//::BUSINESSRULE:: user must be network authenticated to get activities
-    		else if(!currentUser.getIsNetworkAuthenticated()) {
+    		if(currentUser != null && !currentUser.getIsNetworkAuthenticated()) {
 				return Utility.apiError(ApiStatusCode.USER_NOT_NETWORK_AUTHENTICATED);
     		}
     		//::BUSINESSRULE:: user must be a member of the team, if teamId was specified
-    		else if(this.teamId != null && !currentUser.isUserMemberOfTeam(this.teamId)) {
+    		else if(this.teamId != null && currentUser != null && !currentUser.isUserMemberOfTeam(this.teamId)) {
 				return Utility.apiError(ApiStatusCode.USER_NOT_MEMBER_OF_SPECIFIED_TEAM);
         	}
     		// timeZone check 
@@ -629,8 +630,19 @@ public class ActivitiesResource extends ServerResource {
 				}
 			} else {
 				try {
- 					Team team = (Team)em.createNamedQuery("Team.getByKey")
- 						.setParameter("key", KeyFactory.stringToKey(this.teamId))
+	    			String tempTeamId = null;
+	    			Team team = null;
+	    			if(this.teamId.length() <= UrlShort.MAX_ID_SIZE) {
+	    				team = (Team)em.createNamedQuery("Team.getByPageUrl")
+	    						.setParameter("pageUrl", this.teamId)
+	    						.getSingleResult();
+	    				tempTeamId = KeyFactory.keyToString(team.getKey());
+	    			} else {
+	    				tempTeamId = this.teamId;
+	    			}
+					
+ 					team = (Team)em.createNamedQuery("Team.getByKey")
+ 						.setParameter("key", KeyFactory.stringToKey(tempTeamId))
  						.getSingleResult();
  					log.debug("team retrieved = " + team.getTeamName());
  					teams.add(team);
@@ -841,7 +853,7 @@ public class ActivitiesResource extends ServerResource {
 			// that has had activity retrieved by this API call should the associated user.newestCacheId
 			// updated.
 			/////////////////////////////////////////////////////////////////////////////////////////////
-			if(teams.size() > 0) {
+			if(currentUser != null && teams.size() > 0) {
 	        	EntityManager em4= EMF.get().createEntityManager();
 	        	try {
 	        		em4.getTransaction().begin();
@@ -953,7 +965,7 @@ public class ActivitiesResource extends ServerResource {
 				
 				Boolean isCurrentUser = true;
 				String userId = a.getUserId();
-				if(userId == null || !KeyFactory.keyToString(currentUser.getKey()).equals(userId)) {
+				if(userId == null || (currentUser != null && !KeyFactory.keyToString(currentUser.getKey()).equals(userId))  ) {
 					isCurrentUser = false;
 				}
 				jsonActivityObj.put("isCurrentUser", isCurrentUser);
