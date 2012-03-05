@@ -29,6 +29,8 @@ var rteam = (function(r, $) {
   r.Activities = r.BaseCollection.extend({
     model: r.Activity,
     apiUrl: '/team/<teamId>/activities/<timeZone>', // just a template, real URL set in initialize()
+    activitiesWithPhotos: [],
+    currentPhoto: 0,
 
     initialize: function(gameId) {
       this.apiUrl = "/team/" + r.getUrlEndSegment() + "/activities?eventId=" + gameId + "&eventType=game";

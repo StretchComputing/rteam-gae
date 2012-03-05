@@ -29,6 +29,19 @@ $(function() {
     console.log("Backbone history started ...");
     rteam.init(); 
     rteam.activityTable.fnDraw();
+    
+    $("#nextPhoto").click(function() {
+    	var numOfPhotos = window.activitiesView.collection.activitiesWithPhotos.length;
+    	if(numOfPhotos > 2) {
+    		var currentPhoto = window.activitiesView.collection.currentPhoto;
+    		if((currentPhoto + 1) < numOfPhotos) {
+    			currentPhoto += 1;
+    			window.activitiesView.collection.currentPhoto = currentPhoto;
+          		var photoUrl = "http://rteamtest.appspot.com/photo/" + this.collection.activitiesWithPhotos[currentPhoto].get('activityId');
+          		$('#photoImg').attr('src', photoUrl);
+    		}
+    	}
+    });    
   }
 );
 

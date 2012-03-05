@@ -31,7 +31,7 @@ var rteam = (function(r, $) {
       if (this.collection.length <= 0) {
         this.$el.html(this.template());
       } else {
-        this.collection.each(this.addGame);
+        //this.collection.each(this.addGame);
         var recentGame = this.getMostRecentRelevantGame(this.collection);
         if(recentGame) {
         	this.displayGameInfo(recentGame, this.collection.teamName);
@@ -48,10 +48,10 @@ var rteam = (function(r, $) {
     },
     
     getActivityInfo: function(game) {
-        var activitiesView = new r.ActivitiesView({
+        window.activitiesView = new r.ActivitiesView({
             collection: new r.Activities(game.get('gameId'))
          });
-        activitiesView.collection.fetch();
+        window.activitiesView.collection.fetch();
     },
     
     displayGameInfo: function(game, teamName) {
@@ -83,6 +83,7 @@ var rteam = (function(r, $) {
     	var mostRelevantGame = null;
     	for(var i=0; i<collection.size(); i++) {
     		var game = collection.at(i);
+    		
     		console.log("game date = " + game.get('startDate') + " game interval = " + game.get('interval') + " game scoreUs = " + game.get('scoreUs') + " game scoreThem = " + game.get('scoreThem'));
     		if(game.get('interval') != "0" || game.get('scoreUs') != "0" || game.get('scoreThem') != "0") {
     			mostRelevantGame = game;
