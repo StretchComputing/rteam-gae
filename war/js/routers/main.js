@@ -37,7 +37,7 @@ $(function() {
     		if((currentPhoto + 1) < numOfPhotos) {
     			currentPhoto += 1;
     			window.activitiesView.collection.currentPhoto = currentPhoto;
-          		var photoUrl = "http://rteamtest.appspot.com/photo/" + this.collection.activitiesWithPhotos[currentPhoto].get('activityId');
+          		var photoUrl = "http://rteamtest.appspot.com/photo/" + window.activitiesView.collection.activitiesWithPhotos[currentPhoto].get('activityId');
           		$('#photoImg').attr('src', photoUrl);
     		}
     	}

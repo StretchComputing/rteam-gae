@@ -703,7 +703,7 @@ public class PubHub {
 	   	
 		String oneUseToken = null;
 		List<String> messageBodys = new ArrayList<String>();
-		List<String> naEmailAddresses = theMember.getNetworkAuthenticatedActiveEmailAddresses();
+		List<String> naEmailAddresses = theMember.getNetworkAuthenticatedEmailAddresses();
     	List<UserMemberInfo> messageRecipients = new ArrayList<UserMemberInfo>();
     	
     	////////////////////////////

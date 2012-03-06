@@ -421,11 +421,15 @@ public class MemberResource extends ServerResource {
     			
     	    	txn.begin();
     	    	Member memberToRemove = null;
+    	    	List<String> allMemberEmailAddresses = null;
+    	    	Team memberToRemoveTeam = null;
     	    	try {
     				Key memberKey = KeyFactory.stringToKey(this.memberId);
     				memberToRemove = (Member)em.createNamedQuery("Member.getByKey")
     	    			.setParameter("key", memberKey)
     	    			.getSingleResult();
+		        	allMemberEmailAddresses = memberToRemove.getNetworkAuthenticatedEmailAddresses();
+		        	memberToRemoveTeam = memberToRemove.getTeam();
     	    		log.debug("member to be removed = " + memberToRemove.getFullName());
     	    	} catch (NoResultException e) {
     	        	apiStatus = ApiStatusCode.MEMBER_NOT_FOUND;
@@ -458,9 +462,6 @@ public class MemberResource extends ServerResource {
     				memberToRemove.setMarkedForDeletionOn(new Date());
     				memberToRemove.setMarkedForDeletionRequester(currentUserCoordinatorMembership.getFullName());
     				wasMemberMarkedForDeletion = true;
-    				// Call getTeam() before transaction finishes below. Team needed after transaction and getting
-    				// error unless team is first accessed now.
-    				memberToRemove.getTeam();
     	        	log.debug("coordinator delete requested. Confirmation message will be sent to coordinator.");
     			} else {
     				em.remove(memberToRemove);
@@ -487,7 +488,6 @@ public class MemberResource extends ServerResource {
     					// tried to update all users in a single transaction, but got the following error:
     	        		// "can't operate on multiple entity groups in a single transaction"
     	        		// alternate solution. Create a separate transaction for each user deleted
-    		        	List<String> allMemberEmailAddresses = memberToRemove.getNetworkAuthenticatedActiveEmailAddresses();
     		        	for(String ea : allMemberEmailAddresses) {
     			        	try {
     							em2.getTransaction().begin();
@@ -496,7 +496,8 @@ public class MemberResource extends ServerResource {
     								.setParameter("isNetworkAuthenticated", true)
     								.getSingleResult();
     	    		
-    							userOfMemberRemoved.removeTeam(memberToRemove.getTeam().getKey());
+    							userOfMemberRemoved.removeTeam(memberToRemoveTeam.getKey());
+    							log.debug("user with email address = " + ea + " is being removed from team = " + memberToRemoveTeam.getTeamName());
     							em2.getTransaction().commit();
     			        	} catch (NoResultException e) {
     				        	// THIS IS NOT AN ERROR -- there may be no user entity associated with the member.

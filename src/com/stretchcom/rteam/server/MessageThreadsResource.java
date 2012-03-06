@@ -1444,7 +1444,7 @@ public class MessageThreadsResource extends ServerResource {
 			log.debug("json isAlert = " + isAlertStr);
 		}
 		if(isAlertStr != null && isAlertStr.equalsIgnoreCase("true")) {
-			theMessageThread.setIsAlert(false);
+			theMessageThread.setIsAlert(true);
 		}
 		
 		// defaults to 'true' if not specified
