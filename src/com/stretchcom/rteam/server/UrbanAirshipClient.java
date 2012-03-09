@@ -172,7 +172,7 @@ public class UrbanAirshipClient {
 			int responseCode = connection.getResponseCode();
 			log.debug("responseCode = " + responseCode);
 			
-			if (responseCode == HttpURLConnection.HTTP_OK) {
+			if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
 				// read-back the response
 				reader = new InputStreamReader(connection.getInputStream());
 				BufferedReader in = new BufferedReader(reader);

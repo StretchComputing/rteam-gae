@@ -17,10 +17,15 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.NamedQuery;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import com.google.appengine.api.datastore.Key;
+
+import org.restlet.data.Status;
 
 import com.google.appengine.api.datastore.KeyFactory;
 
@@ -80,6 +85,8 @@ public class MigrationTaskServlet extends HttpServlet {
 	    		setActivityIsReply();
 	    	} else if(migrationName.equalsIgnoreCase("setTeamShortenedPageUrlTask")) {
 	    		setTeamShortenedPageUrl();
+	    	} else if(migrationName.equalsIgnoreCase("cleanUpUserTeamsTask")) {
+	    		cleanUpUserTeams();
 	    	}
 		    
 			// Return status depends on how many times this been attempted. If max retry count reached, return HTTP 200 so
@@ -423,4 +430,38 @@ public class MigrationTaskServlet extends HttpServlet {
 		    emTeams.close();
 		}
     }
+    
+    // TODO pass email address in as param
+    private void cleanUpUserTeams() {
+		EntityManager em = EMF.get().createEntityManager();
+		try {
+			User user = (User) em.createNamedQuery("User.getByEmailAddress")
+				.setParameter("emailAddress", "njw438@gmail.com")
+				.getSingleResult();
+			
+			List<Key> teamKeys = user.getTeams();
+			log.debug("user initial number of teams = " + teamKeys.size());
+			for(Key tk : teamKeys) {
+				log.debug("team key = " + tk.toString());
+				Team aTeam = null;
+				try {
+					 aTeam = (Team)em.createNamedQuery("Team.getByKey")
+						.setParameter("key", tk)
+						.getSingleResult();
+					 log.debug("team = " + aTeam.getTeamName() + " found -- no issues here");
+				} catch(Exception e) {
+					// team not found, so remove it from the user's list
+					log.debug("cleanUpUserTeams(): team  not found so it is being removed from user = " + user.getFullName() + " team list");
+					user.removeTeam(tk);
+				}
+			}
+		} catch (NoResultException e) {
+			log.exception("MigrationTaskServlet:cleanUpUserTeams:NoResultException", "", e);
+		} catch (NonUniqueResultException e) {
+			log.exception("MigrationTaskServlet:cleanUpUserTeams:NonUniqueResultException", "", e);
+		} finally {
+		    em.close();
+		}
+    }
+
 }
