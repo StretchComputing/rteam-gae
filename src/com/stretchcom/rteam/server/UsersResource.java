@@ -31,10 +31,10 @@ import org.restlet.resource.ServerResource;
 
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.labs.taskqueue.Queue;
-import com.google.appengine.api.labs.taskqueue.QueueFactory;
-import com.google.appengine.api.labs.taskqueue.TaskOptions;
-import com.google.appengine.api.labs.taskqueue.TaskOptions.Method;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.appengine.api.taskqueue.TaskOptions.Method;
   
 /** 
  * Resource that manages a list of items. 
@@ -373,7 +373,7 @@ public class UsersResource extends ServerResource {
 		// method defaults to POST, but decided to be explicit here
 		// PRIORITY TODO need to somehow secure this URL. Book uses web.xml <security-constraint> but not sure why it restricts the
 		//               URL to task queues (I see how it restricts it to admins)
-		TaskOptions taskOptions = TaskOptions.Builder.url("/migrationTask")
+		TaskOptions taskOptions = TaskOptions.Builder.withUrl("/migrationTask")
 				.method(Method.POST)
 				.param("migrationName", theMigrationName);
 		Queue queue = QueueFactory.getQueue("migration"); // "migration" queue is defined in WEB-INF/queue.xml

@@ -38,10 +38,10 @@ import com.google.appengine.api.images.Image;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.Transform;
-import com.google.appengine.api.labs.taskqueue.Queue;
-import com.google.appengine.api.labs.taskqueue.QueueFactory;
-import com.google.appengine.api.labs.taskqueue.TaskOptions;
-import com.google.appengine.api.labs.taskqueue.TaskOptions.Method;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.appengine.api.taskqueue.TaskOptions.Method;
 import org.apache.commons.codec.binary.Base64;
 
 
@@ -788,7 +788,7 @@ public class TeamResource extends ServerResource {
 		// method defaults to POST, but decided to be explicit here
 		// PRIORITY TODO need to somehow secure this URL. Book uses web.xml <security-constraint> but not sure why it restricts the
 		//               URL to task queues (I see how it restricts it to admins)
-		TaskOptions taskOptions = TaskOptions.Builder.url("/removeTeamActivityTask")
+		TaskOptions taskOptions = TaskOptions.Builder.withUrl("/removeTeamActivityTask")
 				.method(Method.POST)
 				.param("teamId", theTeamId);
 		Queue queue = QueueFactory.getQueue("removeTeamActivity"); // "removeTeamActivity" queue is defined in WEB-INF/queue.xml
@@ -802,7 +802,7 @@ public class TeamResource extends ServerResource {
 		// method defaults to POST, but decided to be explicit here
 		// PRIORITY TODO need to somehow secure this URL. Book uses web.xml <security-constraint> but not sure why it restricts the
 		//               URL to task queues (I see how it restricts it to admins)
-		TaskOptions taskOptions = TaskOptions.Builder.url("/synchActivityWithTwitterTask")
+		TaskOptions taskOptions = TaskOptions.Builder.withUrl("/synchActivityWithTwitterTask")
 				.method(Method.POST)
 				.param("teamId", theTeamId);
 		Queue queue = QueueFactory.getQueue("synchActivityWithTwitter"); // "synchActivityWithTwitter" queue is defined in WEB-INF/queue.xml
