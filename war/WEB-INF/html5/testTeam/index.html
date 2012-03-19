@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script> if (location.hostname === "www.rskybox.com") { location.href = "https://rskybox-stretchcom.appspot.com"; } </script>
+    <title>rSkybox</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="//ajax.aspnetcdn.com/ajax/jquery.mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
+    <link rel="stylesheet" href="css/rscoreboard.css">
+    <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.1.min.js"></script>
+    <script>
+      jQuery || document.write('<script src="\/js\/lib\/jquery-1.7.1.min.js"><\/script\>')
+    </script>
+    <script src="/js/lib/jquery.mobile.router.js"></script>
+    <script src="//ajax.aspnetcdn.com/ajax/jquery.mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
+    <script>
+      jQuery.mobile || document.write('<script src="\/js\/lib\/jquery.mobile-1.0.1.min.js"\><\/script\>')
+    </script>
+    <script src="js/lib/underscore-min.js"></script>
+    <script src="js/lib/backbone-min.js"></script>
+    <script src="js/lib/cookie.js"></script>
+	<script src="js/lib/jquery.dataTables.js"></script>
+    <script src="js/helpers/app.js"></script>
+    <script src="js/helpers/dataTableInit.js"></script>
+    <script src="js/models/base.js"></script>
+    <script src="js/models/game.js"></script>
+    <script src="js/models/activity.js"></script>
+    <script src="js/views/games.js"></script>
+    <script src="js/views/activities.js"></script>
+<script src="js/routers/main.js"></script>
+</head>
+  <body>
+  <div id="rscoreboard-container">
+    <table id="rscorboard-tbl" style="width:859px; border:1px solid black; margin-left:auto; margin-right:auto;">
+      <tr style="height:0px;">
+        <td class="col1"></td>
+        <td class="col2"></td>
+        <td class="col3"></td>
+        <td class="col4"></td>
+        <td class="col5"></td>
+        <td class="col6"></td>
+      </tr>
+      <tr class="row1">
+        <td>
+          <div id="team-name-left"><div id="rteam-logo"><img src="images/rteamLogoSm.png" width="69" height="21" alt="rTeam"></div></div>
+        </td>
+        <td colspan="4">
+          <div id="team-name">
+			<div id="team-name-text"></div>
+			<div id="team-opponent-vs"></div>
+			<div id="opponent-name-text"></div>
+			<div id="game-date"><span id="game-date-value"></span></div>
+          </div>
+        </td>
+        <td>
+          <div id="team-name-right"><div><img src=""></div></div>
+        </td>
+      </tr>
+      <tr class="row2">
+        <td colspan="3">
+          <div id="photo-container">
+          	<div id="nextPhoto" style="display:none;"><a href="">Next Photo</a></div>
+          	<div id="photo"><img id="photoImg" src=""></div>
+          </div>
+        </td>
+        <td colspan="3">
+          <div id="score">
+          	<div id="score-label-area">
+           		<div id="score-label"><span>Score</span></div>
+          	</div>
+          	<div id="score-value-area">
+	          	<div id="interval-block">
+	          		<div id="interval-value"></div>
+		          	<span id="interval-value-modifier"></span>
+	          	</div>
+	          	<div id="us-label">Us</div>
+	          	<div id="us-score-block">
+	          		<div id="us-score-value"></div>
+	          	</div>
+	          	<div id="them-label">Them</div>
+	          	<div id="them-score-block">
+	          		<div id="them-score-value"></div>
+	          	</div>
+          	</div>
+          </div>
+        </td>
+       </tr>
+      <tr class="row3">
+        <td colspan="2">
+          <div id="fans">
+          <div id="fansLabel">
+          	fans
+          </div>
+          </div>
+        </td>
+        <td colspan="2">
+			<div id="activity">
+				<div id="activityLabel">Activity</div>
+				<table id="gameActivity">
+				    <thead id="gameActivityHead">
+				        <tr><th>Column 1</th></tr>
+				    </thead>
+				    <tbody id="gameActivity-body">
+				    </tbody>
+				</table> 
+			</div>
+        </td>
+        <td colspan="2">
+          <div id="misc">
+          <div  id="miscLabel">
+          	Go rTeam!
+          </div>
+          </div>
+        </td>
+       </tr>
+    </table>
+  </div>
+  <div id="container"></div>
+  
+    <script type="text/template" id="gameEmptyTemplate">
+      <p>
+        You don't have any games, yet.
+      </p>
+      <p>
+        Why don't you 'add' one?
+      </p>
+    </script>
+    
+    <script type="text/template" id="gameListTemplate">
+      <a href="#game?id=<%= gameId %>">Game: <% description %></a> Start Date: <%= startDate %> Location: <%= location %>, Interval: <%= interval %> Score Us: <%= scoreUs %> Score Them <%= scoreThem %>
+    </script>
+    
+    <script type="text/template" id="activityTemplate">
+		<div id="activityPoster"><%= poster %></div>
+		<div id="activityDate"><%= rteam.formatDate(createdDate) %></div>
+		<div id="activityText"><%= text %></div>
+    </script>
+  
+  </body>
+</html>

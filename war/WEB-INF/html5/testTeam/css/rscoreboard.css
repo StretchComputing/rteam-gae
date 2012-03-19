@@ -1,0 +1,418 @@
+/* used by the rTeam rScorebaord page */
+body {
+	background-color: #99CCFF;
+}
+
+#rteam-logo {
+	margin-left: 20px;
+}
+
+#rscoreboard-container {
+	margin-top: 25px;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	background-color: white;
+	width: 860px;
+	padding: 2px;
+	margin-left: auto;   /* for centering table */
+	margin-right: auto;  /* for centering table */
+}
+
+#rscorboard-tbl {
+	border-collapse: collapse;
+	border: 1px solid white;
+}
+
+#rscoreboard-tbl {
+	width: 850px;
+	margin-left: auto;   /* for centering table */
+	margin-right: auto;  /* for centering table */
+}
+
+tr {
+	border: 1px solid white;
+}
+
+td {
+	background-color: white;
+	padding: 0px;
+	height: 100%;
+}
+
+td.col1 {
+	width: 50px;
+}
+
+td.col2 {
+	width: 150px;
+}
+
+td.col3 {
+	width: 225px;
+}
+
+td.col4 {
+	width: 225px;
+}
+
+td.col5 {
+	width: 150px;
+}
+
+td.col6 {
+	width: 50px;
+}
+
+tr.row1 {
+	height:50px;
+}
+
+tr.row2 {
+	height:300px;
+}
+
+tr.row3 {
+	height:125px;
+}
+
+#photo-container {
+	height: 99%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	margin-right: 1px;
+	color: black;
+}
+
+#photo {
+	width: 210px;
+	height: 280px;
+	margin-left: auto;   
+	margin-right: auto;
+	margin-top: 7px;;
+}
+
+#score {
+	height: 99%;
+	width: 99%;
+	background-color: #006600;
+	display: inline-block;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	color: white;
+	font-size: 20px;
+	margin-left: 2px;
+}
+
+#fans {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	color: white;
+	font-size: 14px;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+}
+
+#fansLabel {
+	margin-left: 5px;
+}
+
+#activity {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	color: white;
+	font-size: 14px;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+}
+
+#activityLabel {
+	margin-left: 5px;
+}
+
+#misc {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	color: white;
+	font-size: 14px;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+}
+
+#miscLabel {
+	margin-left: 5px;
+}
+
+#team-name {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+	text-align: center;
+}
+
+#rteam-logo {
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+#team-name-left {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+}
+
+#team-name-right {
+	height: 100%;
+	width: 100%;
+	background-color: #006600;
+	display: inline-block;
+}
+
+#team-name-text {
+	display: inline-block;
+	color: white;
+	margin-top: 7px;
+	font-size: 35px;
+}
+
+#opponent-name-text {
+	display: inline-block;
+	color: white;
+	margin-top: 7px;
+	font-size: 35px;
+}
+
+#team-opponent-vs {
+	display: inline-block;
+	color: white;
+	margin-top: 7px;
+	font-size: 15px;
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
+#game-date {
+	display: inline-block;
+	color: white;
+	margin-top: 7px;
+	font-size: 20px;
+	margin-left: 90px;
+}
+#game-date-day {
+	font-size: 22px;
+	margin-left: 5px;
+}
+#game-date-month {
+	margin-left: 5px;
+}
+#game-date-date {
+	margin-left: 10px;
+}
+#game-date-hour {
+	font-size: 22px;
+	margin-left: 25px;
+}
+#game-date-ampm {
+	font-size: 15px;
+	margin-left: 5px;
+}
+
+#score-label-area {
+	position: relative;
+	top: 0%;
+	left: 0%;
+	width: 100%;
+	height: 20%;
+	border: 2px solid white;
+}
+
+#score-label {
+	position: relative;
+	width: 20%;
+	height: 40%;
+	top: 45%;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: bottom;
+	font-size: 35px;
+}
+
+#score-value-area {
+	position: relative;
+	bottom: 0%;
+	left: 0%;
+	width: 100%;
+	height: 80%;
+}
+
+#interval-block {
+	position: absolute;
+	width: 75px;
+	height: 35px;
+	top: 10px;
+	left: 160px;
+	background-color: black;
+	border: 1px solid black;
+}
+
+#interval-value {
+	display: inline-block;
+	border: 1px solid black;
+	margin-left: 8%;
+	font-size: 30px;
+}
+
+#interval-value-modifier {
+	display: none;
+	vertical-align: super;
+	font-size: 14px;
+	border: 1px solid black;
+}
+
+#us-label {
+	display: inline-block;
+	position: absolute;
+	top: 15px;
+	left: 55px;
+	width: 50px;
+	font-size: 30px;
+}
+
+#us-score-block {
+	display: inline-block;
+	position: absolute;
+	top: 55px;
+	left: 35px;
+	width: 75px;
+	height: 75px;
+	background-color: black;
+	padding: 5px;
+}
+
+#us-score-value {
+	display: inline-block;
+	color: red;
+	font-size: 75px;
+	margin-left: 0px;
+}
+
+#them-label {
+	display: inline-block;
+	position: absolute;
+	top: 15px;
+	left: 285px;
+	width: 50px;
+	font-size: 30px;
+}
+
+#them-score-block {
+	display: inline-block;
+	position: absolute;
+	top: 55px;
+	left: 280px;
+	width: 75px;
+	height: 75px;
+	background-color: black;
+	padding: 5px;
+}
+
+#them-score-value {
+	display: inline-block;
+	color: red;
+	font-size: 75px;
+	margin-left: 0px;
+}
+
+div.dataTables_length {
+    background-color: black;
+    color: red;
+}
+
+div.dataTables_info {
+    display: none;
+}
+
+#gameActivityHead {
+	display: none;
+}
+
+#gameActivity {
+	border-collapse: collapse;
+	color: black;
+	height: 100%;
+	width: 100%;
+	margin-top: 5px;
+	margin-bottom: 2px;
+	clear: both;
+}
+
+#gameActivity td,
+#gameActivity th {
+    padding: 3px;
+    border: 1px solid #000;
+}
+
+#gameActivity thead th {
+    text-align: center;
+    background: #66a9bd;
+}
+
+#gameActivity tbody td {
+    text-align: left;
+    background: #d5eaf0;
+}
+         
+#gameActivity tbody tr.odd td { 
+    background: #bcd9e1;
+}
+
+#activityPoster {
+	font-size: 13px;
+	font-weight: bold;
+}
+
+#activityDate {
+	font-size: 12px;
+	color: #2F4F4F;
+	margin-top: 1px;
+}
+
+#activityText {
+	font-size: 12px;
+	margin-top: 2px;
+	margin-left: 5px;
+}
+
+#nextPhotoBtn {
+	background: #d5eaf0;
+	color: black;
+}
+
+#nextPhoto a {
+    display:block;
+    float:left;
+    margin:0 7px 0 0;
+    background-color:#f5f5f5;
+    border:1px solid #dedede;
+    border-top:1px solid #eee;
+    border-left:1px solid #eee;
+
+    font-family:"Lucida Grande", Tahoma, Arial, Verdana, sans-serif;
+    font-size:12px;
+    line-height:130%;
+    text-decoration:none;
+    font-weight:bold;
+    color:#565656;
+    cursor:pointer;
+    padding:5px 10px 6px 7px; /* Links */
+}
