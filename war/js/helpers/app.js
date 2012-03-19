@@ -104,7 +104,9 @@ var rteam = (function(r, $) {
 
     message = message || 'An unknown error occurred. Please reload the page to try again.';
     flash = $('<div>', {
-      class: 'flash error',
+      // TODO have Terry refactor this
+      // removed due to IE error
+      //class: 'flash error',
       text: message
     });
     $(el).prepend(flash);
