@@ -1,6 +1,12 @@
 'use strict';
 
 
+if (!window.console) {
+  window.console = {
+    log: function () {}
+  };
+}
+
 // The main namespace for our application
 var rteam = (function(r, $) {
 
