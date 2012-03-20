@@ -1,6 +1,5 @@
-'use strict';
-
-var rteam = (function(r, $) {
+var rteam = (function (r, $) {
+  'use strict';
 
   var teamId = r.getParameterByNameFromPage("teamId");
   r.log.debug("teamId from URL = " + teamId);
@@ -18,9 +17,6 @@ var rteam = (function(r, $) {
       interval: null,
       mvpDisplayName: null
     },
-
-    initialize: function() {
-    },
   });
 
 
@@ -29,32 +25,34 @@ var rteam = (function(r, $) {
     apiUrl: '/team/<teamId>/games/', // just a template, real Url set in initialize()
     teamName: 'good guys',
 
-    initialize: function() {
-      this.apiUrl = "/team/" + r.getUrlEndSegment() + "/games"
+    initialize: function () {
+      this.apiUrl = "/team/" + r.getUrlEndSegment() + "/games";
       this.setUrl();
     },
 
-    parse: function(response) {
+    parse: function (response) {
       this.teamName = response.teamName;
       return response.games;
     },
-    
+
     // sort games from most recent start date to oldest start date
-    comparator: function(game1, game2) {
-    	// can assume startDate is always non-null
-    	var game1StartDate = r.convertStringToDate(game1.get('startDate'));
-    	var game2StartDate = r.convertStringToDate(game2.get('startDate'));
-    	if(game1StartDate > game2StartDate) {
-    		//console.log("game1StartDate = " + game1StartDate.toString() + " is greater than game2StartDate = " + game2StartDate.toString());
-    		return -1;
-    	} else if(game2StartDate > game1StartDate) {
-    		return 1;
-    	} else {
-    		return 0;
-    	}
+    comparator: function (game1, game2) {
+      var game1StartDate, game2StartDate;
+
+      // can assume startDate is always non-null
+      game1StartDate = r.convertStringToDate(game1.get('startDate'));
+      game2StartDate = r.convertStringToDate(game2.get('startDate'));
+      if (game1StartDate > game2StartDate) {
+        //console.log("game1StartDate = " + game1StartDate.toString() + " is greater than game2StartDate = " + game2StartDate.toString());
+        return -1;
+      }
+      if (game2StartDate > game1StartDate) {
+        return 1;
+      }
+      return 0;
     }
   });
 
 
   return r;
-})(rteam || {}, jQuery);
+}(rteam || {}, jQuery));

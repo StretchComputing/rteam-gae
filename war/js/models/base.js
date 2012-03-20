@@ -1,7 +1,5 @@
-'use strict';
-
-
-var rteam = (function(r, $) {
+var rteam = (function (r, $) {
+  'use strict';
 
 
   r.Base = {
@@ -9,7 +7,7 @@ var rteam = (function(r, $) {
     restUrl: '/v1',
 
     // Sets the model's URL using a base REST url and the API url.
-    setUrl: function() {
+    setUrl: function () {
       if (this.apiUrl) {
         this.url = this.restUrl + this.apiUrl;
       } else {
@@ -28,9 +26,9 @@ var rteam = (function(r, $) {
     //
     // !!! This function should be used with caution !!!
     //
-    prepareNewModel: function() {
+    prepareNewModel: function () {
       if (this.isNew()) {
-        _.each(_.keys(this.attributes), function(key) {
+        _.each(_.keys(this.attributes), function (key) {
           if (!this.get(key)) {
             this.unset(key, {silent: true});
           }
@@ -41,7 +39,7 @@ var rteam = (function(r, $) {
 
     // Gets a mock object for use in HTML forms. Set up a 'fields' attribute in the model
     // that has all the form/model fields in order to use this method.
-    getMock: function() {
+    getMock: function () {
       var field, mock = {};
 
       if (!this.fields) {
@@ -49,9 +47,9 @@ var rteam = (function(r, $) {
         return;
       }
 
-      for (field in this.fields) {
+      Object.keys(this.fields).forEach(function (field) {
         mock[field] = this.get(field) || null;
-      }
+      }, this);
       return mock;
     },
   });
@@ -61,4 +59,4 @@ var rteam = (function(r, $) {
 
 
   return r;
-})(rteam || {}, jQuery);
+}(rteam || {}, jQuery));
