@@ -135,7 +135,7 @@ var rteam = (function (r, $) {
   r.getParameterByNameFromPage = function (name) {
     var regex, regexS, results;
 
-    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
     regexS = "[\\?&]" + name + "=([^&#]*)";
     regex = new RegExp(regexS);
     results = regex.exec(window.location.href);
