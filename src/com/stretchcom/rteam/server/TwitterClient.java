@@ -200,6 +200,7 @@ public class TwitterClient {
 				a.setCreatedGmtDate(s.getCreatedAt());
 				a.setTeamId(KeyFactory.keyToString(theTeam.getKey()));
 				a.setTeamName(theTeam.getTeamName());
+				a.setSport(theTeam.getSport());
 				activities.add(a);
 			}
 			

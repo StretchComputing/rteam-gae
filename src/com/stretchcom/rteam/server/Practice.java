@@ -328,6 +328,7 @@ public class Practice implements Cloneable {
     // info[0]: GMT start date of type Date
     // info[1]: Local start date converted using event's time zone of type String
     // info[2]: event name (ony applies to practice, for game always an empty string
+    // info[3]: description
     public static List getEventInfo(String theEventIdStr, String theEventTypeStr) {
     	EntityManager em = EMF.get().createEntityManager();
     	List info = new ArrayList();
@@ -341,6 +342,7 @@ public class Practice implements Cloneable {
         		info.add(game.getEventGmtStartDate());
         		info.add(game.getEventLocalStartDate());
         		info.add("");
+        		info.add(game.getDescription());
     		} else {
         		Practice practice = (Practice)em.createNamedQuery("Practice.getByKey")
 					.setParameter("key", eventKey)
@@ -349,6 +351,7 @@ public class Practice implements Cloneable {
         		info.add(practice.getEventGmtStartDate());
         		info.add(practice.getEventLocalStartDate());
         		info.add(practice.getEventName());
+        		info.add(practice.getDescription());
     		}
     	} catch (NoResultException e) {
         	// not a error - eventID passed in via API is bad. Null will be returned below.

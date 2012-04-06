@@ -1438,7 +1438,7 @@ public class PubHub {
 		///////////////////
 		// #4 Post Activity
 		///////////////////
-		if(theTeam != null) postActivity(theTeam, getEventUpdatedActivityBody(theUser.getFullName(), theTeam.getTeamName(), theGame, thePractice, theNotificationMessage, theUpdateAllLocations));
+		if(theTeam != null) postActivity(theTeam, getEventUpdatedActivityBody(theUser.getFullName(), theTeam.getTeamName(), theGame, thePractice, theNotificationMessage, theUpdateAllLocations), theGame, thePractice);
     }
 
     private static String getEventUpdatedMessageBody(String theUserFullName, String theTeamName, Game theGame,
@@ -1993,7 +1993,7 @@ public class PubHub {
 		// #4 Post Activity
 		///////////////////
     	// If the post exceeds the maximum sized, then do multiple posts so everything is included.
-		if(theTeam != null) postActivity(theTeam, getAttendanceActivityPost(theUser, theMembersPresent, theGame, thePractice), true);
+		if(theTeam != null) postActivity(theTeam, getAttendanceActivityPost(theUser, theMembersPresent, theGame, thePractice), true, theGame, thePractice);
 
     }
     private static String getAttendanceActivityPost(User theUser, List<Member> theMembersPresent, Game theGame, Practice thePractice) {
@@ -2131,7 +2131,7 @@ public class PubHub {
 		///////////////////
 		// #4 Post Activity
 		///////////////////
-		if(theTeam != null) postActivity(theTeam, getGameSummaryActivityPost(theTeam, theGame, theGame.getScoreUs(), theGame.getScoreThem()));
+		if(theTeam != null) postActivity(theTeam, getGameSummaryActivityPost(theTeam, theGame, theGame.getScoreUs(), theGame.getScoreThem()), theGame, null);
     }
 
     private static String getGameSummaryMessageBody(Team theTeam, Game theGame, Integer theScoreUs, Integer theScoreThem) {
@@ -2215,7 +2215,7 @@ public class PubHub {
 		///////////////////
 		// #4 Post Activity
 		///////////////////
-		postActivity(theTeam, getScoreActivityPost(theTeam, theGame, theScoreUs, theScoreThem));
+		postActivity(theTeam, getScoreActivityPost(theTeam, theGame, theScoreUs, theScoreThem), theGame, null);
 
     }
     private static String getScoreActivityPost(Team theTeam, Game theGame, Integer theScoreUs, Integer theScoreThem) {
@@ -2260,7 +2260,7 @@ public class PubHub {
 		///////////////////
 		// #4 Post Activity
 		///////////////////
-		postActivity(theTeam, getGameMvpActivityPost(theTeam, theGame, theMvp));
+		postActivity(theTeam, getGameMvpActivityPost(theTeam, theGame, theMvp), theGame, null);
 
     }
     private static String getGameMvpActivityPost(Team theTeam, Game theGame, String theMvp) {
@@ -2417,6 +2417,15 @@ public class PubHub {
     }
     
     private static void postActivity(Team theTeam, String theActivityBody, Boolean theMultiPostActive) {
+    	postActivity(theTeam, theActivityBody, theMultiPostActive, null, null);
+    }
+    
+    private static void postActivity(Team theTeam, String theActivityBody, Game theGame, Practice thePractice) {
+    	// unless explicitly requested, multiPost if turned off and the post will be truncated if necessary
+    	postActivity(theTeam, theActivityBody, false, theGame, thePractice);
+    }
+    
+    private static void postActivity(Team theTeam, String theActivityBody, Boolean theMultiPostActive, Game theGame, Practice thePractice) {
 		// abbreviate only if necessary
 		if(theActivityBody.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT) {
 			theActivityBody = Language.abbreviate(theActivityBody);
@@ -2478,7 +2487,17 @@ public class PubHub {
 				newActivity.setCreatedGmtDate(new Date());
 				newActivity.setTeamId(KeyFactory.keyToString(theTeam.getKey()));
 				newActivity.setTeamName(theTeam.getTeamName());
+				newActivity.setSport(theTeam.getSport());
 				newActivity.setContributor(RteamApplication.AUTO_POST);
+				
+				// only support game for now
+				// TODO add support for practice
+				if(theGame != null) {
+					newActivity.setEventId(KeyFactory.keyToString(theGame.getKey()));
+					newActivity.setEventType(Practice.GAME_EVENT_TYPE);
+					newActivity.setEventStartGmtDate(theGame.getEventGmtStartDate());
+					newActivity.setEventDescription(theGame.getDescription());
+				}
 				
 				// cacheId held in team is the last used.
 				Long cacheId = theTeam.getNewestCacheId() + 1;

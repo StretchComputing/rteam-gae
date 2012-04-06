@@ -83,6 +83,8 @@ public class Activity implements Comparable<Activity> {
 	private String text;
     private String teamId;          
     private String teamName;
+    private String sport;
+    private String participantRole;
 	private Date createdGmtDate;
 	private Date updatedGmtDate;
 	private Long numberOfLikeVotes;
@@ -94,6 +96,8 @@ public class Activity implements Comparable<Activity> {
 	private String eventId;
 	private String eventType;
 	private String eventDetailsId; // not sure I want to keep this -- maybe too much overhead to set this
+	private Date eventStartGmtDate;
+	private String eventDescription;
 	private String userId; // user ID of the poster (if it was a user and not an auto post)
 	private String parentActivityId;  // if present, activity is a 'reply'.
 	private Boolean isReply = false;
@@ -156,6 +160,22 @@ public class Activity implements Comparable<Activity> {
 
 	public void setTeamId(String teamId) {
 		this.teamId = teamId;
+	}
+
+	public String getSport() {
+		return sport;
+	}
+
+	public void setSport(String sport) {
+		this.sport = sport;
+	}
+
+	public String getParticipantRole() {
+		return participantRole;
+	}
+
+	public void setParticipantRole(String participantRole) {
+		this.participantRole = participantRole;
 	}
 
 	public Date getCreatedGmtDate() {
@@ -340,6 +360,22 @@ public class Activity implements Comparable<Activity> {
 
 	public void setEventDetailsId(String eventDetailsId) {
 		this.eventDetailsId = eventDetailsId;
+	}
+
+	public Date getEventStartGmtDate() {
+		return eventStartGmtDate;
+	}
+
+	public void setEventStartGmtDate(Date eventStartGmtDate) {
+		this.eventStartGmtDate = eventStartGmtDate;
+	}
+
+	public String getEventDescription() {
+		return eventDescription;
+	}
+
+	public void setEventDescription(String eventDescription) {
+		this.eventDescription = eventDescription;
 	}
 
 	public String getUserId() {

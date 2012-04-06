@@ -250,6 +250,7 @@ public class ActivitiesResource extends ServerResource {
 			}
 			
 			// Enforce Rules
+			List eventInfo = null;
 			if((statusUpdate == null || statusUpdate.length() == 0) && (photoBase64 == null || photoBase64.length() == 0)) {
 				return Utility.apiError(ApiStatusCode.STATUS_UPDATE_OR_PHOTO_REQUIRED);
 			} else if(statusUpdate != null && statusUpdate.length() > TwitterClient.MAX_TWITTER_CHARACTER_COUNT){
@@ -262,7 +263,7 @@ public class ActivitiesResource extends ServerResource {
 				if(eventTypeStr == null) {
 					return Utility.apiError(ApiStatusCode.EVENT_ID_AND_EVENT_TYPE_MUST_BE_SPECIFIED_TOGETHER);
 				}
-				List eventInfo = Practice.getEventInfo(eventIdStr, eventTypeStr);
+				eventInfo = Practice.getEventInfo(eventIdStr, eventTypeStr);
 				if(eventInfo == null || eventInfo.size() == 0) {
 					return Utility.apiError(ApiStatusCode.EVENT_NOT_FOUND);
 				}
@@ -304,6 +305,7 @@ public class ActivitiesResource extends ServerResource {
 			newActivity.setCreatedGmtDate(new Date());
 			newActivity.setTeamId(this.teamId);
 			newActivity.setTeamName(team.getTeamName());
+			newActivity.setSport(team.getSport());
 			newActivity.setContributor(currentUser.getFullName());
 			newActivity.setUserId(KeyFactory.keyToString(currentUser.getKey()));
 			newActivity.setParentActivityId(parentActivityId);
@@ -315,6 +317,8 @@ public class ActivitiesResource extends ServerResource {
 			if(eventIdStr != null) {
 				newActivity.setEventId(eventIdStr);
 				newActivity.setEventType(eventTypeStr);
+				newActivity.setEventStartGmtDate((Date)(eventInfo.get(0)));
+				newActivity.setEventDescription((String)(eventInfo.get(3)));
 			} else {
 				// see if today is GAMEDAY
 				// TODO eventually support other types of events beside Game
@@ -322,8 +326,11 @@ public class ActivitiesResource extends ServerResource {
 				gameDayChecked = true;
 				if(todaysGames.size() > 0) {
 					// for now, just associate with the first game in the list
-					newActivity.setEventId(KeyFactory.keyToString(todaysGames.get(0).getKey()));
+					Game todayGame = todaysGames.get(0);
+					newActivity.setEventId(KeyFactory.keyToString(todayGame.getKey()));
 					newActivity.setEventType(Practice.GAME_EVENT_TYPE);
+					newActivity.setEventStartGmtDate(todayGame.getEventGmtStartDate());
+					newActivity.setEventDescription(todayGame.getDescription());
 				}
 			}
 			
@@ -841,6 +848,24 @@ public class ActivitiesResource extends ServerResource {
 					}
 				}
 				
+				////////////////////////////////////////////////////////////////////////
+				// for each activity found, set the participant role inside the activity
+				////////////////////////////////////////////////////////////////////////
+				if(currentUser != null) {
+					String participantRole = null;
+    				for(Member m : userTeam.getMembers()) {
+    					if(m.isUserParticipant(currentUser)) {
+    						if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
+    								(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
+    							participantRole = m.getParticipantRole();
+    						}
+    					}
+    				}
+    				for(Activity tra : teamRequestedActivities) {
+    					tra.setParticipantRole(participantRole);
+    				}
+				}
+				
 				allTeamsRequestedActivities.addAll(teamRequestedActivities);
 			} // end of for(Team userTeam : teams)
 			log.debug("number of allTeamsRequestedActivities found = " + allTeamsRequestedActivities.size());
@@ -947,6 +972,8 @@ public class ActivitiesResource extends ServerResource {
 				if(isGetActivitiesForAllTeamsApi) {
 					jsonActivityObj.put("teamId", a.getTeamId());
 					jsonActivityObj.put("teamName", a.getTeamName());
+					jsonActivityObj.put("sport", a.getSport());
+					jsonActivityObj.put("participantRole", a.getParticipantRole());
 				}
 				jsonActivityObj.put("cacheId", a.getCacheId());
 				jsonActivityObj.put("numberOfLikeVotes", a.getNumberOfLikeVotes());
@@ -969,6 +996,11 @@ public class ActivitiesResource extends ServerResource {
 					isCurrentUser = false;
 				}
 				jsonActivityObj.put("isCurrentUser", isCurrentUser);
+				
+				if(a.getEventId() != null) jsonActivityObj.put("eventId", a.getEventId());
+				if(a.getEventType() != null) jsonActivityObj.put("eventType", a.getEventType());
+				if(a.getEventStartGmtDate() != null) jsonActivityObj.put("eventStartDate", GMT.convertToLocalDate(a.getEventStartGmtDate(), tz));
+				if(a.getEventDescription() != null) jsonActivityObj.put("eventDescription", a.getEventDescription());
 				
 				jsonActivitiesArray.put(jsonActivityObj);
 			}
