@@ -469,6 +469,8 @@ public class GamesResource extends ServerResource {
         				String participantRole = null;
         				if(currentUser != null) {
             				for(Member m : t.getMembers()) {
+            					// TODO isUserParticipant checks for membership using only emailAddress -- should it also use phoneNumber?
+            					//      this caused the exception below to happen in the production log
             					if(m.isUserParticipant(currentUser)) {
             						if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
             								(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {

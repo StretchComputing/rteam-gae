@@ -54,6 +54,14 @@ import com.google.appengine.api.datastore.Text;
     				"a.isReply = FALSE ORDER BY a.cacheId DESC"
     ),
     @NamedQuery(
+    		name="Activity.getByTeamIdAndUpperAndLowerCreatedDatesAndMediaOnly",
+    		query="SELECT a FROM Activity a WHERE a.teamId = :teamId" + " AND " + 
+    				"a.createdGmtDate <= :mostCurrentDate"  + " AND " +
+    				"a.createdGmtDate >= :leastCurrentDate" + " AND " +
+    				"a.mediaCount = 1" + " AND " +
+    				"a.isReply = FALSE ORDER BY a.createdGmtDate DESC"
+    ),
+    @NamedQuery(
     		name="Activity.getByTeamIdAndUpperAndLowerCreatedDates",
     		query="SELECT a FROM Activity a WHERE a.teamId = :teamId" + " AND " + 
     				"a.createdGmtDate <= :mostCurrentDate"  + " AND " +

@@ -47,6 +47,8 @@ public class ActivitiesResource extends ServerResource {
 	
 	private static final Integer DEFAULT_MAX_COUNT  = 45;
 	private static final Integer MAX_MAX_COUNT  = 200;
+	private static final Integer NUM_OF_DAYS_IN_ACTIVITY_SEARCH  = 30;
+	private static final Integer MAX_NUM_ACTIVITY_SEARCHES  = 12;
 	
 	private static final Long ONE_MINUTE_IN_MILLI_SECONDS = 60000L;
 	
@@ -64,6 +66,7 @@ public class ActivitiesResource extends ServerResource {
 	String activityIdsStr;
 	String eventIdStr;
 	String eventTypeStr;
+	String mediaOnlyStr;
   
     @Override  
     protected void doInit() throws ResourceException {
@@ -141,6 +144,10 @@ public class ActivitiesResource extends ServerResource {
 				this.eventTypeStr = (String)parameter.getValue();
 				this.eventTypeStr = Reference.decode(this.eventTypeStr);
 				log.debug("ActivitiesResource:doInit() - decoded eventTypeStr = " + this.eventTypeStr);
+			}  else if(parameter.getName().equals("mediaOnly")) {
+				this.mediaOnlyStr = (String)parameter.getValue();
+				this.mediaOnlyStr = Reference.decode(this.mediaOnlyStr);
+				log.debug("ActivitiesResource:doInit() - decoded mediaOnlyStr = " + this.mediaOnlyStr);
 			}
 		}
     }  
@@ -521,26 +528,29 @@ public class ActivitiesResource extends ServerResource {
 			}
 			
 			boolean newOnly = false;
-			if(apiStatus.equals(ApiStatusCode.SUCCESS)) {
-				if(this.newOnlyStr != null) {
-					if(newOnlyStr.equalsIgnoreCase("true")) {
-						newOnly = true;
-					} else if(newOnlyStr.equalsIgnoreCase("false")) {
-						newOnly = false;
-					} else {
-	    				return Utility.apiError(ApiStatusCode.INVALID_NEW_ONLY_PARAMETER);
-					}
+			if(this.newOnlyStr != null) {
+				if(newOnlyStr.equalsIgnoreCase("true")) {
+					newOnly = true;
+				} else if(newOnlyStr.equalsIgnoreCase("false")) {
+					newOnly = false;
+				} else {
+    				return Utility.apiError(ApiStatusCode.INVALID_NEW_ONLY_PARAMETER);
 				}
 			}
 			
 			int maxCount = DEFAULT_MAX_COUNT;
-			if(apiStatus.equals(ApiStatusCode.SUCCESS) && maxCountStr != null) {
+			if(maxCountStr != null) {
 				try {
 					maxCount = new Integer(maxCountStr);
 					if(maxCount > MAX_MAX_COUNT) maxCount = MAX_MAX_COUNT;
 				} catch (NumberFormatException e) {
     				return Utility.apiError(ApiStatusCode.INVALID_MAX_COUNT_PARAMETER);
 				}
+			}
+			
+			Boolean mediaOnly = false;
+			if(mediaOnlyStr != null && mediaOnlyStr.equalsIgnoreCase("true")) {
+				mediaOnly = true;
 			}
 			
 			///////////////////////////////////
@@ -553,14 +563,14 @@ public class ActivitiesResource extends ServerResource {
 				////////////////////////////////////////////////////////
 				// Get Activity for All Teams: Parameters and Validation
 				////////////////////////////////////////////////////////
-				if(apiStatus.equals(ApiStatusCode.SUCCESS) && mostCurrentDateStr != null) {
+				if(mostCurrentDateStr != null) {
 					mostCurrentDate = GMT.convertToGmtDate(mostCurrentDateStr, false, tz);
 					if(mostCurrentDate == null) {
 	    				return Utility.apiError(ApiStatusCode.INVALID_MOST_CURRENT_DATE_PARAMETER);
 					}
 				}
 				
-				if(apiStatus.equals(ApiStatusCode.SUCCESS) && this.totalNumberOfDaysStr != null) {
+				if(this.totalNumberOfDaysStr != null) {
 					try {
 						totalNumberOfDays = new Integer(this.totalNumberOfDaysStr);
 					} catch (NumberFormatException e) {
@@ -574,7 +584,7 @@ public class ActivitiesResource extends ServerResource {
 				}
 			
 				//::BUSINESSRULE:: if newOnly=false, date interval must be specified
-				if(!newOnly && (mostCurrentDate == null || totalNumberOfDays == null)) {
+				if(!newOnly && mostCurrentDate == null) {
     				return Utility.apiError(ApiStatusCode.DATE_INTERVAL_REQUIRED);
 				}
 
@@ -663,6 +673,8 @@ public class ActivitiesResource extends ServerResource {
     		
 			List<Activity> allTeamsRequestedActivities = new ArrayList<Activity>();
 			
+			Boolean mustMatchMaxCount = false;
+			Boolean searchMaxedOut = false;
 			// 'teams' will either be one team if only getting activity for a single team or all the user's teams if that's what was requested
 			for(Team userTeam : teams) {
 				Boolean teamUsesTwitter = userTeam.getUseTwitter() != null && userTeam.getUseTwitter();
@@ -791,17 +803,49 @@ public class ActivitiesResource extends ServerResource {
 							if(isGetActivitiesForAllTeamsApi) {
 								// Since newOnly must be false (see comment above) the mostCurrentDate and totalNumberOfDays
 								// must be specified according to the API business rules.
-
-								//////////////////////////////////
-								// get activities by date interval
-								//////////////////////////////////
+								
+								/////////////////////////////////////////////////////
+								// two algorithms for getting a range of activities:
+								// 1. currentDate and totalNumberOfDays count
+								// 2. currentDate and maxCount
+								/////////////////////////////////////////////////////
+								if(totalNumberOfDays == null) {
+									// will be getting range of activity using maxCount, but will do '30 day' query attempts
+									log.debug("activity query is being driven by maxCount, not totalNumberOfDays");
+									totalNumberOfDays = NUM_OF_DAYS_IN_ACTIVITY_SEARCH;
+									mustMatchMaxCount = true;
+								} 
 								Date leastCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays-1);
 								
-								teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCreatedDates")
-									.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
-									.setParameter("mostCurrentDate", GMT.setTimeToEndOfTheDay(mostCurrentDate))
-									.setParameter("leastCurrentDate", GMT.setTimeToTheBeginningOfTheDay(leastCurrentDate))
-									.getResultList();
+								// loop until we have enough activities to return
+								List<Activity> partialTeamRequestedActivities = null;
+								teamRequestedActivities = new ArrayList<Activity>();
+								int numOfSearches = 0;
+								while(true) {
+									if(mediaOnly) {
+										partialTeamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCreatedDatesAndMediaOnly")
+												.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
+												.setParameter("mostCurrentDate", GMT.setTimeToEndOfTheDay(mostCurrentDate))
+												.setParameter("leastCurrentDate", GMT.setTimeToTheBeginningOfTheDay(leastCurrentDate))
+												.getResultList();
+									} else {
+										partialTeamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCreatedDates")
+												.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
+												.setParameter("mostCurrentDate", GMT.setTimeToEndOfTheDay(mostCurrentDate))
+												.setParameter("leastCurrentDate", GMT.setTimeToTheBeginningOfTheDay(leastCurrentDate))
+												.getResultList();
+									}
+									teamRequestedActivities.addAll(partialTeamRequestedActivities);
+									numOfSearches++;
+									log.debug("query for activity, number of queries = " + numOfSearches);
+									if(numOfSearches > MAX_NUM_ACTIVITY_SEARCHES) {
+										searchMaxedOut = true;
+										break;
+									}
+									if(!mustMatchMaxCount || teamRequestedActivities.size() >= maxCount) {
+										break;
+									}
+								}
 							} else {
 								/////////////////////////////////////
 								// get activities for specified event
@@ -1006,7 +1050,7 @@ public class ActivitiesResource extends ServerResource {
 			}
 			log.debug("JSON object built successfully");
 			jsonReturn.put("activities", jsonActivitiesArray);
-
+			if(mustMatchMaxCount) jsonReturn.put("noMoreActivities", searchMaxedOut);
         } catch (JSONException e) {
 			log.exception("ActivitiesResource:getActivities:JSONException", "error converting json representation into a JSON object", e);
 			this.setStatus(Status.SERVER_ERROR_INTERNAL);
