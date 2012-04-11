@@ -845,6 +845,8 @@ public class ActivitiesResource extends ServerResource {
 									if(!mustMatchMaxCount || teamRequestedActivities.size() >= maxCount) {
 										break;
 									}
+									mostCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays);
+									leastCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays-1);
 								}
 							} else {
 								/////////////////////////////////////
