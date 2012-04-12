@@ -672,248 +672,240 @@ public class ActivitiesResource extends ServerResource {
 			}
     		
 			List<Activity> allTeamsRequestedActivities = new ArrayList<Activity>();
-			
 			Boolean mustMatchMaxCount = false;
 			Boolean searchMaxedOut = false;
-			// 'teams' will either be one team if only getting activity for a single team or all the user's teams if that's what was requested
-			for(Team userTeam : teams) {
-				Boolean teamUsesTwitter = userTeam.getUseTwitter() != null && userTeam.getUseTwitter();
-				
-				List<Activity> teamRequestedActivities = null;
-				Long cacheId = userTeam.getNewestCacheId();
-				
-				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				// If a refresh has been requested and team uses Twitter, get the latest activities from Twitter and store in cache
-				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				if(teamUsesTwitter && refreshFirst) {
-					log.debug("refreshFirst is true - updating the cache");
+			int numOfSearches = 0;
+			Date leastCurrentDate = null;
+			
+			// setup to possible go through the 'teams' for loop multiple times. Only done if this isGetActivitiesForAllTeamsApi 
+			if(isGetActivitiesForAllTeamsApi) {
+				if(totalNumberOfDays == null) {
+					log.debug("activity query is being driven by maxCount, not totalNumberOfDays");
+					totalNumberOfDays = NUM_OF_DAYS_IN_ACTIVITY_SEARCH;
+					mustMatchMaxCount = true;
+				} 
+				leastCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays-1);
+			}
+			
+			// Only loop through 'teams' for loop if 'mustMatchMaxCount is true
+			while(true) { //###################################################################################################################################
+				// 'teams' will either be one team if only getting activity for a single team or all the user's teams if that's what was requested
+				for(Team userTeam : teams) { //****************************************************************************************************************
+					Boolean teamUsesTwitter = userTeam.getUseTwitter() != null && userTeam.getUseTwitter();
 					
-					if(newOnly) {teamRequestedActivities = new ArrayList<Activity>();}
-
-					// Twitter refresh is done at most once per minute, so see if the refresh has been done in the last minute.
-					Date lastRefreshDate = userTeam.getLastTwitterRefresh();
-					Long howLongSinceLastRefresh = null;
-					Date now = new Date();
-					if(lastRefreshDate != null) {
-						howLongSinceLastRefresh = now.getTime() - lastRefreshDate.getTime();
-						log.debug("howLongSinceLastRefresh = " + howLongSinceLastRefresh);
-					} else {
-						log.debug("lastTwitterRefresh in User null, so refresh will proceed"); 
-					}
+					List<Activity> teamRequestedActivities = null;
+					Long cacheId = userTeam.getNewestCacheId();
 					
-					if(lastRefreshDate == null || (howLongSinceLastRefresh > ONE_MINUTE_IN_MILLI_SECONDS)) {
-						log.debug("has been over a minute so do a Twitter refresh");
-						Long newestTwitterId = userTeam.getNewestTwitterId();
-						List<Activity> twitterActivities = TwitterClient.getTeamActivities(userTeam, newestTwitterId);
-						if(twitterActivities == null) {
-		    				return Utility.apiError(ApiStatusCode.TWITTER_ERROR);
-						} 
+					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					// If a refresh has been requested and team uses Twitter, get the latest activities from Twitter and store in cache
+					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					if(teamUsesTwitter && refreshFirst) {
+						log.debug("refreshFirst is true - updating the cache");
 						
-						// because twitterActivities doesn't have the cacheId set, this will get sorted by twitterId
-						Collections.sort(twitterActivities);
-						
-						////////////////////////////////////////////////////////////////////////////////////////
-						// persist the activities retrieved from Twitter that aren't already stored in the cache
-						////////////////////////////////////////////////////////////////////////////////////////
-						int requestedActivityCount = maxCount;
+						if(newOnly) {teamRequestedActivities = new ArrayList<Activity>();}
 
-						Long largestTwitterId = newestTwitterId;
-						log.debug("before processing activities, newestTwitterId = " + newestTwitterId);
-						EntityManager em0 = EMF.get().createEntityManager();
-						try {
-							for(Activity a: twitterActivities) {
-								em0.getTransaction().begin();
-								try {
-									Activity precachedActivity = (Activity)em0.createNamedQuery("Activity.getByTwitterId")
-										.setParameter("twitterId", a.getTwitterId())
-										.getSingleResult();
-									// if already cached, there is no work to do ...
-								} catch (NoResultException e) {
-					            	// not an error - we have found a Twitter update that was a direct post to Twitter
-									log.debug("uncached activity retrieved with twitter ID = " + a.getTwitterId());
-									if(newOnly && requestedActivityCount != 0) {
-										teamRequestedActivities.add(a);
-										requestedActivityCount--;
-									}
-									
-									cacheId += 1;
-									a.setCacheId(cacheId);
-									a.setContributor(RteamApplication.TWITTER_POST);
-									em0.persist(a);
-									if(a.getTwitterId() > largestTwitterId) {largestTwitterId = a.getTwitterId();}
-					    		} catch (NonUniqueResultException e) {
-									log.exception("ActivitiesResource:getActivities:NonUniqueResultException2", "two or more activities have the same twitter ID", e);
-					    		}
-								em0.getTransaction().commit();
+						// Twitter refresh is done at most once per minute, so see if the refresh has been done in the last minute.
+						Date lastRefreshDate = userTeam.getLastTwitterRefresh();
+						Long howLongSinceLastRefresh = null;
+						Date now = new Date();
+						if(lastRefreshDate != null) {
+							howLongSinceLastRefresh = now.getTime() - lastRefreshDate.getTime();
+							log.debug("howLongSinceLastRefresh = " + howLongSinceLastRefresh);
+						} else {
+							log.debug("lastTwitterRefresh in User null, so refresh will proceed"); 
+						}
+						
+						if(lastRefreshDate == null || (howLongSinceLastRefresh > ONE_MINUTE_IN_MILLI_SECONDS)) {
+							log.debug("has been over a minute so do a Twitter refresh");
+							Long newestTwitterId = userTeam.getNewestTwitterId();
+							List<Activity> twitterActivities = TwitterClient.getTeamActivities(userTeam, newestTwitterId);
+							if(twitterActivities == null) {
+			    				return Utility.apiError(ApiStatusCode.TWITTER_ERROR);
+							} 
+							
+							// because twitterActivities doesn't have the cacheId set, this will get sorted by twitterId
+							Collections.sort(twitterActivities);
+							
+							////////////////////////////////////////////////////////////////////////////////////////
+							// persist the activities retrieved from Twitter that aren't already stored in the cache
+							////////////////////////////////////////////////////////////////////////////////////////
+							int requestedActivityCount = maxCount;
+
+							Long largestTwitterId = newestTwitterId;
+							log.debug("before processing activities, newestTwitterId = " + newestTwitterId);
+							EntityManager em0 = EMF.get().createEntityManager();
+							try {
+								for(Activity a: twitterActivities) {
+									em0.getTransaction().begin();
+									try {
+										Activity precachedActivity = (Activity)em0.createNamedQuery("Activity.getByTwitterId")
+											.setParameter("twitterId", a.getTwitterId())
+											.getSingleResult();
+										// if already cached, there is no work to do ...
+									} catch (NoResultException e) {
+						            	// not an error - we have found a Twitter update that was a direct post to Twitter
+										log.debug("uncached activity retrieved with twitter ID = " + a.getTwitterId());
+										if(newOnly && requestedActivityCount != 0) {
+											teamRequestedActivities.add(a);
+											requestedActivityCount--;
+										}
+										
+										cacheId += 1;
+										a.setCacheId(cacheId);
+										a.setContributor(RteamApplication.TWITTER_POST);
+										em0.persist(a);
+										if(a.getTwitterId() > largestTwitterId) {largestTwitterId = a.getTwitterId();}
+						    		} catch (NonUniqueResultException e) {
+										log.exception("ActivitiesResource:getActivities:NonUniqueResultException2", "two or more activities have the same twitter ID", e);
+						    		}
+									em0.getTransaction().commit();
+								}
+								log.debug("after processing activities, largestTwitterId = " + largestTwitterId);
+								newestTwitterId = largestTwitterId;
+							} finally {
+								em0.close();
 							}
-							log.debug("after processing activities, largestTwitterId = " + largestTwitterId);
-							newestTwitterId = largestTwitterId;
-						} finally {
-							em0.close();
-						}
-						
-						// Update team in a separate transaction
-						// at this point, newestTwitterId holds the largest, most recent Twitter Id
-						// at this point, cachId holds the largest, most recent cache Id
-						EntityManager em2 = EMF.get().createEntityManager();
-						try {
-							em2.getTransaction().begin();
-							Team teamInTransaction = (Team)em2.createNamedQuery("Team.getByKey")
-								.setParameter("key", userTeam.getKey())
-								.getSingleResult();
-							log.debug("team2 retrieved = " + teamInTransaction.getTeamName());
 							
-							// update the activity IDs
-							teamInTransaction.setNewestCacheId(cacheId);
-							teamInTransaction.setNewestTwitterId(newestTwitterId);
-							teamInTransaction.setLastTwitterRefresh(new Date());
-							em2.getTransaction().commit();
-						} catch(Exception e) {
-							log.exception("ActivitiesResource:getActivities:Exception2", "Could not find team using teamKey from User entity", e);
-							// no matter what, the teamsWithPossibleUpdates team list MUST be complete if this is a refresh!
-						} finally {
-						    if (em2.getTransaction().isActive()) {
-						        em2.getTransaction().rollback();
-						    }
-						    em2.close();
+							// Update team in a separate transaction
+							// at this point, newestTwitterId holds the largest, most recent Twitter Id
+							// at this point, cachId holds the largest, most recent cache Id
+							EntityManager em2 = EMF.get().createEntityManager();
+							try {
+								em2.getTransaction().begin();
+								Team teamInTransaction = (Team)em2.createNamedQuery("Team.getByKey")
+									.setParameter("key", userTeam.getKey())
+									.getSingleResult();
+								log.debug("team2 retrieved = " + teamInTransaction.getTeamName());
+								
+								// update the activity IDs
+								teamInTransaction.setNewestCacheId(cacheId);
+								teamInTransaction.setNewestTwitterId(newestTwitterId);
+								teamInTransaction.setLastTwitterRefresh(new Date());
+								em2.getTransaction().commit();
+							} catch(Exception e) {
+								log.exception("ActivitiesResource:getActivities:Exception2", "Could not find team using teamKey from User entity", e);
+								// no matter what, the teamsWithPossibleUpdates team list MUST be complete if this is a refresh!
+							} finally {
+							    if (em2.getTransaction().isActive()) {
+							        em2.getTransaction().rollback();
+							    }
+							    em2.close();
+							}
 						}
-					}
-				} // end of if(teamUsesTwitter && refreshFirst)
-				
-				// If this team uses Twitter and this is a refreshFirst with newOnly, then teamRequestedActivities 
-				// already initialized in the code above.
-				if(!(teamUsesTwitter && refreshFirst && newOnly)) {
-					if(refreshFirst && newOnly) {
-						// teamUsesTwitter must be false. If no Twitter, then a refreshFirst-newOnly request has no work to do,
-						// but must create a teamRequestedActivities for code below, so make the empty list.
-						teamRequestedActivities = new ArrayList<Activity>();
-					} else {
-						// To get into this leg of code, newOnly must be FALSE
-						
-						//////////////////////////////////////////////////////////////
-						// Build the teamRequestedActivities list from the local cache
-						//////////////////////////////////////////////////////////////
-						EntityManager em3 = EMF.get().createEntityManager();
-						try {
-							log.debug("getting activities from the cache ...");
-							//////////////////////////////////////////////////////////////////////
-							// return activities from cache (which may include some new stuff too)
-							//////////////////////////////////////////////////////////////////////
+					} // end of if(teamUsesTwitter && refreshFirst)
+					
+					// If this team uses Twitter and this is a refreshFirst with newOnly, then teamRequestedActivities 
+					// already initialized in the code above.
+					if(!(teamUsesTwitter && refreshFirst && newOnly)) {
+						if(refreshFirst && newOnly) {
+							// teamUsesTwitter must be false. If no Twitter, then a refreshFirst-newOnly request has no work to do,
+							// but must create a teamRequestedActivities for code below, so make the empty list.
+							teamRequestedActivities = new ArrayList<Activity>();
+						} else {
+							// To get into this leg of code, newOnly must be FALSE
 							
-							if(isGetActivitiesForAllTeamsApi) {
-								// Since newOnly must be false (see comment above) the mostCurrentDate and totalNumberOfDays
-								// must be specified according to the API business rules.
-								
-								/////////////////////////////////////////////////////
-								// two algorithms for getting a range of activities:
-								// 1. currentDate and totalNumberOfDays count
-								// 2. currentDate and maxCount
-								/////////////////////////////////////////////////////
-								if(totalNumberOfDays == null) {
-									// will be getting range of activity using maxCount, but will do '30 day' query attempts
-									log.debug("activity query is being driven by maxCount, not totalNumberOfDays");
-									totalNumberOfDays = NUM_OF_DAYS_IN_ACTIVITY_SEARCH;
-									mustMatchMaxCount = true;
-								} 
-								Date leastCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays-1);
-								
-								// loop until we have enough activities to return
-								List<Activity> partialTeamRequestedActivities = null;
-								teamRequestedActivities = new ArrayList<Activity>();
-								int numOfSearches = 0;
-								while(true) {
+							//////////////////////////////////////////////////////////////
+							// Build the teamRequestedActivities list from the local cache
+							//////////////////////////////////////////////////////////////
+							EntityManager em3 = EMF.get().createEntityManager();
+							try {
+								log.debug("getting activities from the cache ...");
+								//////////////////////////////////////////////////////////////////////
+								// return activities from cache (which may include some new stuff too)
+								//////////////////////////////////////////////////////////////////////
+								if(isGetActivitiesForAllTeamsApi) {
 									if(mediaOnly) {
-										partialTeamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCreatedDatesAndMediaOnly")
+										teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCreatedDatesAndMediaOnly")
 												.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
 												.setParameter("mostCurrentDate", GMT.setTimeToEndOfTheDay(mostCurrentDate))
 												.setParameter("leastCurrentDate", GMT.setTimeToTheBeginningOfTheDay(leastCurrentDate))
 												.getResultList();
 									} else {
-										partialTeamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCreatedDates")
+										teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCreatedDates")
 												.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
 												.setParameter("mostCurrentDate", GMT.setTimeToEndOfTheDay(mostCurrentDate))
 												.setParameter("leastCurrentDate", GMT.setTimeToTheBeginningOfTheDay(leastCurrentDate))
 												.getResultList();
 									}
-									teamRequestedActivities.addAll(partialTeamRequestedActivities);
-									numOfSearches++;
-									log.debug("query for activity, number of queries = " + numOfSearches);
-									if(numOfSearches > MAX_NUM_ACTIVITY_SEARCHES) {
-										searchMaxedOut = true;
-										break;
-									}
-									if(!mustMatchMaxCount || teamRequestedActivities.size() >= maxCount) {
-										break;
-									}
-									mostCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays);
-									leastCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays-1);
-								}
-							} else {
-								/////////////////////////////////////
-								// get activities for specified event
-								/////////////////////////////////////
-								if(this.eventIdStr != null) {
-									teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByEventIdAndEventType")
-											.setParameter("eventId", this.eventIdStr)
-											.setParameter("eventType", this.eventTypeStr)
-											.getResultList();
 								} else {
-									//////////////////////////////////
-									// get activities by cacheId range
-									//////////////////////////////////
-									Long upperCacheId = null; // non-inclusive, upper cache ID used in activity query
-									Long lowerCacheId = null; // 
-									if(maxCacheId != null) {
-										// typically used to request activities that are not the most recent
-										if(maxCacheId > cacheId + 1) {maxCacheId = cacheId + 1;}
-										upperCacheId = maxCacheId;
+									/////////////////////////////////////
+									// get activities for specified event
+									/////////////////////////////////////
+									if(this.eventIdStr != null) {
+										teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByEventIdAndEventType")
+												.setParameter("eventId", this.eventIdStr)
+												.setParameter("eventType", this.eventTypeStr)
+												.getResultList();
 									} else {
-										// the most recent activities are being requested
-										// make upper cache ID large enough so newest item in cache will be returned
-										upperCacheId = cacheId + 1; 
+										//////////////////////////////////
+										// get activities by cacheId range
+										//////////////////////////////////
+										Long upperCacheId = null; // non-inclusive, upper cache ID used in activity query
+										Long lowerCacheId = null; // 
+										if(maxCacheId != null) {
+											// typically used to request activities that are not the most recent
+											if(maxCacheId > cacheId + 1) {maxCacheId = cacheId + 1;}
+											upperCacheId = maxCacheId;
+										} else {
+											// the most recent activities are being requested
+											// make upper cache ID large enough so newest item in cache will be returned
+											upperCacheId = cacheId + 1; 
+										}
+										lowerCacheId = upperCacheId - maxCount;
+										// number of available activities might be less than maxCount
+										if(lowerCacheId < 0) {lowerCacheId = 0L;}
+										
+										teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCacheIds")
+											.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
+											.setParameter("upperCacheId", upperCacheId)
+											.setParameter("lowerCacheId", lowerCacheId)
+											.getResultList();
 									}
-									lowerCacheId = upperCacheId - maxCount;
-									// number of available activities might be less than maxCount
-									if(lowerCacheId < 0) {lowerCacheId = 0L;}
-									
-									teamRequestedActivities = (List<Activity>)em3.createNamedQuery("Activity.getByTeamIdAndUpperAndLowerCacheIds")
-										.setParameter("teamId", KeyFactory.keyToString(userTeam.getKey()))
-										.setParameter("upperCacheId", upperCacheId)
-										.setParameter("lowerCacheId", lowerCacheId)
-										.getResultList();
 								}
+								log.debug("number of teamRequestedActivities found = " + teamRequestedActivities.size());
+							} catch(Exception e) {
+								log.exception("ActivitiesResource:getActivities:Exception3", "Failed in getting Activity from cache", e);
+								this.setStatus(Status.SERVER_ERROR_INTERNAL);
+			    				return Utility.apiError(null);
+							} finally {
+								em3.close();
 							}
-							log.debug("number of teamRequestedActivities found = " + teamRequestedActivities.size());
-						} catch(Exception e) {
-							log.exception("ActivitiesResource:getActivities:Exception3", "Failed in getting Activity from cache", e);
-							this.setStatus(Status.SERVER_ERROR_INTERNAL);
-		    				return Utility.apiError(null);
-						} finally {
-							em3.close();
 						}
 					}
-				}
+					
+					////////////////////////////////////////////////////////////////////////
+					// for each activity found, set the participant role inside the activity
+					////////////////////////////////////////////////////////////////////////
+					if(currentUser != null) {
+						String participantRole = null;
+	    				for(Member m : userTeam.getMembers()) {
+	    					if(m.isUserParticipant(currentUser)) {
+	    						if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
+	    								(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
+	    							participantRole = m.getParticipantRole();
+	    						}
+	    					}
+	    				}
+	    				for(Activity tra : teamRequestedActivities) {
+	    					tra.setParticipantRole(participantRole);
+	    				}
+					}
+					
+					allTeamsRequestedActivities.addAll(teamRequestedActivities);
+				} // end of for(Team userTeam : teams) ********************************************************************************************************
 				
-				////////////////////////////////////////////////////////////////////////
-				// for each activity found, set the participant role inside the activity
-				////////////////////////////////////////////////////////////////////////
-				if(currentUser != null) {
-					String participantRole = null;
-    				for(Member m : userTeam.getMembers()) {
-    					if(m.isUserParticipant(currentUser)) {
-    						if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
-    								(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
-    							participantRole = m.getParticipantRole();
-    						}
-    					}
-    				}
-    				for(Activity tra : teamRequestedActivities) {
-    					tra.setParticipantRole(participantRole);
-    				}
+				numOfSearches++;
+				log.debug("query for activity, number of queries = " + numOfSearches);
+				if(numOfSearches > MAX_NUM_ACTIVITY_SEARCHES) {
+					searchMaxedOut = true;
+					break;  // out of the while(true) loop
 				}
-				
-				allTeamsRequestedActivities.addAll(teamRequestedActivities);
-			} // end of for(Team userTeam : teams)
+				if(!mustMatchMaxCount || allTeamsRequestedActivities.size() >= maxCount) {
+					break;  // out of the while(true) loop
+				}
+				mostCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays);
+				leastCurrentDate = GMT.subtractDaysFromDate(mostCurrentDate, totalNumberOfDays-1);
+			} // end of the while(true) loop #####################################################################################################################
 			log.debug("number of allTeamsRequestedActivities found = " + allTeamsRequestedActivities.size());
 			
 			/////////////////////////////////////////////////////////////////////////////////////////////
