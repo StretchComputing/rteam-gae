@@ -320,7 +320,13 @@ public class UsersResource extends ServerResource {
 						// migrations often require the longer 10 min execution time allowed to tasks. Migration that
 						// are tasks are identified by a migration name that ends with "Task"
 						if(migrationName.endsWith("Task")) {
-							createMigrationTask(migrationName);
+							String parameterOne = null;
+							if(json.has("parameterOne")) {
+								parameterOne = json.getString("parameterOne");
+							} else {
+								parameterOne = "";
+							}
+							createMigrationTask(migrationName, parameterOne);
 						} else {
 							// These migration are NOT run as tasks - limited to 30 second execution time by GAE
 							if(migrationName.equalsIgnoreCase("createUserCacheIds")) {
@@ -367,7 +373,7 @@ public class UsersResource extends ServerResource {
     	
     }
     
-    private void createMigrationTask(String theMigrationName) {
+    private void createMigrationTask(String theMigrationName, String theParameterOne) {
 		// URL "/migrationTask" is routed to MigrationTaskServlet in web.xml
 		// not calling name() to name the task, so the GAE will assign a unique name that has not been used in 7 days (see book)
 		// method defaults to POST, but decided to be explicit here
@@ -375,7 +381,8 @@ public class UsersResource extends ServerResource {
 		//               URL to task queues (I see how it restricts it to admins)
 		TaskOptions taskOptions = TaskOptions.Builder.withUrl("/migrationTask")
 				.method(Method.POST)
-				.param("migrationName", theMigrationName);
+				.param("migrationName", theMigrationName)
+				.param("parameterOne", theParameterOne);
 		Queue queue = QueueFactory.getQueue("migration"); // "migration" queue is defined in WEB-INF/queue.xml
 		queue.add(taskOptions);
     }

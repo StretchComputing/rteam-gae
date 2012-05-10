@@ -49,6 +49,8 @@ public class MigrationTaskServlet extends HttpServlet {
 			// no parameters as of yet
 			String migrationName = req.getParameter("migrationName");
 			log.debug("migrationName parameter: " + migrationName);
+			String parameterOne = req.getParameter("parameterOne");
+			log.debug("parameterOne parameter: " + parameterOne);
 			
 			// need to get the retry count
 			String taskRetryCountStr = req.getHeader("X-AppEngine-TaskRetryCount");
@@ -86,7 +88,9 @@ public class MigrationTaskServlet extends HttpServlet {
 	    	} else if(migrationName.equalsIgnoreCase("setTeamShortenedPageUrlTask")) {
 	    		setTeamShortenedPageUrl();
 	    	} else if(migrationName.equalsIgnoreCase("cleanUpUserTeamsTask")) {
-	    		cleanUpUserTeams();
+	    		cleanUpUserTeams(parameterOne);
+	    	} else if(migrationName.equalsIgnoreCase("cleanUserDeleteTask")) {
+	    		cleanUserDelete(parameterOne);
 	    	}
 		    
 			// Return status depends on how many times this been attempted. If max retry count reached, return HTTP 200 so
@@ -431,13 +435,14 @@ public class MigrationTaskServlet extends HttpServlet {
 		}
     }
     
-    // TODO pass email address in as param
-    private void cleanUpUserTeams() {
+    // theParameterOne: must be the user's email address
+    private void cleanUpUserTeams(String theParameterOne) {
 		EntityManager em = EMF.get().createEntityManager();
 		try {
 			User user = (User) em.createNamedQuery("User.getByEmailAddress")
-				.setParameter("emailAddress", "njw438@gmail.com")
+				.setParameter("emailAddress", theParameterOne)
 				.getSingleResult();
+			log.debug("user found with specified email address = " + theParameterOne);
 			
 			List<Key> teamKeys = user.getTeams();
 			log.debug("user initial number of teams = " + teamKeys.size());
@@ -448,13 +453,131 @@ public class MigrationTaskServlet extends HttpServlet {
 					 aTeam = (Team)em.createNamedQuery("Team.getByKey")
 						.setParameter("key", tk)
 						.getSingleResult();
-					 log.debug("team = " + aTeam.getTeamName() + " found -- no issues here");
+					 log.debug("team = " + aTeam.getTeamName() + " found -- so far so good");
+					 
+					 // make sure the user is a member of the team
+					 String userId = KeyFactory.keyToString(user.getKey());
+					 Boolean membershipFound = false;
+					 List<Member> members = aTeam.getMembers();
+					 for(Member mem : members) {
+						 if(mem.isAssociatedWithUser(userId)) {
+							 membershipFound = true;
+							 break;
+						 }
+					 }
+					 
+					 if(!membershipFound) {
+						log.debug("cleanUpUserTeams(): membershi  not found on team so team is being removed from user = " + user.getFullName() + " team list");
+						user.removeTeam(tk);
+					 }
 				} catch(Exception e) {
 					// team not found, so remove it from the user's list
-					log.debug("cleanUpUserTeams(): team  not found so it is being removed from user = " + user.getFullName() + " team list");
+					log.debug("cleanUpUserTeams(): team  not found so team is being removed from user = " + user.getFullName() + " team list");
 					user.removeTeam(tk);
 				}
 			}
+		} catch (NoResultException e) {
+			log.exception("MigrationTaskServlet:cleanUpUserTeams:NoResultException", "", e);
+		} catch (NonUniqueResultException e) {
+			log.exception("MigrationTaskServlet:cleanUpUserTeams:NonUniqueResultException", "", e);
+		} finally {
+		    em.close();
+		}
+    }
+    
+    // theParameterOne: must be the user's email address
+    private void cleanUserDelete(String theParameterOne) {
+		EntityManager em = EMF.get().createEntityManager();
+		try {
+			log.debug("cleanUserDelete Task starting ...");
+			User user = (User) em.createNamedQuery("User.getByEmailAddress")
+				.setParameter("emailAddress", theParameterOne)
+				.getSingleResult();
+			log.debug("user found with specified email address = " + theParameterOne);
+			 String userId = KeyFactory.keyToString(user.getKey());
+			
+			///////////////////////
+			// Process User's Teams
+			///////////////////////
+			List<Key> teamKeys = user.getTeams();
+			log.debug("user initial number of teams = " + teamKeys.size());
+			EntityManager em2 = EMF.get().createEntityManager();
+			for(Key tk : teamKeys) {
+				log.debug("team key = " + tk.toString());
+				Team aTeam = null;
+				try {
+					em2.getTransaction().begin();
+					 aTeam = (Team)em2.createNamedQuery("Team.getByKey")
+						.setParameter("key", tk)
+						.getSingleResult();
+					 log.debug("team = " + aTeam.getTeamName() + " found -- so far so good");
+					 
+					 // make sure the user is a member of the team
+					 Boolean membershipFound = false;
+					 List<Member> originalMembers = aTeam.getMembers();
+					 List<Member> updatedMembers = new ArrayList<Member>();
+					 for(Member mem : originalMembers) {
+						 if(!mem.isAssociatedWithUser(userId)) {
+							 updatedMembers.add(mem);
+						 }
+					 }
+					 
+					 if(updatedMembers.size() == 0) {
+						 // if no members left, remove team
+						 em2.remove(aTeam);
+						 log.debug("removing team = " + aTeam.getTeamName());
+					 } else {
+						 // set the new member list in team less the members removed
+						 aTeam.setMembers(updatedMembers);
+						 log.debug("removing members from team = " + aTeam.getTeamName());
+					 }
+					 em2.getTransaction().commit();
+				} catch(Exception e) {
+					log.debug("cleanUserDelete(): team  not found");
+				} finally {
+				    if (em2.getTransaction().isActive()) {
+				    	em2.getTransaction().rollback();
+				    }
+				    em2.close();
+				}
+			}
+			
+			///////////////////////////////////////////
+			// Process User's MessageThreads/Recipients
+			///////////////////////////////////////////
+			
+			
+			// ???????????????????????????????
+			//get rid of all messageThread with userId and deleted memberIds?
+			// get rid of all recipients with userId and deleted memberIds?
+			
+			
+			EntityManager em3 = EMF.get().createEntityManager();
+			try {
+				List<Recipient> recipients = (List<Recipient>)em3.createNamedQuery("Recipient.getByUserId")
+						.setParameter("userId", userId)
+						.getResultList();
+					 log.debug("number of recipients found = " + recipients.size());
+					 for(Recipient r : recipients) {
+						 em3.getTransaction().begin();
+						 r.getMessageThread();
+						 em3.getTransaction().commit();
+					 }
+			} catch(Exception e) {
+				log.debug("cleanUserDelete(): team  not found");
+			} finally {
+			    if (em3.getTransaction().isActive()) {
+			    	em3.getTransaction().rollback();
+			    }
+			    em3.close();
+			}
+			
+			
+			
+			
+			// delete the user
+			em.remove(user);
+			log.debug("deleted user = " + user.getFullName());
 		} catch (NoResultException e) {
 			log.exception("MigrationTaskServlet:cleanUpUserTeams:NoResultException", "", e);
 		} catch (NonUniqueResultException e) {

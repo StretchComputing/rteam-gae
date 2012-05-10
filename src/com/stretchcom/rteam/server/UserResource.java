@@ -172,6 +172,10 @@ public class UserResource extends ServerResource {
 				
 				if(user != null) {
 					jsonReturn.put("token", user.getToken());
+					jsonReturn.put("firstName", user.getFirstName());
+					jsonReturn.put("lastName", user.getLastName());
+					jsonReturn.put("emailAddress", user.getEmailAddress());
+					jsonReturn.put("phoneNumber", user.getPhoneNumber());
 					if(user.getUserIconOneId() != null) jsonReturn.put("userIconOneId", user.getUserIconOneId());
 					if(user.getUserIconOneAlias() != null) jsonReturn.put("userIconOneAlias", user.getUserIconOneAlias());
 					if(user.getUserIconOneImage() != null) jsonReturn.put("userIconOneImage", user.getUserIconOneImage());
