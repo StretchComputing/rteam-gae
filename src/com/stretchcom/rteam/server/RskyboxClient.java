@@ -128,16 +128,18 @@ public class RskyboxClient {
 		}
 		
 		// Identify end user if possible
-		String endUser = RSKYBOX_USER_NAME;
+		String userName = RSKYBOX_USER_NAME;
+		String userId = "";
 		if(theRequest != null) {
 			User currentUser = Utility.getCurrentUser(theRequest);
 			if(currentUser != null) {
-				endUser = currentUser.getEmailAddress();
+				userName = currentUser.getFullName() + ", " + currentUser.getEmailAddress();
+				userId = currentUser.getToken();
 			}
 		}
 		
 		// check to see if request LOG is enabled
-		if(!isLogEnabled(theName, theLevel, endUser)) {
+		if(!isLogEnabled(theName, theLevel)) {
 			//log.info("log " + theName + " is inactive");
 			return;
 		}
@@ -158,7 +160,8 @@ public class RskyboxClient {
 			}
 			
 			// TODO rSkybox should rename instanceUrl to something more generic - here we use the current user's login ID if there is a current user
-			jsonPayload.put("userName", endUser);
+			jsonPayload.put("userName", userName);
+			jsonPayload.put("userId", userId);
 			jsonPayload.put("instanceUrl", RSKYBOX_SERVICE_PROVIDER);
 			//log.info("jsonPayload = " + jsonPayload.toString());
 			
@@ -289,7 +292,7 @@ public class RskyboxClient {
 		return response;
 	}
 	
-	private static Boolean isLogEnabled(String theName, String theLevel, String theEndUser) {
+	private static Boolean isLogEnabled(String theName, String theLevel) {
 		if(theLevel.equalsIgnoreCase(RskyboxLog.DEBUG_LEVEL) || theLevel.equalsIgnoreCase(RskyboxLog.INFO_LEVEL)) {
 			// TODO add support for:  DEBUG and INFO logs can be enabled/disabled as a LEVEL for individual users
 			// for now, always disabled
