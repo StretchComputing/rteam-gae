@@ -102,7 +102,7 @@ public class MigrationTaskServlet extends HttpServlet {
 			resp.getWriter().println(response);
 		}
 		catch (Exception ex) {
-			response = "Should not happen. Email send: failure : " + ex.getMessage();
+			response = "Should not happen. MigrationTaskServlet failure : " + ex.getMessage();
 			log.debug(response);
 			resp.setStatus(HttpServletResponse.SC_OK);
 			resp.getWriter().println(response);
@@ -502,78 +502,51 @@ public class MigrationTaskServlet extends HttpServlet {
 			List<Key> teamKeys = user.getTeams();
 			log.debug("user initial number of teams = " + teamKeys.size());
 			EntityManager em2 = EMF.get().createEntityManager();
-			for(Key tk : teamKeys) {
-				log.debug("team key = " + tk.toString());
-				Team aTeam = null;
-				try {
-					em2.getTransaction().begin();
-					 aTeam = (Team)em2.createNamedQuery("Team.getByKey")
-						.setParameter("key", tk)
-						.getSingleResult();
-					 log.debug("team = " + aTeam.getTeamName() + " found -- so far so good");
-					 
-					 // make sure the user is a member of the team
-					 Boolean membershipFound = false;
-					 List<Member> originalMembers = aTeam.getMembers();
-					 List<Member> updatedMembers = new ArrayList<Member>();
-					 for(Member mem : originalMembers) {
-						 if(!mem.isAssociatedWithUser(userId)) {
-							 updatedMembers.add(mem);
-						 }
-					 }
-					 
-					 if(updatedMembers.size() == 0) {
-						 // if no members left, remove team
-						 em2.remove(aTeam);
-						 log.debug("removing team = " + aTeam.getTeamName());
-					 } else {
-						 // set the new member list in team less the members removed
-						 aTeam.setMembers(updatedMembers);
-						 log.debug("removing members from team = " + aTeam.getTeamName());
-					 }
-					 em2.getTransaction().commit();
-				} catch(Exception e) {
-					log.debug("cleanUserDelete(): team  not found");
-				} finally {
-				    if (em2.getTransaction().isActive()) {
-				    	em2.getTransaction().rollback();
-				    }
-				    em2.close();
-				}
-			}
-			
-			///////////////////////////////////////////
-			// Process User's MessageThreads/Recipients
-			///////////////////////////////////////////
-			
-			
-			// ???????????????????????????????
-			//get rid of all messageThread with userId and deleted memberIds?
-			// get rid of all recipients with userId and deleted memberIds?
-			
-			
-			EntityManager em3 = EMF.get().createEntityManager();
 			try {
-				List<Recipient> recipients = (List<Recipient>)em3.createNamedQuery("Recipient.getByUserId")
-						.setParameter("userId", userId)
-						.getResultList();
-					 log.debug("number of recipients found = " + recipients.size());
-					 for(Recipient r : recipients) {
-						 em3.getTransaction().begin();
-						 r.getMessageThread();
-						 em3.getTransaction().commit();
-					 }
-			} catch(Exception e) {
-				log.debug("cleanUserDelete(): team  not found");
+				for(Key tk : teamKeys) {
+					log.debug("team key = " + tk.toString());
+					Team aTeam = null;
+					try {
+						em2.getTransaction().begin();
+						 aTeam = (Team)em2.createNamedQuery("Team.getByKey")
+							.setParameter("key", tk)
+							.getSingleResult();
+						 log.debug("user team = " + aTeam.getTeamName() + " found -- so far so good");
+						 
+						 // make sure the user is a member of the team
+						 Boolean membershipFound = false;
+						 List<Member> originalMembers = aTeam.getMembers();
+						 List<Member> remainingMembers = new ArrayList<Member>();
+						 for(Member mem : originalMembers) {
+							 if(!mem.isAssociatedWithUser(userId)) {
+								 remainingMembers.add(mem);
+							 }
+						 }
+						 
+						 if(remainingMembers.size() == 0) {
+							 // if no members left, remove team
+							 em2.remove(aTeam);
+							 log.debug("removing team = " + aTeam.getTeamName());
+						 } else {
+							 // set the new member list in team less the members removed
+							 aTeam.setMembers(remainingMembers);
+							 log.debug("user is being removed as a member of team = " + aTeam.getTeamName());
+						 }
+						 em2.getTransaction().commit();
+					} catch(Exception e) {
+						log.debug("cleanUserDelete(): team  not found -- continuing on");
+					}
+				}
 			} finally {
-			    if (em3.getTransaction().isActive()) {
-			    	em3.getTransaction().rollback();
+			    if (em2.getTransaction().isActive()) {
+			    	em2.getTransaction().rollback();
 			    }
-			    em3.close();
+			    em2.close();
 			}
 			
-			
-			
+			// TODO? 
+			// Thought about removing Recipients associated with this user ID, but these will eventually get 
+			// archived to I'm thinking there's no harm leaving them for now.
 			
 			// delete the user
 			em.remove(user);

@@ -629,7 +629,7 @@ public class Emailer {
     	sb.append("<head></head>");
     	sb.append("<body>");
     	
-    	sb.append("<div><img src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/rteamEmailLogo.png' width='314' height='40' border='0' alt='rTeam Logo'></div>");
+    	sb.append("<div><img src='" + RteamApplication.BASE_URL_WITH_SLASH + "desktop/images/rteamEmailLogo.png' width='286' height='30' border='0' alt='rTeam Logo'></div>");
     	sb.append("<div style='height:5px;'></div>");
     	
     	sb.append("<div style='padding:20px; border-radius:10px; -o-border-radius:10px; -icab-border-radius:10px; -khtml-border-radius:10px; ");
