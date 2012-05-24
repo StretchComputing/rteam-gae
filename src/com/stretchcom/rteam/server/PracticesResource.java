@@ -648,19 +648,18 @@ public class PracticesResource extends ServerResource {
 					
 					// Need to determine what role this user plays on this team.  Since a user can be associated with
 					// multiple memberships (due to guardian), give precedence to coordinator, then member, then fan
-					String participantRole = null;
+					String participation = null;
 					for(Member m : t.getMembers()) {
 						if(m.isUserParticipant(theUser)) {
 							currentUserMember = m;
-							if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
-									(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
-								participantRole = m.getParticipantRole();
+							if(m.isParticipationHigher(participation)) {
+								participation = m.getParticipantRole();
 							}
 						}
 					}
 					
-					if(participantRole != null) {
-						jsonPracticeObj.put("participantRole", participantRole);
+					if(participation != null) {
+						jsonPracticeObj.put("participantRole", participation);
 					} else {
 						log.error("PracticesResource:getPracticeList:participantRole", "User's partipant role could not be found on team = " + t.getTeamName());
 					}
@@ -714,19 +713,18 @@ public class PracticesResource extends ServerResource {
 					
 					// Need to determine what role this user plays on this team.  Since a user can be associated with
 					// multiple memberships (due to guardian), give precedence to coordinator, then member, then fan
-					String participantRole = null;
+					String participation = null;
 					for(Member m : t.getMembers()) {
 						if(m.isUserParticipant(theUser)) {
 							currentUserMember = m;
-							if(participantRole == null || participantRole.equalsIgnoreCase(Member.FAN_ROLE) || 
-									(m.isCoordinator() && !participantRole.equalsIgnoreCase(Member.CREATOR_PARTICIPANT)) ) {
-								participantRole = m.getParticipantRole();
+							if(m.isParticipationHigher(participation)) {
+								participation = m.getParticipantRole();
 							}
 						}
 					}
 					
-					if(participantRole != null) {
-						jsonGameObj.put("participantRole", participantRole);
+					if(participation != null) {
+						jsonGameObj.put("participantRole", participation);
 					} else {
 						log.error("PracticesResource:getPracticeList:teamForPractice", "User's partipant role could not be found on team = " + t.getTeamName());
 					}

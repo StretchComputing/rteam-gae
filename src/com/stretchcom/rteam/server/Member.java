@@ -885,6 +885,16 @@ public class Member {
 		return false;
 	}
 	
+	public boolean isParticipationHigher(String theParticipation) {
+		if(theParticipation == null && this.participantRole != null)  {return true;}
+		if( (theParticipation.equalsIgnoreCase(FAN_PARTICIPANT) && this.isMemberParticipant()) ||
+			(theParticipation.equalsIgnoreCase(MEMBER_PARTICIPANT) && this.isCoordinator())    ||
+			(theParticipation.equalsIgnoreCase(COORDINATOR_PARTICIPANT) && this.isCreator()) ) {
+			return true;
+		}
+		return false;
+	}
+	
 	// returns true if one or more of the people in this membership are users; false otherwise
 	public boolean isAssociatedWithUser() {
 		if(this.userId != null || (this.guardianUserIds != null && this.guardianUserIds.size() > 0) ) {
