@@ -33,9 +33,15 @@ public class EmailToSmsClient {
 	//private static final String EMAIL_TO_SMS_BASE_URL = "http://50.57.64.254:8080/rTeamSms/";
 	private static final String EMAIL_RESOURCE_URI = "email";
 	private static final String IS_ALIVE_RESOURCE_URI = "vitals";
+	private static final String PUSH_RESOURCE_URI = "Push";
 	
 	private static final String BASIC_AUTH_USER_NAME = "rTeamLogin";
 	private static final String BASIC_AUTH_PASSWORD = "test123";
+	private static final String RTEAM_APPLICATION = "rTeam";
+	private static final String DEVELOPMENT_PUSH_TYPE = "Development";
+	private static final String PRODUCTION_PUSH_TYPE = "Production";
+	private static final String IOS_CLIENT = "iOS";
+	private static final String ANDROID_CLIENT = "Android";
 	
 	private static final int TEN_SECONDS_IN_MILLIS = 10000;
 	
@@ -71,6 +77,51 @@ public class EmailToSmsClient {
 		
 		return response;
 	}
+	
+	//static public String {
+	static public String push(String theAlert, Integer theBadge, String theDeviceToken, Boolean theIsDeveloper)  {
+		log.debug("EmailToSmsClient::push entered");
+		
+		//////////////////////////
+		// Create the JSON Payload
+		//////////////////////////
+		JSONObject jsonPayload = null;
+		try {
+			String pushType = PRODUCTION_PUSH_TYPE;
+			if(theIsDeveloper) pushType = DEVELOPMENT_PUSH_TYPE;
+			
+			JSONArray devicesJsonArray = new JSONArray();
+			jsonPayload = new JSONObject();
+			
+			JSONObject jsonDevice = new JSONObject();
+			jsonDevice.put("Client", IOS_CLIENT);
+			jsonDevice.put("DeviceToken", theDeviceToken);
+			jsonDevice.put("PushType", pushType);
+			
+			devicesJsonArray.put(jsonDevice);
+			jsonPayload.put("Devices", devicesJsonArray);
+			jsonPayload.put("Message", theAlert);
+			jsonPayload.put("Badge", theBadge);
+			jsonPayload.put("Application", RTEAM_APPLICATION);
+			
+		} catch (JSONException e1) {
+			log.exception("EmailToSmsClient:push:JSONException", "error building JSON object", e1);
+			return null;
+		}
+		
+		String response = null;
+		String urlStr = EMAIL_TO_SMS_BASE_URL + PUSH_RESOURCE_URI;
+		URL url = null;
+		try {
+			url = new URL(urlStr);
+			response = send(url, HTTP_POST, jsonPayload.toString(), BASIC_AUTH_USER_NAME, BASIC_AUTH_PASSWORD);
+		} catch (MalformedURLException e) {
+			log.exception("EmailToSmsClient:push:MalformedURLException", "", e);
+		}
+		
+		return response;
+	}
+
 	
 	
 	// can return NULL

@@ -2356,22 +2356,20 @@ public class PubHub {
 //			if(u.getEmailAddress().equalsIgnoreCase("njw438@gmail.com")) {
 //				isDeveloper = true;
 //			}
-			String httpResponse = UrbanAirshipClient.register(u.getAlertToken(), isDeveloper);
-			if(httpResponse != null) {
-				String alertMsg = null;
-				if(theIsAlert) {
-					alertMsg = theMessage;
-				}
-				
-				Integer newMessageCount = null;
-				if(u.getNewMessageCount() != null && u.getNewMessageCount() > 0) {
-					newMessageCount = u.getNewMessageCount();
-				}
-				
-				if(alertMsg != null || newMessageCount != null) {
-					httpResponse = UrbanAirshipClient.push(alertMsg, newMessageCount, u.getAlertToken(), isDeveloper);
-					log.debug("UrbanAirship response = " + httpResponse + " for user = " + u.getFullName());
-				}
+			String httpResponse = null;
+			String alertMsg = null;
+			if(theIsAlert) {
+				alertMsg = theMessage;
+			}
+			
+			Integer newMessageCount = null;
+			if(u.getNewMessageCount() != null && u.getNewMessageCount() > 0) {
+				newMessageCount = u.getNewMessageCount();
+			}
+			
+			if(alertMsg != null || newMessageCount != null) {
+				httpResponse = EmailToSmsClient.push(alertMsg, newMessageCount, u.getAlertToken(), isDeveloper);
+				log.debug("EmailToSmsClient.push() response = " + httpResponse + " for user = " + u.getFullName());
 			}
 		}
     }
